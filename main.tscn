@@ -1,5 +1,8 @@
 [gd_scene format=3 uid="uid://cmo6yi1lb1d7r"]
 
+[ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://dxxumo0e3cw1a" path="res://scenes/player.tscn" id="2_0xm2m"]
+
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_xkek7"]
 sky_top_color = Color(0.41960785, 0.47843137, 0.5411765, 1)
 sky_horizon_color = Color(0.65882355, 0.6901961, 0.72156864, 1)
@@ -17,10 +20,30 @@ reflected_light_source = 2
 tonemap_mode = 3
 tonemap_white = 8.0
 
+[sub_resource type="BoxMesh" id="BoxMesh_8rti0"]
+lightmap_size_hint = Vector2i(224, 216)
+size = Vector3(40, 1, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8rti0"]
+size = Vector3(40, 1, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ax6fg"]
+size = Vector3(1, 20, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ax6fg"]
+size = Vector3(1, 20, 4)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_h2yge"]
+friction = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tjwri"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_tjwri"]
+
 [node name="Main" type="Node3D" unique_id=1890468165]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1830876862]
-transform = Transform3D(0.8660254, -0.3535534, 0.3535534, 0, 0.7071068, 0.7071068, -0.5, -0.61237246, 0.61237246, 5, 5, 5)
+transform = Transform3D(-0.76604444, -0.45451948, 0.45451948, 0, 0.70710677, 0.70710677, -0.64278764, 0.5416752, -0.5416752, 5, 6, -5)
 light_color = Color(0.84705883, 0.83137256, 0.8, 1)
 light_angular_distance = 0.5
 light_specular = 0.5
@@ -29,3 +52,57 @@ shadow_blur = 2.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=952224140]
 environment = SubResource("Environment_8rti0")
+
+[node name="Environment" type="Node3D" parent="." unique_id=2009461040]
+
+[node name="Floor" type="StaticBody3D" parent="Environment" unique_id=1746274784]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Floor" unique_id=1506466537]
+mesh = SubResource("BoxMesh_8rti0")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floor" unique_id=126289966]
+shape = SubResource("BoxShape3D_8rti0")
+
+[node name="WallLeft" type="StaticBody3D" parent="Environment" unique_id=1337412042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 9.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/WallLeft" unique_id=1147854718]
+shape = SubResource("BoxShape3D_ax6fg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallLeft" unique_id=553790537]
+mesh = SubResource("BoxMesh_ax6fg")
+
+[node name="WallRight" type="StaticBody3D" parent="Environment" unique_id=1573778462]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 9.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/WallRight" unique_id=1990171267]
+shape = SubResource("BoxShape3D_ax6fg")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallRight" unique_id=1310877674]
+mesh = SubResource("BoxMesh_ax6fg")
+
+[node name="Props" type="Node3D" parent="." unique_id=145268961]
+
+[node name="Box" type="RigidBody3D" parent="Props" unique_id=25235499]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
+axis_lock_linear_z = true
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+physics_material_override = SubResource("PhysicsMaterial_h2yge")
+linear_damp = 1.0
+angular_damp = 1.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/Box" unique_id=154006518]
+shape = SubResource("BoxShape3D_tjwri")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Props/Box" unique_id=812212104]
+mesh = SubResource("BoxMesh_tjwri")
+
+[node name="Camera" type="Camera3D" parent="." unique_id=1868020920 node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8)
+script = ExtResource("1_ig7tw")
+target = NodePath("../Player")
+
+[node name="Player" parent="." unique_id=905935114 instance=ExtResource("2_0xm2m")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2, 0)
