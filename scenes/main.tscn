@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cmo6yi1lb1d7r"]
 
 [ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="1_0wfyh"]
+[ext_resource type="Script" uid="uid://bxb04n76ah8p4" path="res://scripts/basic_controller.gd" id="1_sugp2"]
 [ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="2_sugp2"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_xkek7"]
@@ -39,6 +40,10 @@ friction = 0.5
 [sub_resource type="BoxShape3D" id="BoxShape3D_tjwri"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_tjwri"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_jyhfs"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_tbgi4"]
 
 [node name="Main" type="Node3D" unique_id=1890468165]
 
@@ -98,6 +103,19 @@ shape = SubResource("BoxShape3D_tjwri")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Props/Box" unique_id=812212104]
 mesh = SubResource("BoxMesh_tjwri")
+
+[node name="ControllableBox" type="CharacterBody3D" parent="Props" unique_id=324389355]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 5, 0)
+axis_lock_linear_z = true
+axis_lock_angular_x = true
+axis_lock_angular_y = true
+script = ExtResource("1_sugp2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/ControllableBox" unique_id=1894132623]
+shape = SubResource("SphereShape3D_jyhfs")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Props/ControllableBox" unique_id=283743181]
+mesh = SubResource("SphereMesh_tbgi4")
 
 [node name="Camera" type="Camera3D" parent="." unique_id=1868020920 node_paths=PackedStringArray("target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8)

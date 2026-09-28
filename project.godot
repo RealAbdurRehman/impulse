@@ -71,6 +71,11 @@ sprint={
 ]
 }
 
+[layer_names]
+
+3d_physics/layer_1="Environment"
+3d_physics/layer_2="Ragdoll"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
