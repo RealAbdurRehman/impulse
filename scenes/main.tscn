@@ -104,17 +104,16 @@ shape = SubResource("BoxShape3D_tjwri")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Props/Box" unique_id=812212104]
 mesh = SubResource("BoxMesh_tjwri")
 
-[node name="ControllableBox" type="CharacterBody3D" parent="Props" unique_id=324389355]
+[node name="Sphere" type="RigidBody3D" parent="Props" unique_id=631725020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 5, 0)
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
-script = ExtResource("1_sugp2")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/ControllableBox" unique_id=1894132623]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Props/Sphere" unique_id=1894132623]
 shape = SubResource("SphereShape3D_jyhfs")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Props/ControllableBox" unique_id=283743181]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Props/Sphere" unique_id=283743181]
 mesh = SubResource("SphereMesh_tbgi4")
 
 [node name="Camera" type="Camera3D" parent="." unique_id=1868020920 node_paths=PackedStringArray("target")]
@@ -123,3 +122,4 @@ script = ExtResource("1_0wfyh")
 target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=1109349395 instance=ExtResource("2_sugp2")]
+script = ExtResource("1_sugp2")
