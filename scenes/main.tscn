@@ -21,6 +21,8 @@ reflected_light_source = 2
 tonemap_mode = 3
 tonemap_white = 8.0
 
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_tuyoq"]
+
 [sub_resource type="BoxMesh" id="BoxMesh_8rti0"]
 lightmap_size_hint = Vector2i(224, 216)
 size = Vector3(40, 1, 4)
@@ -62,6 +64,7 @@ environment = SubResource("Environment_8rti0")
 
 [node name="Floor" type="StaticBody3D" parent="Environment" unique_id=1746274784]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+physics_material_override = SubResource("PhysicsMaterial_tuyoq")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Floor" unique_id=1506466537]
 mesh = SubResource("BoxMesh_8rti0")

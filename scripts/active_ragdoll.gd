@@ -1,10 +1,12 @@
 extends PhysicalBoneSimulator3D
 
-@export var angular_stiffness: float = 2000.0
-@export var angular_damping: float = 60.0
-@export var linear_stiffness: float = 3500.0
-@export var linear_damping: float = 40.0
-@export var animated_skeleton_path: NodePath = "../../../AnimatedSkeleton/Skeleton3D"
+@export var angular_stiffness: float = 8000.0
+@export var angular_damping: float = 180.0
+
+@export var linear_stiffness: float = 6000.0
+@export var linear_damping: float = 160.0
+
+@export var animated_skeleton_path: NodePath
 
 @onready var physics_skeleton: Skeleton3D = get_parent()
 @onready var animated_skeleton: Skeleton3D = get_node(animated_skeleton_path)
@@ -53,16 +55,15 @@ func _physics_process(delta: float) -> void:
 		if diff.w < 0.0:
 			diff = -diff
 
-		var torque := diff.get_axis() * diff.get_angle() * angular_stiffness \
-				- bone.angular_velocity * angular_damping
+		var err := diff.get_axis() * diff.get_angle()
 
-		bone.angular_velocity += torque * delta
+		bone.angular_velocity = (bone.angular_velocity + err * angular_stiffness * delta) \
+				/ (1.0 + angular_damping * delta)
 
 		if bone == hips:
 			var pos_error: Vector3 = target.origin - bone.global_position
-			var force := pos_error * linear_stiffness - bone.linear_velocity * linear_damping
-
-			bone.linear_velocity += force * delta
+			bone.linear_velocity = (bone.linear_velocity + pos_error * linear_stiffness * delta) \
+					/ (1.0 + linear_damping * delta)
 
 
 func _target_body_transform(bone: PhysicalBone3D) -> Transform3D:
@@ -70,3 +71,8 @@ func _target_body_transform(bone: PhysicalBone3D) -> Transform3D:
 			* animated_skeleton.get_bone_global_pose(bone_indices[bone])
 
 	return target_bone_global * bone.body_offset.affine_inverse()
+
+
+func set_self_collision(enabled: bool) -> void:
+	for bone in physical_bones:
+		bone.collision_mask = 1 | (2 if enabled else 0)
