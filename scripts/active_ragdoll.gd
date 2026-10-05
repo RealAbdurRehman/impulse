@@ -1,6 +1,7 @@
 extends PhysicalBoneSimulator3D
 
 @export_group("Tracking")
+@export var max_gain_per_step := 3.0
 @export var angular_frequency_hz := 6.5
 @export var angular_damping_ratio := 1.15
 
@@ -13,8 +14,7 @@ extends PhysicalBoneSimulator3D
 @export_range(0.0, 1.0) var foot_linear_assist: float = 1.0
 
 @export_group("Leg Strength")
-@export var air_tuck_legs := true
-@export var legs_ignore_each_other := true
+@export var legs_ignore_each_other := false
 
 @export var foot_angular_frequency_hz := 18.0
 @export var hips_angular_frequency_hz := 10.0
@@ -27,7 +27,7 @@ extends PhysicalBoneSimulator3D
 
 @export var max_leg_track_speed := 5.0
 
-@export_range(0.2, 1.0) var landing_leg_softness := 0.45
+@export_range(0.2, 1.0) var landing_leg_softness := 0.62
 @export_range(0.0, 1.0) var leg_linear_assist := 0.6
 
 @export_group("Feedforward")
@@ -39,18 +39,38 @@ extends PhysicalBoneSimulator3D
 @export_group("Upper Body")
 @export var upper_body_stiffness_scale := 10.0
 
+@export var arm_angular_frequency_hz := 4.5
+@export var arm_angular_damping_ratio := 0.9
+
+@export_range(0.0, 1.0) var arm_linear_assist := 0.35
+@export_range(0.0, 1.0) var torso_linear_assist := 0.6
+
 @export_group("Upright")
 @export var upright_torque: float = 2800.0
 @export var upright_damping: float = 34.0
 
-@export var spine_upright_torque: float = 2600.0
+@export var spine_upright_torque: float = 0.0
 @export var spine_upright_damping: float = 24.0
+
+@export_group("Joint Limits")
+@export var override_joint_limits := true
+@export var spine_limits := Vector3(65.0, 35.0, 65.0)
+@export var head_limits := Vector3(75.0, 60.0, 60.0)
+@export var shoulder_limits := Vector3(175.0, 100.0, 175.0)
+@export var wrist_limits := Vector3(55.0, 110.0, 55.0)
+@export var hip_limits := Vector3(135.0, 45.0, 135.0)
+@export var ankle_limits := Vector3(55.0, 25.0, 55.0)
+
+@export_group("Hands")
+@export var curl_fingers := false
+@export var finger_curl_degrees := Vector3(30.0, 40.0, 30.0)
+@export var thumb_curl_degrees := Vector3(8.0, 18.0, 18.0)
 
 @export_group("Gravity")
 @export_range(0.0, 1.0) var gravity_compensation := 0.0
 
 @export_group("Refs")
-@export var player_body: CharacterBody3D
+@export var player_body: Node3D
 @export var animated_skeleton_path: NodePath
 
 @export var gait: GaitDriver
@@ -69,6 +89,7 @@ var thigh_bones: Array[PhysicalBone3D] = []
 var shin_bones: Array[PhysicalBone3D] = []
 
 var spine_bones: Array[PhysicalBone3D] = []
+var arm_bones: Array[PhysicalBone3D] = []
 
 var bone_indices: Dictionary = { }
 var physical_bones: Array[PhysicalBone3D] = []
@@ -87,6 +108,9 @@ var _foot_c := 0.0
 
 var _spine_ang_k := 0.0
 var _spine_ang_c := 0.0
+
+var _arm_ang_k := 0.0
+var _arm_ang_c := 0.0
 
 var _leg_ang_k := 0.0
 var _leg_ang_c := 0.0
@@ -158,9 +182,19 @@ func _ready() -> void:
 					shin_bones.append(child)
 			elif "Spine" in bn or "Chest" in bn or "Neck" in bn or "Head" in bn:
 				spine_bones.append(child)
+			elif "Arm" in bn or "Hand" in bn:
+				arm_bones.append(child)
 
 	for b in physical_bones:
 		b.gravity_scale = 1.0 - gravity_compensation
+
+	if override_joint_limits:
+		_apply_joint_limits()
+
+	_publish_hinge_axes()
+
+	if curl_fingers:
+		_curl_fingers()
 
 	if legs_ignore_each_other:
 		var lefts: Array[PhysicalBone3D] = []
@@ -180,6 +214,9 @@ func _ready() -> void:
 				a.add_collision_exception_with(b)
 
 	await get_tree().process_frame
+	for i in 3:
+		await get_tree().physics_frame
+
 	for bone in physical_bones:
 		if bone_indices.has(bone):
 			bone.global_transform = _target_body_transform(bone)
@@ -191,8 +228,114 @@ func _ready() -> void:
 	physical_bones_start_simulation()
 
 
+func _limits_for(bone_name: String) -> Vector3:
+	if "UpLeg" in bone_name:
+		return hip_limits
+
+	if "Foot" in bone_name:
+		return ankle_limits
+
+	if "Hand" in bone_name:
+		return wrist_limits
+
+	if "Arm" in bone_name and "ForeArm" not in bone_name:
+		return shoulder_limits
+
+	if "Head" in bone_name or "Neck" in bone_name:
+		return head_limits
+
+	if "Spine" in bone_name:
+		return spine_limits
+
+	return Vector3.ZERO
+
+
+func _apply_joint_limits() -> void:
+	for b in physical_bones:
+		if b.joint_type != PhysicalBone3D.JOINT_TYPE_6DOF:
+			continue
+
+		var lim := _limits_for(String(b.bone_name))
+		if lim == Vector3.ZERO:
+			continue
+
+		var axes := ["x", "y", "z"]
+		for i in 3:
+			var deg: float = lim[i]
+			b.set("joint_constraints/%s/angular_limit_enabled" % axes[i], true)
+			b.set("joint_constraints/%s/angular_limit_upper" % axes[i], deg)
+			b.set("joint_constraints/%s/angular_limit_lower" % axes[i], -deg)
+
+
+func _publish_hinge_axes() -> void:
+	for b in physical_bones:
+		if b.joint_type != PhysicalBone3D.JOINT_TYPE_HINGE:
+			continue
+
+		var axis_body := b.joint_offset.basis * Vector3.BACK
+		var axis_bone := (b.body_offset.basis * axis_body).normalized()
+
+		animated_skeleton.set_meta(StringName("hinge_axis_" + String(b.bone_name)), axis_bone)
+
+
+func _curl_fingers() -> void:
+	var skel := physics_skeleton
+	var parent := skel.get_parent_node_3d()
+	var to_rest := parent.transform.basis * skel.transform.basis if parent else skel.transform.basis
+	var up_in_skel := (to_rest.inverse() * Vector3.UP).normalized()
+
+	for i in skel.get_bone_count():
+		var bone_name := String(skel.get_bone_name(i))
+		if not bone_name.contains("Hand") or bone_name.ends_with("Hand"):
+			continue
+
+		var digit := int(bone_name.right(1))
+		if digit != 1:
+			continue
+
+		var thumb := bone_name.contains("Thumb")
+		var curls := thumb_curl_degrees if thumb else finger_curl_degrees
+
+		var chain: Array[int] = [i]
+		var cur := i
+		while chain.size() < 3:
+			var kids := skel.get_bone_children(cur)
+			if kids.is_empty():
+				break
+
+			cur = kids[0]
+			chain.append(cur)
+
+		var total := 0.0
+		var prev_global := skel.get_bone_global_rest(skel.get_bone_parent(i)).basis
+		for k in chain.size():
+			var rest_basis := skel.get_bone_global_rest(chain[k]).basis
+			var kids := skel.get_bone_children(chain[k])
+			var dir := Vector3.ZERO
+			if not kids.is_empty():
+				dir = skel.get_bone_global_rest(kids[0]).origin - skel \
+						.get_bone_global_rest(chain[k]) \
+						.origin
+			else:
+				dir = rest_basis * Vector3.UP
+
+			var axis := dir.normalized().cross(-up_in_skel)
+			if axis.length_squared() < 0.0001:
+				continue
+
+			total += deg_to_rad(curls[k])
+			var desired := Basis(axis.normalized(), total) * rest_basis
+			var local := prev_global.inverse() * desired
+
+			skel.set_bone_pose_rotation(chain[k], local.orthonormalized().get_rotation_quaternion())
+			prev_global = desired
+
+
 func _gains(freq_hz: float, ratio: float) -> Vector2:
 	var wn := TAU * freq_hz
+	var step := 1.0 / maxf(float(Engine.physics_ticks_per_second), 1.0)
+
+	wn = minf(wn, max_gain_per_step / step)
 	return Vector2(wn * wn, 2.0 * ratio * wn)
 
 
@@ -212,6 +355,10 @@ func _recompute_constants() -> void:
 	g = _gains(angular_frequency_hz * upper_body_stiffness_scale, angular_damping_ratio)
 	_spine_ang_k = g.x
 	_spine_ang_c = g.y
+
+	g = _gains(arm_angular_frequency_hz, arm_angular_damping_ratio)
+	_arm_ang_k = g.x
+	_arm_ang_c = g.y
 
 	g = _gains(leg_angular_frequency_hz, leg_angular_damping_ratio)
 	_leg_ang_k = g.x
@@ -244,6 +391,9 @@ func _bone_ang_k(bone: PhysicalBone3D) -> float:
 	if bone == hips:
 		return _hips_ang_k
 
+	if bone in arm_bones:
+		return _arm_ang_k
+
 	var soft := _leg_softness()
 
 	if bone in feet_bones:
@@ -262,6 +412,9 @@ func _bone_ang_c(bone: PhysicalBone3D) -> float:
 	if bone == hips:
 		return _hips_ang_c
 
+	if bone in arm_bones:
+		return _arm_ang_c
+
 	var soft := _leg_softness()
 
 	if bone in feet_bones:
@@ -275,9 +428,29 @@ func _bone_ang_c(bone: PhysicalBone3D) -> float:
 
 func is_on_floor() -> bool:
 	if player_body:
-		return player_body.is_on_floor()
+		return _body_grounded()
 
 	return _on_floor
+
+
+func _body_grounded() -> bool:
+	if player_body == null:
+		return _on_floor
+
+	if "grounded" in player_body:
+		return player_body.grounded
+
+	if player_body.has_method("is_on_floor"):
+		return player_body.call("is_on_floor")
+
+	return true
+
+
+func _body_velocity() -> Vector3:
+	if player_body != null and "velocity" in player_body:
+		return player_body.velocity
+
+	return Vector3.ZERO
 
 
 func body_position() -> Vector3:
@@ -327,49 +500,6 @@ func measure_leg_length() -> float:
 	return ((a - b).length() + (b - c).length()) * scale_y
 
 
-func _air_tuck_amount() -> float:
-	if gait == null or not air_tuck_legs:
-		return 0.0
-
-	return gait.air_tuck
-
-
-func _apply_air_tuck(bone: PhysicalBone3D, target: Transform3D) -> Transform3D:
-	var tuck := _air_tuck_amount()
-	if tuck <= 0.001:
-		return target
-
-	var dir_sign := 0.0
-	if bone in thigh_bones:
-		dir_sign = 1.0
-	elif bone in shin_bones:
-		dir_sign = -1.0
-	else:
-		return target
-
-	var axis := Vector3.DOWN.cross(gait.air_fwd)
-	if axis.length_squared() < 0.0001:
-		return target
-
-	axis = axis.normalized()
-
-	var idx: int = bone_indices[bone]
-	var skel_basis := animated_skeleton.global_transform.basis.orthonormalized()
-	var rest_body := skel_basis \
-			* animated_skeleton.get_bone_global_rest(idx).basis.orthonormalized() \
-			* bone.body_offset.basis.orthonormalized()
-
-	var tuck_q := (
-		Basis(axis, dir_sign * gait.air_half_angle) * rest_body
-	).get_rotation_quaternion()
-
-	var anim_q := target.basis.get_rotation_quaternion()
-
-	target.basis = Basis(anim_q.slerp(tuck_q, tuck))
-
-	return target
-
-
 func animated_leg_root(slot: int) -> Vector3:
 	var i := _anim_upleg_idx[slot]
 	if i >= 0 and i < _anim_poses.size():
@@ -394,7 +524,6 @@ func _physics_process(delta: float) -> void:
 			continue
 
 		var target := _target_body_transform(bone)
-		target = _apply_air_tuck(bone, target)
 
 		_update_feedforward(bone, target, delta)
 		_apply_angular_track(bone, target, delta)
@@ -403,7 +532,30 @@ func _physics_process(delta: float) -> void:
 			_track_linear(bone, target, _lin_k, _lin_c, 1.0, delta)
 			_apply_upright_torque(bone, delta, upright_torque, upright_damping)
 		elif bone in spine_bones:
-			_apply_upright_torque(bone, delta, spine_upright_torque, spine_upright_damping)
+			if spine_upright_torque > 0.0:
+				_apply_upright_torque(bone, delta, spine_upright_torque, spine_upright_damping)
+
+			if torso_linear_assist > 0.0:
+				_track_linear(
+					bone,
+					target,
+					_lin_k,
+					_lin_c,
+					torso_linear_assist,
+					delta,
+					max_leg_track_speed,
+				)
+		elif bone in arm_bones:
+			if arm_linear_assist > 0.0:
+				_track_linear(
+					bone,
+					target,
+					_lin_k,
+					_lin_c,
+					arm_linear_assist,
+					delta,
+					max_leg_track_speed,
+				)
 		elif bone in feet_bones:
 			if foot_linear_assist > 0.0:
 				_track_linear(
@@ -422,7 +574,7 @@ func _physics_process(delta: float) -> void:
 					target,
 					_leg_lin_k,
 					_leg_lin_c,
-					leg_linear_assist * _leg_softness() * (1.0 - _air_tuck_amount()),
+					leg_linear_assist * _leg_softness(),
 					delta,
 					max_leg_track_speed,
 				)
@@ -452,7 +604,7 @@ func _update_feedforward(bone: PhysicalBone3D, target: Transform3D, delta: float
 		_ff_lin[bone] = (_ff_lin[bone] as Vector3).lerp(v, blend)
 	else:
 		_ff_ang[bone] = Vector3.ZERO
-		_ff_lin[bone] = player_body.velocity if player_body else Vector3.ZERO
+		_ff_lin[bone] = _body_velocity()
 
 	_ff_prev_q[bone] = q
 	_ff_prev_o[bone] = o
@@ -486,7 +638,7 @@ func _track_linear(
 	delta: float,
 	max_rel := INF,
 ) -> void:
-	var body_v := player_body.velocity if player_body else Vector3.ZERO
+	var body_v := _body_velocity()
 	var ff_v: Vector3 = _ff_lin.get(bone, body_v)
 
 	var target_v := body_v.lerp(ff_v, feedforward)
@@ -537,7 +689,7 @@ func _apply_upright_torque(
 func _update_state(delta: float) -> void:
 	if player_body:
 		desired_speed = player_body.desired_speed if "desired_speed" in player_body else 0.0
-		_on_floor = player_body.is_on_floor()
+		_on_floor = _body_grounded()
 
 	if hips:
 		var hp := hips.global_position

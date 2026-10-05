@@ -33,6 +33,12 @@ size = Vector3(1, 20, 4)
 [sub_resource type="BoxMesh" id="BoxMesh_ax6fg"]
 size = Vector3(1, 20, 4)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_crjh3"]
+size = Vector3(0.3, 0.15, 4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_crjh3"]
+size = Vector3(0.3, 0.15, 4)
+
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_h2yge"]
 friction = 0.5
 
@@ -87,6 +93,189 @@ shape = SubResource("BoxShape3D_ax6fg")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallRight" unique_id=1310877674]
 mesh = SubResource("BoxMesh_ax6fg")
+
+[node name="Stairs" type="Node3D" parent="Environment" unique_id=532195282]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -3.8769379, 0, 0)
+
+[node name="Step1" type="StaticBody3D" parent="Environment/Stairs" unique_id=2101867964]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step1" unique_id=305909366]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step1" unique_id=1716122973]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step2" type="StaticBody3D" parent="Environment/Stairs" unique_id=1657890091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.2290313, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step2" unique_id=1691033551]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step2" unique_id=473743492]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step3" type="StaticBody3D" parent="Environment/Stairs" unique_id=1503439632]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.37245777, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step3" unique_id=1633851166]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step3" unique_id=950713528]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step4" type="StaticBody3D" parent="Environment/Stairs" unique_id=806542660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.9, 0.51138353, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step4" unique_id=1383624713]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step4" unique_id=701458460]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step5" type="StaticBody3D" parent="Environment/Stairs" unique_id=777727222]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.65726644, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step5" unique_id=1686530420]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step5" unique_id=1053856330]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step6" type="StaticBody3D" parent="Environment/Stairs" unique_id=1045272900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.80937356, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step6" unique_id=326369433]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step6" unique_id=1821422590]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step7" type="StaticBody3D" parent="Environment/Stairs" unique_id=1763528915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 0.95280766, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step7" unique_id=1417552715]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step7" unique_id=650156419]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step8" type="StaticBody3D" parent="Environment/Stairs" unique_id=730470487]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1, 1.1038845, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step8" unique_id=2140948748]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step8" unique_id=1241281524]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step9" type="StaticBody3D" parent="Environment/Stairs" unique_id=1927050275]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 1.2560905, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step9" unique_id=630199507]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step9" unique_id=1225999302]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step10" type="StaticBody3D" parent="Environment/Stairs" unique_id=514938469]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 1.3959389, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step10" unique_id=1012154902]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step10" unique_id=1993990224]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step11" type="StaticBody3D" parent="Environment/Stairs" unique_id=96894287]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5435795, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step11" unique_id=155068473]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step11" unique_id=513445472]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step12" type="StaticBody3D" parent="Environment/Stairs" unique_id=343323540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.3, 1.6913503, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step12" unique_id=193091374]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step12" unique_id=2091959125]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step13" type="StaticBody3D" parent="Environment/Stairs" unique_id=1813552051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 1.8384109, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step13" unique_id=183847608]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step13" unique_id=1127961154]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step14" type="StaticBody3D" parent="Environment/Stairs" unique_id=2045042367]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.9, 1.9880962, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step14" unique_id=497929148]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step14" unique_id=338828548]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step15" type="StaticBody3D" parent="Environment/Stairs" unique_id=881785010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 2.1300735, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step15" unique_id=1006496399]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step15" unique_id=1512735152]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step16" type="StaticBody3D" parent="Environment/Stairs" unique_id=426783648]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 2.27764, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step16" unique_id=1116494111]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step16" unique_id=1781259224]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step17" type="StaticBody3D" parent="Environment/Stairs" unique_id=1341748567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 2.426121, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step17" unique_id=410725703]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step17" unique_id=1900770902]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step18" type="StaticBody3D" parent="Environment/Stairs" unique_id=1948378264]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1, 2.574434, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step18" unique_id=1511285229]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step18" unique_id=875842884]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step19" type="StaticBody3D" parent="Environment/Stairs" unique_id=1864486395]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 2.7230353, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step19" unique_id=1831677019]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step19" unique_id=1123742320]
+mesh = SubResource("BoxMesh_crjh3")
+
+[node name="Step20" type="StaticBody3D" parent="Environment/Stairs" unique_id=1286160402]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7, 2.8613453, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Stairs/Step20" unique_id=1445921064]
+shape = SubResource("BoxShape3D_crjh3")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Stairs/Step20" unique_id=387736925]
+mesh = SubResource("BoxMesh_crjh3")
 
 [node name="Props" type="Node3D" parent="." unique_id=145268961]
 

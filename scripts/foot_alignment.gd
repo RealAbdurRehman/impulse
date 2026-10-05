@@ -1,15 +1,15 @@
 extends SkeletonModifier3D
-
-class_name FootAlignModifier
+class_name FootModifier
 
 @export var left_foot_target: Node3D
 @export var right_foot_target: Node3D
+
 @export var left_foot_bone: StringName = &"mixamorig7_LeftFoot"
 @export var right_foot_bone: StringName = &"mixamorig7_RightFoot"
 
 @export_range(0.0, 1.0) var strength := 1.0
-@export_range(0.0, 80.0) var max_tilt_degrees := 80.0
-@export_range(-45.0, 45.0) var pitch_offset_degrees := -20.0
+@export_range(0.0, 80.0) var max_tilt_degrees := 45.0
+@export_range(-45.0, 45.0) var pitch_offset_degrees := 10.0
 
 var _idx: Array[int] = [-1, -1]
 
