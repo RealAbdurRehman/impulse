@@ -71,6 +71,7 @@ environment = SubResource("Environment_8rti0")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Floor" unique_id=1506466537]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015769005, -0.01597619, 0.0026855469)
 mesh = SubResource("BoxMesh_8rti0")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floor" unique_id=126289966]
@@ -83,6 +84,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 9.5, 0)
 shape = SubResource("BoxShape3D_ax6fg")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallLeft" unique_id=553790537]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015768051, -0.015975952, 0.0026855469)
 mesh = SubResource("BoxMesh_ax6fg")
 
 [node name="WallRight" type="StaticBody3D" parent="Environment" unique_id=1573778462]
@@ -92,10 +94,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 9.5, 0)
 shape = SubResource("BoxShape3D_ax6fg")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/WallRight" unique_id=1310877674]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015768051, -0.015975952, 0.0026855469)
 mesh = SubResource("BoxMesh_ax6fg")
 
 [node name="Stairs" type="Node3D" parent="Environment" unique_id=532195282]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -3.8769379, 0, 0)
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -3.8611689, -0.01597619, 0.0026855469)
 
 [node name="Step1" type="StaticBody3D" parent="Environment/Stairs" unique_id=2101867964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)

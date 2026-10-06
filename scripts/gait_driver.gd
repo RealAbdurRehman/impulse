@@ -156,7 +156,7 @@ const PROBE_UP := 0.8
 @export_range(0.4, 1.0) var crouch_hip_ratio := 0.50
 
 @export_group("Crouch")
-@export var crouch_lean_degrees := 8.0
+@export var crouch_lean_degrees := 28.0
 
 @export var crouch_foot_stagger := 0.22
 @export var crouch_foot_lateral_extra := 0.04

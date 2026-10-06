@@ -61,11 +61,6 @@ extends PhysicalBoneSimulator3D
 @export var hip_limits := Vector3(135.0, 45.0, 135.0)
 @export var ankle_limits := Vector3(55.0, 25.0, 55.0)
 
-@export_group("Hands")
-@export var curl_fingers := false
-@export var finger_curl_degrees := Vector3(30.0, 40.0, 30.0)
-@export var thumb_curl_degrees := Vector3(8.0, 18.0, 18.0)
-
 @export_group("Gravity")
 @export_range(0.0, 1.0) var gravity_compensation := 0.0
 
@@ -74,10 +69,8 @@ extends PhysicalBoneSimulator3D
 @export var animated_skeleton_path: NodePath
 
 @export var gait: GaitDriver
-@export var run_speed: float = 3.2
 @export var hips_bone_name: StringName = &"mixamorig7_Hips"
 
-@onready var physics_skeleton: Skeleton3D = get_parent()
 @onready var animated_skeleton: Skeleton3D = get_node(animated_skeleton_path)
 
 var hips: PhysicalBone3D
@@ -85,17 +78,11 @@ var hips: PhysicalBone3D
 var feet_bones: Array[PhysicalBone3D] = []
 var leg_bones: Array[PhysicalBone3D] = []
 
-var thigh_bones: Array[PhysicalBone3D] = []
-var shin_bones: Array[PhysicalBone3D] = []
-
 var spine_bones: Array[PhysicalBone3D] = []
 var arm_bones: Array[PhysicalBone3D] = []
 
 var bone_indices: Dictionary = { }
 var physical_bones: Array[PhysicalBone3D] = []
-
-var desired_speed := 0.0
-var velocity: Vector3 = Vector3.ZERO
 
 var _ang_k := 0.0
 var _ang_c := 0.0
@@ -127,14 +114,6 @@ var _leg_lin_c := 0.0
 var _anim_poses: Array[Transform3D] = []
 var _anim_xform := Transform3D.IDENTITY
 
-var _anim_hips_idx := -1
-var _anim_upleg_idx: Array[int] = [-1, -1]
-
-var _on_floor := true
-
-var _prev_hips_pos := Vector3.ZERO
-var _hips_vel_smooth := Vector3.ZERO
-
 var _ff_prev_q: Dictionary = { }
 var _ff_prev_o: Dictionary = { }
 
@@ -146,15 +125,6 @@ func _ready() -> void:
 	_recompute_constants()
 
 	animated_skeleton.skeleton_updated.connect(_on_animated_skeleton_updated)
-
-	_anim_hips_idx = animated_skeleton.find_bone(hips_bone_name)
-	for i in animated_skeleton.get_bone_count():
-		var bone_n := String(animated_skeleton.get_bone_name(i))
-
-		if bone_n.ends_with("LeftUpLeg"):
-			_anim_upleg_idx[0] = i
-		elif bone_n.ends_with("RightUpLeg"):
-			_anim_upleg_idx[1] = i
 
 	await get_tree().physics_frame
 
@@ -175,11 +145,6 @@ func _ready() -> void:
 				feet_bones.append(child)
 			elif "Leg" in bn:
 				leg_bones.append(child)
-
-				if "UpLeg" in bn:
-					thigh_bones.append(child)
-				else:
-					shin_bones.append(child)
 			elif "Spine" in bn or "Chest" in bn or "Neck" in bn or "Head" in bn:
 				spine_bones.append(child)
 			elif "Arm" in bn or "Hand" in bn:
@@ -192,9 +157,6 @@ func _ready() -> void:
 		_apply_joint_limits()
 
 	_publish_hinge_axes()
-
-	if curl_fingers:
-		_curl_fingers()
 
 	if legs_ignore_each_other:
 		var lefts: Array[PhysicalBone3D] = []
@@ -220,9 +182,6 @@ func _ready() -> void:
 	for bone in physical_bones:
 		if bone_indices.has(bone):
 			bone.global_transform = _target_body_transform(bone)
-
-	if hips:
-		_prev_hips_pos = hips.global_position
 
 	active = true
 	physical_bones_start_simulation()
@@ -276,59 +235,6 @@ func _publish_hinge_axes() -> void:
 		var axis_bone := (b.body_offset.basis * axis_body).normalized()
 
 		animated_skeleton.set_meta(StringName("hinge_axis_" + String(b.bone_name)), axis_bone)
-
-
-func _curl_fingers() -> void:
-	var skel := physics_skeleton
-	var parent := skel.get_parent_node_3d()
-	var to_rest := parent.transform.basis * skel.transform.basis if parent else skel.transform.basis
-	var up_in_skel := (to_rest.inverse() * Vector3.UP).normalized()
-
-	for i in skel.get_bone_count():
-		var bone_name := String(skel.get_bone_name(i))
-		if not bone_name.contains("Hand") or bone_name.ends_with("Hand"):
-			continue
-
-		var digit := int(bone_name.right(1))
-		if digit != 1:
-			continue
-
-		var thumb := bone_name.contains("Thumb")
-		var curls := thumb_curl_degrees if thumb else finger_curl_degrees
-
-		var chain: Array[int] = [i]
-		var cur := i
-		while chain.size() < 3:
-			var kids := skel.get_bone_children(cur)
-			if kids.is_empty():
-				break
-
-			cur = kids[0]
-			chain.append(cur)
-
-		var total := 0.0
-		var prev_global := skel.get_bone_global_rest(skel.get_bone_parent(i)).basis
-		for k in chain.size():
-			var rest_basis := skel.get_bone_global_rest(chain[k]).basis
-			var kids := skel.get_bone_children(chain[k])
-			var dir := Vector3.ZERO
-			if not kids.is_empty():
-				dir = skel.get_bone_global_rest(kids[0]).origin - skel \
-						.get_bone_global_rest(chain[k]) \
-						.origin
-			else:
-				dir = rest_basis * Vector3.UP
-
-			var axis := dir.normalized().cross(-up_in_skel)
-			if axis.length_squared() < 0.0001:
-				continue
-
-			total += deg_to_rad(curls[k])
-			var desired := Basis(axis.normalized(), total) * rest_basis
-			var local := prev_global.inverse() * desired
-
-			skel.set_bone_pose_rotation(chain[k], local.orthonormalized().get_rotation_quaternion())
-			prev_global = desired
 
 
 func _gains(freq_hz: float, ratio: float) -> Vector2:
@@ -426,26 +332,6 @@ func _bone_ang_c(bone: PhysicalBone3D) -> float:
 	return _ang_c
 
 
-func is_on_floor() -> bool:
-	if player_body:
-		return _body_grounded()
-
-	return _on_floor
-
-
-func _body_grounded() -> bool:
-	if player_body == null:
-		return _on_floor
-
-	if "grounded" in player_body:
-		return player_body.grounded
-
-	if player_body.has_method("is_on_floor"):
-		return player_body.call("is_on_floor")
-
-	return true
-
-
 func _body_velocity() -> Vector3:
 	if player_body != null and "velocity" in player_body:
 		return player_body.velocity
@@ -453,72 +339,7 @@ func _body_velocity() -> Vector3:
 	return Vector3.ZERO
 
 
-func body_position() -> Vector3:
-	if hips:
-		return hips.global_position
-
-	return global_position
-
-
-func body_basis() -> Basis:
-	if hips:
-		return hips.global_transform.basis.orthonormalized()
-
-	return global_basis
-
-
-func animated_hips_position() -> Vector3:
-	if _anim_hips_idx >= 0 and _anim_hips_idx < _anim_poses.size():
-		return (_anim_xform * _anim_poses[_anim_hips_idx]).origin
-
-	return body_position()
-
-
-func measure_leg_length() -> float:
-	var up := -1
-	var knee := -1
-	var foot := -1
-	for i in animated_skeleton.get_bone_count():
-		var n := animated_skeleton.get_bone_name(i)
-
-		if n.ends_with("LeftUpLeg"):
-			up = i
-		elif n.ends_with("LeftLeg"):
-			knee = i
-		elif n.ends_with("LeftFoot"):
-			foot = i
-
-	if up < 0 or knee < 0 or foot < 0:
-		return -1.0
-
-	var a := animated_skeleton.get_bone_global_rest(up).origin
-	var b := animated_skeleton.get_bone_global_rest(knee).origin
-	var c := animated_skeleton.get_bone_global_rest(foot).origin
-
-	var scale_y := animated_skeleton.global_basis.get_scale().y
-
-	return ((a - b).length() + (b - c).length()) * scale_y
-
-
-func animated_leg_root(slot: int) -> Vector3:
-	var i := _anim_upleg_idx[slot]
-	if i >= 0 and i < _anim_poses.size():
-		return (_anim_xform * _anim_poses[i]).origin
-
-	return animated_hips_position()
-
-
-func com() -> Vector3:
-	return body_position()
-
-
-func com_velocity() -> Vector3:
-	return Vector3(_hips_vel_smooth.x, 0.0, _hips_vel_smooth.z)
-
-
 func _physics_process(delta: float) -> void:
-	_update_state(delta)
-
 	for bone in physical_bones:
 		if not bone_indices.has(bone):
 			continue
@@ -686,21 +507,6 @@ func _apply_upright_torque(
 	bone.angular_velocity += correction * delta
 
 
-func _update_state(delta: float) -> void:
-	if player_body:
-		desired_speed = player_body.desired_speed if "desired_speed" in player_body else 0.0
-		_on_floor = _body_grounded()
-
-	if hips:
-		var hp := hips.global_position
-		var inst_v := (hp - _prev_hips_pos) / maxf(delta, 0.0001)
-
-		_prev_hips_pos = hp
-		_hips_vel_smooth = _hips_vel_smooth.lerp(inst_v, 1.0 - exp(-18.0 * delta))
-
-		velocity = _hips_vel_smooth
-
-
 func _target_body_transform(bone: PhysicalBone3D) -> Transform3D:
 	var idx: int = bone_indices[bone]
 	var target_bone_global: Transform3D
@@ -722,8 +528,3 @@ func _on_animated_skeleton_updated() -> void:
 		_anim_poses[i] = animated_skeleton.get_bone_global_pose(i)
 
 	_anim_xform = animated_skeleton.global_transform
-
-
-func set_self_collision(enabled: bool) -> void:
-	for bone in physical_bones:
-		bone.collision_mask = 1 | (2 if enabled else 0)

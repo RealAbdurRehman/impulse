@@ -63,7 +63,6 @@ var move_dir := 0.0
 
 var facing := 1
 var moving_backward := false
-var turning := false
 
 var grounded := true
 var velocity := Vector3.ZERO
@@ -71,7 +70,6 @@ var velocity := Vector3.ZERO
 var plane_z := 0.0
 
 var aim_point := Vector3.ZERO
-var aim_direction := Vector3.RIGHT
 var aim_pitch := 0.0
 
 var _stairs_amt := 0.0
@@ -155,7 +153,6 @@ func _physics_process(delta: float) -> void:
 	var turn := flip_speed if grounded else flip_speed * air_flip_scale
 
 	rotation.y = lerp_angle(rotation.y, _target_yaw, 1.0 - exp(-turn * delta))
-	turning = absf(angle_difference(rotation.y, _target_yaw)) > 0.15
 
 	if grounded:
 		_advance_grounded(delta)
@@ -304,7 +301,6 @@ func _update_aim() -> bool:
 	var shoulder := global_position + Vector3.UP * aim_origin_height
 	var to_aim := aim_point - shoulder
 	if to_aim.length_squared() > 0.0001:
-		aim_direction = to_aim.normalized()
 		aim_pitch = atan2(to_aim.y, maxf(absf(to_aim.x), 0.001))
 
 	return true
