@@ -39,10 +39,10 @@ extends PhysicalBoneSimulator3D
 @export_group("Upper Body")
 @export var upper_body_stiffness_scale := 10.0
 
-@export var arm_angular_frequency_hz := 4.5
-@export var arm_angular_damping_ratio := 0.9
+@export var arm_angular_frequency_hz := 18.0
+@export var arm_angular_damping_ratio := 1.0
 
-@export_range(0.0, 1.0) var arm_linear_assist := 0.35
+@export_range(0.0, 1.0) var arm_linear_assist := 1.0
 @export_range(0.0, 1.0) var torso_linear_assist := 0.6
 
 @export_group("Upright")
@@ -56,10 +56,13 @@ extends PhysicalBoneSimulator3D
 @export var override_joint_limits := true
 @export var spine_limits := Vector3(65.0, 35.0, 65.0)
 @export var head_limits := Vector3(75.0, 60.0, 60.0)
-@export var shoulder_limits := Vector3(175.0, 100.0, 175.0)
-@export var wrist_limits := Vector3(55.0, 110.0, 55.0)
+@export var shoulder_limits := Vector3(175.0, 150.0, 175.0)
+@export var wrist_limits := Vector3(70.0, 110.0, 70.0)
 @export var hip_limits := Vector3(135.0, 45.0, 135.0)
 @export var ankle_limits := Vector3(55.0, 25.0, 55.0)
+
+@export var free_shoulders := true
+@export var mirror_left_elbow := true
 
 @export_group("Gravity")
 @export_range(0.0, 1.0) var gravity_compensation := 0.0
@@ -209,8 +212,23 @@ func _limits_for(bone_name: String) -> Vector3:
 	return Vector3.ZERO
 
 
+func _is_shoulder(bone_name: String) -> bool:
+	return "Arm" in bone_name and "ForeArm" not in bone_name
+
+
+func _is_left_forearm(bone_name: String) -> bool:
+	return "Left" in bone_name and "ForeArm" in bone_name
+
+
 func _apply_joint_limits() -> void:
 	for b in physical_bones:
+		if mirror_left_elbow and b.joint_type == PhysicalBone3D.JOINT_TYPE_HINGE:
+			if _is_left_forearm(String(b.bone_name)):
+				var lower: float = b.get("joint_constraints/angular_limit_lower")
+				var upper: float = b.get("joint_constraints/angular_limit_upper")
+				b.set("joint_constraints/angular_limit_lower", -upper)
+				b.set("joint_constraints/angular_limit_upper", -lower)
+
 		if b.joint_type != PhysicalBone3D.JOINT_TYPE_6DOF:
 			continue
 
@@ -218,10 +236,11 @@ func _apply_joint_limits() -> void:
 		if lim == Vector3.ZERO:
 			continue
 
+		var free := free_shoulders and _is_shoulder(String(b.bone_name))
 		var axes := ["x", "y", "z"]
 		for i in 3:
 			var deg: float = lim[i]
-			b.set("joint_constraints/%s/angular_limit_enabled" % axes[i], true)
+			b.set("joint_constraints/%s/angular_limit_enabled" % axes[i], not free)
 			b.set("joint_constraints/%s/angular_limit_upper" % axes[i], deg)
 			b.set("joint_constraints/%s/angular_limit_lower" % axes[i], -deg)
 
@@ -234,7 +253,11 @@ func _publish_hinge_axes() -> void:
 		var axis_body := b.joint_offset.basis * Vector3.BACK
 		var axis_bone := (b.body_offset.basis * axis_body).normalized()
 
-		animated_skeleton.set_meta(StringName("hinge_axis_" + String(b.bone_name)), axis_bone)
+		var lower: float = b.get("joint_constraints/angular_limit_lower")
+		var upper: float = b.get("joint_constraints/angular_limit_upper")
+		var flexion_axis := -axis_bone if upper + lower >= 0.0 else axis_bone
+
+		animated_skeleton.set_meta(StringName("hinge_axis_" + String(b.bone_name)), flexion_axis)
 
 
 func _gains(freq_hz: float, ratio: float) -> Vector2:

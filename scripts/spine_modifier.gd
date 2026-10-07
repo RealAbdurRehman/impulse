@@ -31,20 +31,23 @@ extends SkeletonModifier3D
 @export var rising_lean := 4.0
 @export var falling_lean := 7.0
 
-@export var breath_degrees := 2
+@export var breath_degrees := 2.0
 @export var breath_speed := 1.7
 
 @export_group("Aim")
-@export var head_forward_tilt := 3.0
+@export var aim_smoothing := 25.0
+@export var aim_from_muzzle := true
 
-@export var head_max_relative_degrees := 38.0
 @export var max_aim_up_degrees := 80.0
 @export var max_aim_down_degrees := 70.0
 
+@export var head_forward_tilt := 3.0
+@export var head_max_relative_degrees := 38.0
+
 @export_range(0.0, 1.0) var head_level := 0.55
 @export_range(0.0, 1.0) var head_aim_share := 0.75
-@export_range(0.0, 1.0) var chest_aim_share := 0.3
-
+@export_range(0.0, 1.0) var chest_aim_share := 0.4
+@export_range(0.0, 1.0) var chest_aim_share_down := 0.12
 
 @export_group("Arms")
 @export var left_arm_bones: Array[StringName] = [
@@ -58,39 +61,30 @@ extends SkeletonModifier3D
 	&"mixamorig7_RightHand",
 ]
 
-@export var always_aim := false
+@export_group("Hold")
+@export var hold_reach := 0.45
+@export var hold_drop := 0.05
+@export var hold_side := 0.0
 
-@export var aim_action: StringName = &"aim"
-@export var aim_blend_speed := 9.0
+@export_range(0.6, 1.0) var max_arm_extension := 0.97
 
-@export var aim_reach_front := 0.42
-@export var aim_reach_back := 0.34
+@export var hold_up_limit_degrees := 85.0
+@export var hold_down_limit_degrees := 85.0
 
-@export_range(0.0, 1.0) var aim_hand_spread := 0.25
-@export var aim_back_hand_drop := 0.04
+@export var elbow_flare_degrees := -60.0
+@export var elbow_back := 0.3
 
-@export var aim_hand_drop := 0.09
-@export var aim_bob := 0.012
+@export var breath_sway := 0.004
+@export var landing_dip := 0.04
 
-@export var hand_roll_degrees := 80.0
+var gun_equipped := false
+var gun_anchor := Vector3.ZERO
+var gun_muzzle := Vector3.ZERO
 
-@export_group("Arms relaxed")
-@export var arm_swing_degrees := 14.0
-@export var arm_rest_forward_degrees := 4.0
-@export var elbow_bend_idle_degrees := 8.0
-@export var elbow_bend_run_degrees := 28.0
-@export var elbow_bend_crouch_degrees := 20.0
+var hold_main := Transform3D.IDENTITY
+var hold_support := Transform3D.IDENTITY
 
-@export var arm_side_offset := 0.16
-@export var crouch_arm_forward_degrees := 8.0
-
-@export_group("Arms air")
-@export var air_arm_raise_degrees := 22.0
-@export var air_arm_spread := 0.3
-@export var air_elbow_degrees := 20.0
-@export var landing_arm_forward_degrees := 15.0
-
-@export_range(0.0, 1.0) var aim_air_arm_share := 0.25
+var gun_pose := Transform3D.IDENTITY
 
 var _chain: Array[int] = []
 var _head_tip := -1
@@ -100,12 +94,15 @@ var _right: Array[int] = []
 var _chest_off := 0.0
 var _head_off := 0.0
 var _aim := 0.0
-var _aim_amt := 0.0
 var _clock := 0.0
+
+var _muzzle_skel := Vector3.ZERO
 
 var _rest_lean: Array[float] = []
 var _upper_len := { }
 var _fore_len := { }
+var _rest_bend := { }
+var _rest_hand := { }
 
 
 func _ready() -> void:
@@ -163,12 +160,15 @@ func _resolve(skel: Skeleton3D) -> bool:
 
 	for chain in [_left, _right]:
 		var c: Array[int] = chain
-		_upper_len[c[0]] = (
-			skel.get_bone_global_rest(c[1]).origin - skel.get_bone_global_rest(c[0]).origin
-		).length()
-		_fore_len[c[0]] = (
-			skel.get_bone_global_rest(c[2]).origin - skel.get_bone_global_rest(c[1]).origin
-		).length()
+		var upper := skel.get_bone_global_rest(c[0])
+		var fore := skel.get_bone_global_rest(c[1])
+		var hand := skel.get_bone_global_rest(c[2])
+
+		_upper_len[c[0]] = (fore.origin - upper.origin).length()
+		_fore_len[c[0]] = (hand.origin - fore.origin).length()
+
+		_rest_bend[c[0]] = upper.basis.orthonormalized().inverse() * fore.basis.orthonormalized()
+		_rest_hand[c[0]] = hand.basis.orthonormalized()
 
 	_chain = ids
 	return true
@@ -201,24 +201,29 @@ func _process_modification() -> void:
 
 	_clock += dt
 
-	var pitch := 0.0
-	if "aim_pitch" in player:
-		pitch = clampf(
-			float(player.aim_pitch),
-			-deg_to_rad(max_aim_down_degrees),
-			deg_to_rad(max_aim_up_degrees),
-		)
-
-	_aim = lerpf(_aim, pitch, 1.0 - exp(-smoothing_speed * dt))
-
-	var aiming := always_aim or Input.is_action_pressed(aim_action)
-	_aim_amt = lerpf(_aim_amt, 1.0 if aiming else 0.0, 1.0 - exp(-aim_blend_speed * dt))
+	_aim = lerpf(_aim, _target_pitch(skel), 1.0 - exp(-aim_smoothing * dt))
 
 	_apply_spine(skel, dt)
 
-	var near_left := smoothstep(-0.6, 0.6, skel.global_transform.basis.orthonormalized().x.z)
-	_apply_arm(skel, _left, 1.0, near_left)
-	_apply_arm(skel, _right, -1.0, 1.0 - near_left)
+	if gun_equipped:
+		_hold_gun(skel)
+	else:
+		_lower_arms(skel)
+
+
+func _target_pitch(skel: Skeleton3D) -> float:
+	var pitch := 0.0
+	if "aim_pitch" in player:
+		pitch = float(player.aim_pitch)
+
+	if aim_from_muzzle and gun_equipped and "aim_point" in player and "facing" in player:
+		var muzzle := skel.global_transform * _muzzle_skel
+		var to: Vector3 = (player.aim_point as Vector3) - muzzle
+		var ahead := to.x * float(player.facing)
+
+		pitch = lerp_angle(pitch, atan2(to.y, maxf(ahead, 0.001)), smoothstep(0.3, 1.0, ahead))
+
+	return clampf(pitch, -deg_to_rad(max_aim_down_degrees), deg_to_rad(max_aim_up_degrees))
 
 
 func _posture_lean() -> float:
@@ -246,7 +251,8 @@ func _posture_lean() -> float:
 
 
 func _apply_spine(skel: Skeleton3D, dt: float) -> void:
-	var chest_target := _posture_lean() - _aim * chest_aim_share
+	var chest_share := chest_aim_share if _aim > 0.0 else chest_aim_share_down
+	var chest_target := _posture_lean() - _aim * chest_share
 	var head_target := (
 		chest_target * (1.0 - head_level) - _aim * head_aim_share + deg_to_rad(head_forward_tilt)
 	)
@@ -286,136 +292,134 @@ func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 		skel.set_bone_global_pose(_chain[i], pose)
 
 
-func _apply_arm(skel: Skeleton3D, chain: Array[int], side: float, near: float) -> void:
-	var speed := _g("speed_ratio")
-	var crouch := _g("crouch_amount")
-	var air := _g("air_amount")
-	var land := _g("landing_amount")
-	var vy := _g("vertical_speed")
+func _hold_gun(skel: Skeleton3D) -> void:
+	var s_left := skel.get_bone_global_pose(_left[0]).origin
+	var s_right := skel.get_bone_global_pose(_right[0]).origin
+	var mid := (s_left + s_right) * 0.5
 
+	var aim := Vector3(0.0, sin(_aim), cos(_aim))
+	var up := Vector3(0.0, cos(_aim), -sin(_aim))
+	var frame := Basis(aim, up, aim.cross(up))
+
+	var held := _held_pitch()
+	var held_aim := Vector3(0.0, sin(held), cos(held))
+	var held_up := Vector3(0.0, cos(held), -sin(held))
+	var held_frame := Basis(held_aim, held_up, held_aim.cross(held_up))
+
+	var lift := breath_sway * sin(_clock * breath_speed) - landing_dip * _g("landing_amount")
+
+	var wrist_main := frame * (hold_main.origin - gun_anchor)
+	var wrist_support := frame * (hold_support.origin - gun_anchor)
+
+	var limit_left: float = (_upper_len[_left[0]] + _fore_len[_left[0]]) * max_arm_extension
+	var limit_right: float = (_upper_len[_right[0]] + _fore_len[_right[0]]) * max_arm_extension
+
+	var reach := hold_reach
+	var anchor := Vector3.ZERO
+	for i in 4:
+		anchor = mid + held_frame * Vector3(reach, lift - hold_drop, hold_side)
+
+		var over := maxf(
+			(anchor + wrist_support - s_left).length() - limit_left,
+			(anchor + wrist_main - s_right).length() - limit_right,
+		)
+		if over <= 0.0:
+			break
+
+		reach = maxf(reach - over, 0.15)
+
+	gun_pose = Transform3D(frame, anchor - frame * gun_anchor)
+	_muzzle_skel = gun_pose * gun_muzzle
+
+	var turn := deg_to_rad(elbow_flare_degrees)
+	var pole_right := _elbow_pole(held_up, -held_frame.z, turn)
+	var pole_left := _elbow_pole(held_up, held_frame.z, turn)
+
+	_solve_arm(skel, _right, pole_right, gun_pose * hold_main.origin, frame * hold_main.basis)
+	_solve_arm(skel, _left, pole_left, gun_pose * hold_support.origin, frame * hold_support.basis)
+
+
+func _lower_arms(skel: Skeleton3D) -> void:
+	for side in [1.0, -1.0]:
+		var chain: Array[int] = _left if side > 0.0 else _right
+		var shoulder := skel.get_bone_global_pose(chain[0]).origin
+		var reach: float = (_upper_len[chain[0]] + _fore_len[chain[0]]) * 0.9
+
+		var wrist := shoulder + Vector3(side * 0.05, -reach, 0.08)
+		var pole := Vector3(side * 0.4, -1.0, -elbow_back)
+		_solve_arm(skel, chain, pole, wrist, _rest_hand[chain[0]])
+
+
+func _held_pitch() -> float:
+	var limit := deg_to_rad(hold_up_limit_degrees if _aim > 0.0 else hold_down_limit_degrees)
+	return limit * tanh(_aim / limit)
+
+
+func _elbow_pole(up: Vector3, out: Vector3, turn: float) -> Vector3:
+	return -up * cos(turn) + out * sin(turn) + Vector3(0.0, 0.0, -elbow_back)
+
+
+func _solve_arm(
+	skel: Skeleton3D,
+	chain: Array[int],
+	pole_hint: Vector3,
+	wrist: Vector3,
+	hand_basis: Basis,
+) -> void:
+	var upper_len: float = _upper_len[chain[0]]
+	var fore_len: float = _fore_len[chain[0]]
 	var shoulder := skel.get_bone_global_pose(chain[0]).origin
 
-	var phase := -side * _g("foot_phase")
-	var swing := deg_to_rad(arm_swing_degrees) * phase * clampf(speed * 1.6, 0.0, 1.0)
-	swing += deg_to_rad(arm_rest_forward_degrees)
-	swing += deg_to_rad(crouch_arm_forward_degrees) * crouch
-
-	var bend := lerpf(elbow_bend_idle_degrees, elbow_bend_run_degrees, smoothstep(0.2, 1.0, speed))
-	bend = deg_to_rad(lerpf(bend, elbow_bend_crouch_degrees, crouch))
-	var spread := arm_side_offset
-
-	var air_share := lerpf(1.0, aim_air_arm_share, _aim_amt)
-	var a := air * air_share
-	var l := land * (1.0 - air) * air_share
-
-	if a > 0.001 or l > 0.001:
-		var rising := clampf(vy / 3.0, -1.0, 1.0) * 0.5 + 0.5
-		var raise := deg_to_rad(air_arm_raise_degrees) * lerpf(1.0, 0.75, rising)
-
-		swing = lerpf(swing, raise, a)
-		bend = lerpf(bend, deg_to_rad(air_elbow_degrees), a)
-		spread = lerpf(spread, air_arm_spread, a)
-
-		swing = lerpf(swing, deg_to_rad(landing_arm_forward_degrees), l)
-		bend = lerpf(bend, deg_to_rad(20.0), l)
-
-	var lateral := Vector3(side * spread, 0.0, 0.0)
-	var upper := (lateral + Vector3(0.0, -cos(swing), sin(swing))).normalized()
-	var fore := (lateral + Vector3(0.0, -cos(swing + bend), sin(swing + bend))).normalized()
-
-	if _aim_amt > 0.001:
-		var ua: float = _upper_len[chain[0]]
-		var fa: float = _fore_len[chain[0]]
-
-		var aim_dir := Vector3(0.0, sin(_aim), cos(_aim))
-		var reach := lerpf(aim_reach_back, aim_reach_front, near)
-
-		var hand := shoulder + aim_dir * reach
-		hand.x = lerpf(0.0, shoulder.x, aim_hand_spread)
-		hand.y += aim_bob * speed * _g("foot_phase") * -side
-		hand.y -= aim_hand_drop + aim_back_hand_drop * (1.0 - near)
-
-		var elbow := _elbow_for(shoulder, hand, ua, fa)
-		var aim_upper := (elbow - shoulder).normalized()
-		var aim_fore := (hand - elbow).normalized()
-
-		upper = upper.slerp(aim_upper, _aim_amt).normalized()
-		fore = fore.slerp(aim_fore, _aim_amt).normalized()
-
-	_point_bone(skel, chain[0], upper)
-	_align_elbow(skel, chain[0], chain[1], upper, fore)
-	_point_bone(skel, chain[1], fore)
-
-	var wrist := skel.get_bone_global_pose(chain[2])
-	wrist.basis = Basis(fore, deg_to_rad(hand_roll_degrees) * -side) * wrist.basis
-	skel.set_bone_global_pose(chain[2], wrist)
-
-
-func _elbow_for(shoulder: Vector3, hand: Vector3, upper_len: float, fore_len: float) -> Vector3:
-	var to_hand := hand - shoulder
-	var dist := clampf(to_hand.length(), 0.05, upper_len + fore_len - 0.002)
-	var dir := to_hand.normalized()
+	var to := wrist - shoulder
+	var dist := clampf(
+		to.length(),
+		absf(upper_len - fore_len) + 0.02,
+		(upper_len + fore_len) * 0.9995,
+	)
+	var dir := to.normalized() if to.length_squared() > 0.000001 else Vector3.BACK
 
 	var along := (upper_len * upper_len + dist * dist - fore_len * fore_len) / (2.0 * dist)
 	var height := sqrt(maxf(upper_len * upper_len - along * along, 0.0))
 
-	var pole := Vector3.DOWN
-	pole -= dir * pole.dot(dir)
-	if pole.length_squared() < 0.0001:
-		pole = Vector3.BACK
+	var pole := pole_hint - dir * pole_hint.dot(dir)
+	if pole.length_squared() < 0.000001:
+		pole = dir.cross(Vector3.RIGHT)
 
-	return shoulder + dir * along + pole.normalized() * height
+	pole = pole.normalized()
 
+	var elbow := shoulder + dir * along + pole * height
+	var upper_dir := (elbow - shoulder).normalized()
+	var fore_dir := (shoulder + dir * dist - elbow).normalized()
 
-func _align_elbow(
-	skel: Skeleton3D,
-	upper_idx: int,
-	fore_idx: int,
-	upper_dir: Vector3,
-	fore_dir: Vector3,
-) -> void:
-	var key := StringName("hinge_axis_" + String(skel.get_bone_name(fore_idx)))
-	if not skel.has_meta(key):
-		return
+	var bend_axis := pole.cross(dir).normalized()
+	var hinge := _hinge_axis(skel, chain[1])
 
-	var axis_local: Vector3 = skel.get_meta(key)
+	var local := Basis(Vector3.UP, hinge, Vector3.UP.cross(hinge))
+	var wanted := Basis(fore_dir, bend_axis, fore_dir.cross(bend_axis))
+	var fore_basis := wanted * local.transposed()
 
-	var upper := skel.get_bone_global_pose(upper_idx)
-	var fore := skel.get_bone_global_pose(fore_idx)
+	var bend := acos(clampf(upper_dir.dot(fore_dir), -1.0, 1.0))
+	var rest_bend: Basis = _rest_bend[chain[0]]
+	var upper_basis := fore_basis * Basis(hinge, -bend) * rest_bend.inverse()
+	upper_basis = Basis(Quaternion(upper_basis * Vector3.UP, upper_dir)) * upper_basis
 
-	var d := (fore.origin - upper.origin).normalized()
-	var hinge := (fore.basis * axis_local).normalized()
-
-	var wanted := upper_dir.cross(fore_dir)
-	if wanted.length_squared() < 0.0004:
-		wanted = Vector3.RIGHT
-	wanted = wanted.normalized()
-
-	var a := hinge - d * d.dot(hinge)
-	var z := wanted - d * d.dot(wanted)
-	if a.length_squared() < 0.0001 or z.length_squared() < 0.0001:
-		return
-
-	var phi := a.signed_angle_to(z, d)
-
-	if phi > PI * 0.5:
-		phi -= PI
-	elif phi < -PI * 0.5:
-		phi += PI
-
-	upper.basis = Basis(d, phi) * upper.basis
-	skel.set_bone_global_pose(upper_idx, upper)
+	_set_basis(skel, chain[0], upper_basis)
+	_set_basis(skel, chain[1], fore_basis)
+	_set_basis(skel, chain[2], hand_basis)
 
 
-func _point_bone(skel: Skeleton3D, idx: int, desired: Vector3) -> void:
-	var kids := skel.get_bone_children(idx)
-	if kids.is_empty():
-		return
+func _hinge_axis(skel: Skeleton3D, fore: int) -> Vector3:
+	var bone_name := String(skel.get_bone_name(fore))
+	var key := StringName("hinge_axis_" + bone_name)
+	var axis := Vector3.BACK if bone_name.contains("Left") else Vector3.FORWARD
+	if skel.has_meta(key):
+		axis = (skel.get_meta(key) as Vector3).normalized()
 
+	axis -= Vector3.UP * axis.dot(Vector3.UP)
+	return axis.normalized() if axis.length_squared() > 0.0001 else Vector3.BACK
+
+
+func _set_basis(skel: Skeleton3D, idx: int, basis: Basis) -> void:
 	var pose := skel.get_bone_global_pose(idx)
-	var cur := skel.get_bone_global_pose(kids[0]).origin - pose.origin
-	if cur.length_squared() < 0.0000001:
-		return
-
-	pose.basis = Basis(Quaternion(cur.normalized(), desired.normalized())) * pose.basis
+	pose.basis = basis.orthonormalized()
 	skel.set_bone_global_pose(idx, pose)

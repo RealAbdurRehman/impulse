@@ -10,7 +10,7 @@ extends Camera3D
 @export var lookahead_max: float = 40
 @export var lookahead_speed: float = 4.0
 
-@export var z_distance: float = 12.0
+@export var z_distance: float = 10.0
 @export var field_of_view: float = 35.0
 
 var height_offset: float = 1.0
