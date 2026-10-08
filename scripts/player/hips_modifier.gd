@@ -10,6 +10,8 @@ class_name HipsModifier
 @export var reset_pose_each_frame := true
 @export var measure_rig := true
 
+var recoil: WeaponRecoil
+
 var _hips_idx := -1
 var _measured := false
 
@@ -35,8 +37,13 @@ func _process_modification() -> void:
 
 	var pose := skel.get_bone_global_pose(_hips_idx)
 	var shift_fwd: float = gait.hips_offset_fwd
+	var shift_y: float = gait.hips_offset_y
+	if recoil != null:
+		shift_fwd -= recoil.hips_back
+		shift_y -= recoil.hips_drop
+
 	var fwd_world: Vector3 = skel.global_transform.basis.orthonormalized() * Vector3.BACK
-	pose.origin += to_skel * (Vector3(0.0, gait.hips_offset_y, 0.0) + fwd_world * shift_fwd)
+	pose.origin += to_skel * (Vector3(0.0, shift_y, 0.0) + fwd_world * shift_fwd)
 
 	if absf(lean) > 0.001:
 		var axis: Vector3 = (to_skel * (gait.lean_axis as Vector3)).normalized()

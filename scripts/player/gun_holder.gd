@@ -22,22 +22,24 @@ class Grip:
 @export var hidden_parts: Array[StringName] = [&"MagFull", &"Bullet", &"BulletCasing"]
 
 @export_group("Main grip")
-@export_range(-90.0, 90.0) var main_tilt_degrees := 22.0
 @export var main_depth := 0.053
 @export var main_width := 0.035
 @export var trigger_finger := true
 
+@export_range(-90.0, 90.0) var main_tilt_degrees := 22.0
+
 @export_group("Support grip")
-@export_range(-90.0, 90.0) var support_tilt_degrees := 22.0
 @export var support_depth := 0.053
 @export var support_width := 0.035
+
+@export_range(-90.0, 90.0) var support_tilt_degrees := 22.0
 
 @export_group("Hands")
 @export var palm_width := 0.082
 @export var palm_thickness := 0.032
 @export var palm_heel := 0.0285
 
-@export var finger_radius := 0.0105
+@export var finger_radius := 0.011
 
 var gun: Node3D
 var muzzle: Node3D

@@ -62,7 +62,7 @@ extends SkeletonModifier3D
 ]
 
 @export_group("Hold")
-@export var hold_reach := 0.45
+@export var hold_reach := 0.5
 @export var hold_drop := 0.05
 @export var hold_side := 0.0
 
@@ -76,6 +76,12 @@ extends SkeletonModifier3D
 
 @export var breath_sway := 0.004
 @export var landing_dip := 0.04
+
+@export_group("Recoil")
+@export_range(0.0, 1.0) var recoil_arm_share := 0.5
+@export_range(0.0, 1.0) var recoil_head_share := 0.45
+
+var recoil: WeaponRecoil
 
 var gun_equipped := false
 var gun_anchor := Vector3.ZERO
@@ -264,17 +270,21 @@ func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 	_chest_off = lerpf(_chest_off, chest_target, k)
 	_head_off = lerpf(_head_off, head_target, k)
 
+	var back := recoil.torso if recoil != null else 0.0
+	var chest := _chest_off - back
+	var head := _head_off - back * recoil_head_share
+
 	var cum := 0.0
 	var targets: Array[float] = []
 	for i in _chain.size():
 		var t := 0.0
 		if i < 3:
 			cum += torso_shares[i] if i < torso_shares.size() else 0.0
-			t = _chest_off * cum
+			t = chest * cum
 		elif i == 3:
-			t = lerpf(_chest_off, _head_off, 0.5)
+			t = lerpf(chest, head, 0.5)
 		else:
-			t = _head_off
+			t = head
 
 		targets.append(t)
 
@@ -297,11 +307,15 @@ func _hold_gun(skel: Skeleton3D) -> void:
 	var s_right := skel.get_bone_global_pose(_right[0]).origin
 	var mid := (s_left + s_right) * 0.5
 
-	var aim := Vector3(0.0, sin(_aim), cos(_aim))
-	var up := Vector3(0.0, cos(_aim), -sin(_aim))
+	var flip := recoil.flip if recoil != null else 0.0
+	var slide := recoil.slide if recoil != null else 0.0
+
+	var pitch := _aim + flip
+	var aim := Vector3(0.0, sin(pitch), cos(pitch))
+	var up := Vector3(0.0, cos(pitch), -sin(pitch))
 	var frame := Basis(aim, up, aim.cross(up))
 
-	var held := _held_pitch()
+	var held := _held_pitch() + flip * recoil_arm_share
 	var held_aim := Vector3(0.0, sin(held), cos(held))
 	var held_up := Vector3(0.0, cos(held), -sin(held))
 	var held_frame := Basis(held_aim, held_up, held_aim.cross(held_up))
@@ -314,7 +328,7 @@ func _hold_gun(skel: Skeleton3D) -> void:
 	var limit_left: float = (_upper_len[_left[0]] + _fore_len[_left[0]]) * max_arm_extension
 	var limit_right: float = (_upper_len[_right[0]] + _fore_len[_right[0]]) * max_arm_extension
 
-	var reach := hold_reach
+	var reach := hold_reach - slide
 	var anchor := Vector3.ZERO
 	for i in 4:
 		anchor = mid + held_frame * Vector3(reach, lift - hold_drop, hold_side)

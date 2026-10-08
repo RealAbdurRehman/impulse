@@ -55,6 +55,9 @@ extends Node3D
 @export var camera: Camera3D
 @export var hide_system_cursor := false
 
+@export_group("Push")
+@export var push_decay := 1.5
+
 var desired_speed := 0.0
 var desired_dir := 0.0
 
@@ -68,6 +71,8 @@ var grounded := true
 var velocity := Vector3.ZERO
 
 var plane_z := 0.0
+
+var push := 0.0
 
 var aim_point := Vector3.ZERO
 var aim_pitch := 0.0
@@ -93,7 +98,13 @@ func is_on_floor() -> bool:
 	return grounded
 
 
+func push_back(distance: float) -> void:
+	push -= float(facing) * distance
+
+
 func _physics_process(delta: float) -> void:
+	push *= exp(-push_decay * delta)
+
 	if grounded:
 		_coyote = coyote_time
 	else:
@@ -105,13 +116,18 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = maxf(0.0, _jump_buffer - delta)
 
 	var dir := Input.get_axis("move_left", "move_right")
+
+	var pushed := absf(dir) < 0.1 and absf(push) > 0.1
+	if pushed:
+		dir = clampf(push, -1.0, 1.0)
+
 	var crouching := grounded and Input.is_action_pressed("crouch")
 
 	var aimed := false
 	if face_mouse:
 		aimed = _update_aim()
 
-	if not aimed and absf(dir) > 0.1:
+	if not aimed and not pushed and absf(dir) > 0.1:
 		facing = 1 if dir > 0.0 else -1
 
 	moving_backward = absf(dir) > 0.1 and int(signf(dir)) != facing
@@ -164,7 +180,7 @@ func _physics_process(delta: float) -> void:
 
 func _advance_grounded(delta: float) -> void:
 	var p := global_position
-	p.x += move_dir * move_speed * delta
+	p.x += (move_dir * move_speed) * delta
 	p.z = plane_z
 
 	global_position = p
@@ -240,7 +256,7 @@ func _update_air(delta: float) -> void:
 	if _is_blocked(int(move_dir)) and move_dir != 0.0:
 		move_speed = move_toward(move_speed, 0.0, blocked_brake * delta)
 
-	p.x += move_dir * move_speed * delta
+	p.x += (move_dir * move_speed + push) * delta
 	p.y += _vy * delta
 	p.z = plane_z
 
@@ -252,7 +268,7 @@ func _update_air(delta: float) -> void:
 			grounded = true
 
 	global_position = p
-	velocity = Vector3(move_dir * move_speed, _vy, 0.0)
+	velocity = Vector3(move_dir * move_speed + push, _vy, 0.0)
 
 
 func _is_blocked(dir: int) -> bool:
