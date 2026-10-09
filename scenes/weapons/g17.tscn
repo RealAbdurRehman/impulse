@@ -855,3 +855,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.024, 0.54, 0)
 
 [node name="BarrelPivot" type="Marker3D" parent="." unique_id=484855921]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.911, 0.538, 0)
+
+[node name="Sight" type="Marker3D" parent="." unique_id=1671618886]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.66619176, 0)

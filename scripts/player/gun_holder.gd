@@ -21,6 +21,7 @@ class Grip:
 @export var muzzle_marker: StringName = &"Muzzle"
 @export var ejector_marker: StringName = &"Ejector"
 @export var trigger_marker: StringName = &"TriggerPad"
+@export var sight_marker: StringName = &"Sight"
 @export var rack_marker: StringName = &"RackGrab"
 @export var feed_start_marker: StringName = &"FeedStart"
 @export var feed_end_marker: StringName = &"FeedEnd"
@@ -55,6 +56,7 @@ var gun: Node3D
 var muzzle: Node3D
 var ejector: Node3D
 var trigger_pad: Node3D
+var sight: Node3D
 var rack_grab: Node3D
 var feed_start: Node3D
 var feed_end: Node3D
@@ -86,6 +88,7 @@ func _ready() -> void:
 	muzzle = _marker(muzzle_marker)
 	ejector = _marker(ejector_marker)
 	trigger_pad = _marker(trigger_marker)
+	sight = _marker(sight_marker)
 	rack_grab = _marker(rack_marker)
 	feed_start = _marker(feed_start_marker)
 	feed_end = _marker(feed_end_marker)
@@ -134,6 +137,7 @@ func _assemble() -> void:
 
 	spine.gun_anchor = (main.hole + support.hole) * 0.5
 	spine.gun_muzzle = _gun_space(muzzle).origin
+	spine.gun_sight = _gun_space(sight).origin
 	spine.hold_main = main_in_gun
 	spine.hold_support = support_in_gun
 	spine.gun_equipped = true

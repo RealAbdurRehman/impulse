@@ -10,7 +10,7 @@ extends Camera3D
 @export var lookahead_max: float = 40
 @export var lookahead_speed: float = 4.0
 
-@export var z_distance: float = 8.0
+@export var z_distance: float = 9.0
 @export var field_of_view: float = 35.0
 
 var height_offset: float = 1.0
@@ -41,5 +41,6 @@ func _physics_process(delta: float) -> void:
 		target_pos.z + z_distance,
 	)
 
+	fov = field_of_view * target.aim_zoom
 	global_position = global_position.lerp(desired_pos, 1.0 - exp(-follow_speed * delta))
 	rotation_degrees = Vector3.ZERO

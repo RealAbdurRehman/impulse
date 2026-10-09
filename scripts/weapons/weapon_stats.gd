@@ -5,11 +5,18 @@ extends Resource
 @export var automatic := false
 @export var auto_reload := false
 
-@export var reload_time := 1.6
-@export var magazine_size := 2
+@export var reload_time := 2.4
+@export var magazine_size := 17
 @export var trigger_buffer := 0.12
 
 @export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 600.0
+
+@export_group("Aim down sights")
+@export var ads_time := 0.24
+@export var ads_zoom := 0.9
+@export var ads_move_scale := 0.55
+@export_range(0.0, 1.0) var ads_spread_scale := 0.3
+@export_range(0.0, 1.0) var ads_recoil_scale := 0.7
 
 @export_group("Ballistics")
 @export var damage := 25.0
@@ -48,7 +55,7 @@ extends Resource
 @export var barrel_smoke_lifetime := 3.2
 
 @export var barrel_cool_time := 3.0
-@export var barrel_heat_per_shot := 0.15
+@export var barrel_heat_per_shot := 0.025
 
 @export_range(0.0, 1.0) var barrel_smoke_opacity := 0.65
 

@@ -60,6 +60,18 @@ class Tracer:
 	var active := false
 
 
+class Wisp:
+	var pos := Vector3.ZERO
+	var vel := Vector3.ZERO
+	var age := 0.0
+	var life := 1.0
+	var along := 0.0
+	var quad := false
+	var noise_seed := 0.0
+	var phase := 0.0
+	var strength := 1.0
+
+
 class Sprite:
 	var mesh: MeshInstance3D
 	var material: ShaderMaterial
@@ -75,16 +87,125 @@ class Sprite:
 	var active := false
 
 
+const SMOKE_LAYERS := [
+	{
+		"offset": 0.1,
+		"spread": 0.1,
+		"from": Vector2(0.4, 0.16),
+		"to": Vector2(1.3, 0.34),
+		"life": 0.6,
+		"speed": 1.8,
+		"drag": 3.4,
+		"rise": 0.08,
+		"density": 0.5,
+		"noise": Vector2(1.3, 0.6),
+		"flow": Vector2(0.35, 0.04),
+	},
+	{
+		"offset": 0.22,
+		"spread": 0.14,
+		"from": Vector2(0.7, 0.22),
+		"to": Vector2(1.9, 0.5),
+		"life": 0.8,
+		"speed": 1.2,
+		"drag": 2.4,
+		"rise": 0.12,
+		"density": 0.47,
+		"noise": Vector2(1.2, 0.55),
+		"flow": Vector2(0.3, 0.05),
+	},
+	{
+		"offset": 0.4,
+		"spread": 0.18,
+		"from": Vector2(1.0, 0.3),
+		"to": Vector2(2.6, 0.65),
+		"life": 1.0,
+		"speed": 0.8,
+		"drag": 1.6,
+		"rise": 0.18,
+		"density": 0.38,
+		"noise": Vector2(1.0, 0.45),
+		"flow": Vector2(0.2, 0.06),
+	},
+	{
+		"offset": 0.55,
+		"spread": 0.22,
+		"from": Vector2(1.1, 0.34),
+		"to": Vector2(2.9, 0.75),
+		"life": 1.1,
+		"speed": 0.6,
+		"drag": 1.4,
+		"rise": 0.2,
+		"density": 0.3,
+		"noise": Vector2(0.95, 0.42),
+		"flow": Vector2(0.15, 0.06),
+	},
+	{
+		"offset": 0.7,
+		"spread": 0.28,
+		"from": Vector2(1.3, 0.4),
+		"to": Vector2(3.2, 0.85),
+		"life": 1.2,
+		"speed": 0.45,
+		"drag": 1.3,
+		"rise": 0.22,
+		"density": 0.25,
+		"noise": Vector2(0.9, 0.4),
+		"flow": Vector2(0.12, 0.05),
+	},
+	{
+		"offset": 0.3,
+		"spread": 0.35,
+		"from": Vector2(0.5, 0.2),
+		"to": Vector2(1.2, 0.5),
+		"life": 0.7,
+		"speed": 0.9,
+		"drag": 2.0,
+		"rise": 0.25,
+		"density": 0.28,
+		"noise": Vector2(1.6, 0.8),
+		"flow": Vector2(0.25, 0.1),
+	},
+]
+
 const FLASH_SPREAD := 1.7
-const PUFF_STEP := 0.03
+const IDLE_LIGHT := 0.0001
+const HEAT_FLOOR := 0.015
+const HEAT_DECAY := 6.0
+const WISP_STEP := 0.035
+const WISP_SMOOTH := 4
+const WISP_QUAD_TIME := 0.14
+const WISP_QUAD_GAP := 0.06
+const WISP_TRAVEL_GAP := 0.04
+const WISP_TAPER := 0.012
+const WISP_REACH := 0.04
+const WISP_FOLLOW := 10.0
+const WISP_ALPHA := 2.6
+const WISP_STRENGTH := 0.4
+const WISP_FADE := Vector2(0.1, 0.65)
+const WISP_V := 0.0049
+const WISP_AFTER := 0.3
+const WISP_DELAY := 0.05
+const WISP_FROM := Vector2(0.06, 0.03)
+const QUAD: Array[Vector2] = [
+	Vector2(0.0, 0.0),
+	Vector2(1.0, 0.0),
+	Vector2(1.0, 1.0),
+	Vector2(0.0, 0.0),
+	Vector2(1.0, 1.0),
+	Vector2(0.0, 1.0),
+]
 
 @export var casing_node: StringName = &"BulletCasing"
 
 @export_group("Pools")
-@export var sprite_pool := 90
+@export var sprite_pool := 160
 @export var max_casings := 40
 @export var tracer_pool := 12
-@export var puff_pool := 90
+@export var max_strands := 4
+
+@export_group("Quality")
+@export var noise_size := 1024
 
 @export_flags_3d_physics var casing_layer := 4
 @export_flags_3d_physics var casing_mask := 1
@@ -95,6 +216,10 @@ var _noise: Texture2D
 var _flash_shader: Shader
 var _smoke_shader: Shader
 var _tracer_shader: Shader
+var _stream_shader: Shader
+var _stream_material: ShaderMaterial
+var _stream: MeshInstance3D
+var _stream_mesh: ImmediateMesh
 
 var _anchor: Node3D
 var _shift := Vector3.ZERO
@@ -106,12 +231,23 @@ var _flash_total := 0.05
 
 var _sprites: Array[Sprite] = []
 var _sprite_next := 0
+var _silent := false
 var _heat := 0.0
-var _puffs: Array[Sprite] = []
-var _puff_next := 0
-var _puff_timer := 0.0
-var _puff_clock := 0.0
-var _puff_phase := 0.0
+var _since_shot := 0.0
+var _strands: Array[Array] = []
+var _wisp_open := false
+var _wisp_seed := 0.0
+var _wisp_phase := 0.0
+var _wisp_rel := Vector3.ZERO
+var _wisp_count := 0.0
+var _wisp_travel := 0.0
+var _wisp_last := Vector3.ZERO
+var _wisp_seen := Vector3.ZERO
+var _wisp_quad := Vector3.ZERO
+var _wisp_since := 0.0
+var _wisp_delay := 0.0
+var _wisp_timer := 0.0
+var _wisp_clock := 0.0
 
 var _casings: Array[Casing] = []
 var _casing_next := 0
@@ -132,14 +268,18 @@ func _ready() -> void:
 	_flash_shader = load(dir.path_join("muzzle_flash.gdshader")) as Shader
 	_smoke_shader = load(dir.path_join("smoke.gdshader")) as Shader
 	_tracer_shader = load(dir.path_join("tracer.gdshader")) as Shader
+	_stream_shader = load(dir.path_join("smoke_stream.gdshader")) as Shader
 	_noise = _noise_texture()
 
 	_build_sprites()
+	_build_stream()
 	_build_tracers()
 
 	weapon.fired.connect(_on_fired)
 	weapon.bullet_traced.connect(_on_bullet_traced)
 	weapon.animator.ejected.connect(_eject)
+
+	_prewarm.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -162,7 +302,11 @@ func _on_fired(muzzle: Transform3D) -> void:
 	_start_flash()
 	_puff(muzzle)
 
+	if not _wisp_open:
+		_wisp_rel = muzzle.origin - weapon.player.get_global_transform_interpolated().origin
+
 	_heat = minf(_heat + weapon.stats.barrel_heat_per_shot, 1.0)
+	_since_shot = 0.0
 	set_process(true)
 
 
@@ -202,6 +346,7 @@ func _on_bullet_traced(from: Vector3, to: Vector3, _hit: Dictionary) -> void:
 	t.material.set_shader_parameter("glow_color", _rgb(s.tracer_glow_color))
 	t.material.set_shader_parameter("seed", Vector2(randf(), randf()))
 	t.material.set_shader_parameter("length_m", s.tracer_length)
+	t.material.set_shader_parameter("level", 0.0 if _silent else 1.0)
 
 	set_process(true)
 
@@ -287,7 +432,7 @@ func _update_flash(delta: float) -> bool:
 	_flash_left -= delta
 	if _flash_left <= 0.0:
 		_flash_root.visible = false
-		_light.visible = false
+		_light.light_energy = IDLE_LIGHT
 		return false
 
 	var t := 1.0 - _flash_left / _flash_total
@@ -299,10 +444,13 @@ func _update_flash(delta: float) -> bool:
 
 func _apply_flash_level(level: float, age: float) -> void:
 	var m := _flash.material_override as ShaderMaterial
-	m.set_shader_parameter("level", level)
+	var gain := 0.0 if _silent else 1.0
+	m.set_shader_parameter("level", level * gain)
 	m.set_shader_parameter("age", age)
 	m.set_shader_parameter("fade", smoothstep(0.5, 1.0, age))
-	_light.light_energy = weapon.stats.light_energy * (1.0 - smoothstep(0.3, 1.0, age))
+	_light.light_energy = IDLE_LIGHT + weapon.stats.light_energy * gain * (
+		1.0 - smoothstep(0.3, 1.0, age)
+	)
 
 
 func _place_light() -> void:
@@ -345,9 +493,6 @@ func _build_sprites() -> void:
 	for i in sprite_pool:
 		_sprites.append(_make_sprite(quad))
 
-	for i in puff_pool:
-		_puffs.append(_make_sprite(quad))
-
 
 func _make_sprite(quad: Mesh) -> Sprite:
 	var sp := Sprite.new()
@@ -370,13 +515,6 @@ func _take_sprite() -> Sprite:
 	return sp
 
 
-func _take_puff() -> Sprite:
-	var sp := _puffs[_puff_next]
-	_puff_next = (_puff_next + 1) % _puffs.size()
-
-	return sp
-
-
 func _spawn_sprite(
 	sp: Sprite,
 	pos: Vector3,
@@ -391,7 +529,7 @@ func _spawn_sprite(
 	noise_scale: Vector2,
 	flow: Vector2,
 ) -> void:
-	pos.z += fmod(float(_sprite_next + _puff_next), 30.0) * 0.004
+	pos.z += fmod(float(_sprite_next), 30.0) * 0.004
 
 	sp.pos = pos
 	sp.vel = vel
@@ -409,17 +547,14 @@ func _spawn_sprite(
 	sp.material.set_shader_parameter("seed", Vector2(randf(), randf()) * 4.0)
 	sp.material.set_shader_parameter("noise_scale", noise_scale)
 	sp.material.set_shader_parameter("flow", flow)
-	sp.material.set_shader_parameter("density", density)
+	sp.material.set_shader_parameter("density", 0.0 if _silent else density)
 	sp.material.set_shader_parameter("age", 0.0)
 
 	set_process(true)
 
 
 func _update_sprites(delta: float) -> bool:
-	var a := _step_sprites(_sprites, delta)
-	var b := _step_sprites(_puffs, delta)
-
-	return a or b
+	return _step_sprites(_sprites, delta)
 
 
 func _step_sprites(list: Array[Sprite], delta: float) -> bool:
@@ -461,93 +596,353 @@ func _puff(muzzle: Transform3D) -> void:
 	var drift := s.smoke_speed
 	var up := Vector3.UP
 
-	_spawn_sprite(
-		_take_sprite(),
-		o + dir * 0.15 * k,
-		dir.rotated(Vector3.BACK, randf_range(-0.1, 0.1)),
-		Vector2(0.5, 0.2) * k,
-		Vector2(1.5, 0.4) * k,
-		life * 0.7,
-		dir * drift * 1.6,
-		3.0,
-		up * 0.1,
-		s.smoke_opacity,
-		Vector2(1.1, 0.5),
-		Vector2(0.3, 0.04),
-	)
-
-	_spawn_sprite(
-		_take_sprite(),
-		o + dir * 0.4 * k,
-		dir.rotated(Vector3.BACK, randf_range(-0.15, 0.15)),
-		Vector2(1.0, 0.3) * k,
-		Vector2(2.6, 0.65) * k,
-		life,
-		dir * drift * 0.8,
-		1.6,
-		up * 0.18,
-		s.smoke_opacity * 0.7,
-		Vector2(1.0, 0.45),
-		Vector2(0.2, 0.06),
-	)
-
-	_spawn_sprite(
-		_take_sprite(),
-		o + dir * 0.6 * k,
-		dir.rotated(Vector3.BACK, randf_range(-0.25, 0.25)),
-		Vector2(1.3, 0.4) * k,
-		Vector2(3.0, 0.8) * k,
-		life * 1.15,
-		dir * drift * 0.45,
-		1.3,
-		up * 0.22,
-		s.smoke_opacity * 0.5,
-		Vector2(0.9, 0.4),
-		Vector2(0.12, 0.05),
-	)
+	for layer in SMOKE_LAYERS:
+		var jitter: float = layer.spread
+		_spawn_sprite(
+			_take_sprite(),
+			o + dir * layer.offset * k,
+			dir.rotated(Vector3.BACK, randf_range(-jitter, jitter)),
+			layer.from * k * randf_range(0.9, 1.1),
+			layer.to * k * randf_range(0.9, 1.1),
+			life * layer.life * randf_range(0.9, 1.1),
+			dir * drift * layer.speed * randf_range(0.85, 1.15),
+			layer.drag,
+			up * layer.rise,
+			s.smoke_opacity * layer.density,
+			layer.noise,
+			layer.flow,
+		)
 
 
 func _update_wisps(delta: float) -> bool:
 	var s := weapon.stats
-	_heat = maxf(_heat - delta / maxf(s.barrel_cool_time, 0.1), 0.0)
+	_wisp_clock += delta
+	_since_shot += delta
 
-	if _heat < 0.05 or s.barrel_heat_per_shot <= 0.0:
-		_puff_phase = randf() * TAU
-		return false
+	var settled := _since_shot >= WISP_AFTER
+	if settled:
+		_heat *= exp(-delta * HEAT_DECAY / maxf(s.barrel_cool_time, 0.1))
 
-	_puff_clock += delta
-	_puff_timer -= delta
-	if _puff_timer > 0.0:
-		return true
+	var hot := _heat >= HEAT_FLOOR and s.barrel_heat_per_shot > 0.0
+	var emitting := hot and settled
+	if emitting:
+		_emit_wisps(delta)
+	else:
+		_wisp_open = false
+		if settled and not hot:
+			_heat = 0.0
 
+	_step_strands(delta)
+	_rebuild_stream()
+
+	return hot or not _strands.is_empty()
+
+
+func _emit_wisps(delta: float) -> void:
 	var xf := _anchor.get_global_transform_interpolated()
+	var body := weapon.player.get_global_transform_interpolated().origin
+
+	if not _wisp_open:
+		_wisp_open = true
+		_wisp_delay = WISP_DELAY
+		_wisp_timer = 0.0
+		_wisp_since = WISP_QUAD_TIME
+		_wisp_seed = randf()
+		_wisp_phase = randf() * TAU
+		_wisp_seen = body + _wisp_rel
+		_strands.append([])
+		while _strands.size() > max_strands:
+			_strands.pop_front()
+
+	_wisp_rel = _wisp_rel.lerp(xf.origin - body, 1.0 - exp(-WISP_FOLLOW * delta))
+
+	var tip := body + _wisp_rel
+	var speed := tip.distance_to(_wisp_seen) / maxf(delta, 0.0001)
+	_wisp_seen = tip
+
+	_wisp_delay -= delta
+	if _wisp_delay > 0.0:
+		_wisp_last = tip
+		_wisp_quad = tip
+		return
+
+	_wisp_since += delta
+	_wisp_timer -= delta
+	if tip.distance_to(_wisp_last) >= WISP_TRAVEL_GAP:
+		_wisp_timer = 0.0
+
+	var strength := minf(sqrt(_heat) * 1.4, WISP_STRENGTH) / (1.0 + speed * 0.25)
+	strength *= smoothstep(HEAT_FLOOR, HEAT_FLOOR * 3.0, _heat)
+	if _silent:
+		strength = 0.0
+
+	var strand: Array = _strands.back()
+	while _wisp_timer <= 0.0:
+		_wisp_timer += WISP_STEP
+		_emit_wisp(strand, tip, xf, strength)
+
+
+func _emit_wisp(strand: Array, tip: Vector3, xf: Transform3D, strength: float) -> void:
+	var s := weapon.stats
 	var fwd := Vector3(xf.basis.x.x, xf.basis.x.y, 0.0).normalized()
-	var heat := sqrt(_heat)
-	var wave := sin(_puff_clock * 2.6 + _puff_phase)
 
-	while _puff_timer <= 0.0:
-		_puff_timer += PUFF_STEP
+	_wisp_travel += tip.distance_to(_wisp_last)
+	_wisp_last = tip
 
-		var size := s.barrel_smoke_size * randf_range(0.8, 1.2)
-		var life := s.barrel_smoke_lifetime * randf_range(0.85, 1.15)
-		var spin := Vector3.RIGHT.rotated(Vector3.BACK, randf() * TAU)
+	var w := Wisp.new()
+	w.pos = tip
+	w.vel = fwd * 0.03 + Vector3(0.0, s.barrel_smoke_rise * 0.5, 0.0)
+	w.life = s.barrel_smoke_lifetime * randf_range(0.94, 1.06)
+	w.along = _wisp_travel + _wisp_count * WISP_V
+	w.noise_seed = _wisp_seed
+	w.phase = _wisp_phase
+	w.strength = strength
+	w.quad = _wisp_since >= WISP_QUAD_TIME or tip.distance_to(_wisp_quad) >= WISP_QUAD_GAP
+	strand.append(w)
 
-		_spawn_sprite(
-			_take_puff(),
-			xf.origin + fwd * 0.012 + Vector3(randf_range(-0.004, 0.004), 0.0, 0.0),
-			spin,
-			Vector2.ONE * size * 0.25,
-			Vector2.ONE * size,
-			life,
-			fwd * 0.06 + Vector3(randf_range(-0.02, 0.02), s.barrel_smoke_rise, 0.0),
-			0.5,
-			Vector3(wave * 0.07, 0.05, 0.0),
-			s.barrel_smoke_opacity * heat * 0.3,
-			Vector2(0.9, 0.9),
-			Vector2(0.15, 0.05),
-		)
+	if w.quad:
+		_wisp_since = 0.0
+		_wisp_quad = tip
 
-	return true
+	_wisp_count += 1.0
+
+
+func _step_strands(delta: float) -> void:
+	var s := weapon.stats
+	var rise := s.barrel_smoke_rise
+	var gust := sin(_wisp_clock * 0.9) * 0.012
+
+	for strand in _strands:
+		for w: Wisp in strand:
+			w.age += delta
+
+			var k := w.age / w.life
+			var sway := sin(w.age * 2.2 + w.phase) * 0.03 * (0.25 + k) + gust
+			var lift := rise * (1.0 + k * 0.8)
+
+			w.vel.x = lerpf(w.vel.x, sway, 1.0 - exp(-1.2 * delta))
+			w.vel.y = lerpf(w.vel.y, lift, 1.0 - exp(-1.5 * delta))
+			w.pos += w.vel * delta
+
+		while not strand.is_empty() and (strand[0] as Wisp).age >= (strand[0] as Wisp).life:
+			strand.pop_front()
+
+	var i := 0
+	while i < _strands.size():
+		if _strands[i].is_empty() and not (_wisp_open and i == _strands.size() - 1):
+			_strands.remove_at(i)
+		else:
+			i += 1
+
+
+func _rebuild_stream() -> void:
+	var s := weapon.stats
+	_stream_mesh.clear_surfaces()
+
+	var begun := false
+	for index in _strands.size():
+		var points: Array = (_strands[index] as Array).duplicate()
+		if _wisp_open and index == _strands.size() - 1 and not points.is_empty():
+			var head := Wisp.new()
+			head.pos = _wisp_seen
+			head.life = 1.0
+			points.append(head)
+
+		var count := points.size()
+		if count < 2:
+			continue
+
+		var path: Array[Vector3] = []
+		var arc: Array[float] = []
+		for i in count:
+			var reach := mini(WISP_SMOOTH, mini(i, count - 1 - i))
+			var total := Vector3.ZERO
+			for j in range(i - reach, i + reach + 1):
+				total += (points[j] as Wisp).pos
+
+			path.append(total / float(reach * 2 + 1))
+			arc.append(0.0 if i == 0 else arc[i - 1] + path[i].distance_to(path[i - 1]))
+
+		var quads: Array[int] = []
+		for i in count:
+			if (points[i] as Wisp).quad:
+				quads.append(i)
+
+		var tangent := Vector3.UP
+		var lo := 0
+		var hi := 0
+		for q in quads.size():
+			var i := quads[q]
+			var w: Wisp = points[i]
+			var k := clampf(w.age / w.life, 0.0, 1.0)
+			var spread := 1.0 - (1.0 - k) * (1.0 - k)
+
+			var gap := 0.0
+			var neighbors := 0.0
+			if q > 0:
+				gap += arc[i] - arc[quads[q - 1]]
+				neighbors += 1.0
+
+			if q < quads.size() - 1:
+				gap += arc[quads[q + 1]] - arc[i]
+				neighbors += 1.0
+
+			gap /= maxf(neighbors, 1.0)
+
+			var length := maxf(lerpf(WISP_FROM.x, s.barrel_smoke_size * 1.6, spread), gap * 1.8)
+			var width := lerpf(WISP_FROM.y, s.barrel_smoke_size * 1.2, spread)
+
+			var reach := maxf(WISP_REACH, length * 0.5)
+			while arc[i] - arc[lo] > reach:
+				lo += 1
+
+			hi = maxi(hi, i)
+			while hi < count - 1 and arc[hi + 1] - arc[i] <= reach:
+				hi += 1
+
+			var span := path[hi] - path[lo]
+			if span.length_squared() > 0.0000001:
+				tangent = span.normalized()
+
+			var taper := smoothstep(0.0, WISP_TAPER, arc[count - 1] - arc[i])
+			var fade := taper * smoothstep(0.0, 0.05, k)
+			fade *= 1.0 - smoothstep(WISP_FADE.x, WISP_FADE.y, k)
+			var alpha := fade * w.strength * s.barrel_smoke_opacity * WISP_ALPHA
+			alpha *= clampf(gap / length, 0.1, 1.0)
+
+			var along := tangent * (length * 0.5)
+			var across := Vector3(-tangent.y, tangent.x, 0.0) * (width * 0.5)
+
+			if not begun:
+				begun = true
+				_stream_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES, _stream_material)
+
+			_stream_mesh.surface_set_color(Color(k, w.noise_seed, width * 4.0, alpha))
+			_stream_mesh.surface_set_uv2(Vector2(length, w.along))
+
+			for corner: Vector2 in QUAD:
+				_stream_mesh.surface_set_uv(corner)
+				_stream_mesh.surface_add_vertex(
+					path[i] + along * (corner.x * 2.0 - 1.0) + across * (corner.y * 2.0 - 1.0),
+				)
+
+	if begun:
+		_stream_mesh.surface_end()
+
+
+func _build_stream() -> void:
+	_stream_material = _shader_material(_stream_shader)
+	_stream_material.set_shader_parameter("tint", _rgb(weapon.stats.smoke_color))
+	_stream_mesh = ImmediateMesh.new()
+
+	_stream = MeshInstance3D.new()
+	_stream.mesh = _stream_mesh
+	_stream.top_level = true
+	_stream.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_stream.custom_aabb = AABB(Vector3(-50.0, -50.0, -5.0), Vector3(100.0, 100.0, 10.0))
+	add_child(_stream)
+	_stream.global_transform = Transform3D.IDENTITY
+
+
+func _prewarm() -> void:
+	while not weapon.holder.gun.is_inside_tree():
+		await get_tree().process_frame
+
+	_build_flash()
+	_build_casings()
+	_light.light_energy = IDLE_LIGHT
+	_light.visible = true
+
+	var cam := get_viewport().get_camera_3d()
+	var spot := Transform3D(
+		Basis.from_scale(Vector3.ONE * 0.001),
+		cam.global_position - cam.global_basis.z,
+	)
+
+	var quad := QuadMesh.new()
+	var warm: Array[Node3D] = []
+	var materials: Array[Material] = [_flash.material_override]
+	for sprite in _sprites:
+		materials.append(sprite.material)
+
+	for tracer in _tracers:
+		materials.append(tracer.material)
+
+	for material in materials:
+		var piece := MeshInstance3D.new()
+		piece.mesh = quad
+		piece.material_override = material
+		piece.top_level = true
+		add_child(piece)
+		piece.global_transform = spot
+		warm.append(piece)
+
+	var trail := ImmediateMesh.new()
+	trail.surface_begin(Mesh.PRIMITIVE_TRIANGLES, _stream_material)
+	trail.surface_set_color(Color(0.0, 0.0, 0.0, 0.0))
+	trail.surface_set_uv2(Vector2.ONE)
+	for corner: Vector2 in QUAD:
+		trail.surface_set_uv(corner)
+		trail.surface_add_vertex(Vector3(corner.x, corner.y, 0.0))
+	trail.surface_end()
+
+	var trail_piece := MeshInstance3D.new()
+	trail_piece.mesh = trail
+	trail_piece.top_level = true
+	add_child(trail_piece)
+	trail_piece.global_transform = spot
+	warm.append(trail_piece)
+
+	var casing := _casings[0].pivot.get_child(0).duplicate() as Node3D
+	casing.top_level = true
+	add_child(casing)
+	casing.global_transform = spot
+	warm.append(casing)
+
+	var cartridge := weapon.holder.gun.get_node(NodePath(weapon.animator.feed_part)).duplicate() as Node3D
+	cartridge.visible = true
+	cartridge.top_level = true
+	add_child(cartridge)
+	cartridge.global_transform = spot
+	warm.append(cartridge)
+
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	for piece in warm:
+		piece.queue_free()
+
+	_silent = true
+	weapon.animator.slide_node()
+
+	var muzzle := weapon.holder.muzzle_transform()
+	var fwd := Vector3(muzzle.basis.x.x, muzzle.basis.x.y, 0.0).normalized()
+	_on_fired(muzzle)
+	_on_bullet_traced(muzzle.origin, muzzle.origin + fwd * 3.0, { })
+	_eject()
+	_casings[_casing_next - 1].pivot.scale = Vector3.ONE * 0.001
+
+	for i in 40:
+		await get_tree().process_frame
+
+	for c in _casings:
+		c.retire()
+
+	for sp in _sprites:
+		sp.active = false
+		sp.mesh.visible = false
+
+	for t in _tracers:
+		t.active = false
+		t.mesh.visible = false
+
+	_strands.clear()
+	_wisp_open = false
+	_flash_left = 0.0
+	_flash_root.visible = false
+	_light.light_energy = IDLE_LIGHT
+	_heat = 0.0
+	_silent = false
 
 
 func _build_casings() -> void:
@@ -698,12 +1093,12 @@ func _noise_texture() -> Texture2D:
 	var n := FastNoiseLite.new()
 	n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	n.seed = 11
-	n.frequency = 0.014
+	n.frequency = 0.014 * 256.0 / float(noise_size)
 	n.fractal_type = FastNoiseLite.FRACTAL_FBM
-	n.fractal_octaves = 3
+	n.fractal_octaves = 4
 	n.fractal_gain = 0.45
 
-	var img := n.get_seamless_image(256, 256, false, false, 0.2, true)
+	var img := n.get_seamless_image(noise_size, noise_size, false, false, 0.2, true)
 	img.generate_mipmaps()
 
 	return ImageTexture.create_from_image(img)

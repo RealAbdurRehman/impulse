@@ -25,7 +25,7 @@ extends SkeletonModifier3D
 
 @export var backpedal_lean := 5.0
 
-@export var crouch_lean := 26.0
+@export var crouch_lean := 46.0
 @export var landing_lean := 16.0
 
 @export var rising_lean := 4.0
@@ -48,6 +48,14 @@ extends SkeletonModifier3D
 @export_range(0.0, 1.0) var head_aim_share := 0.75
 @export_range(0.0, 1.0) var chest_aim_share := 0.4
 @export_range(0.0, 1.0) var chest_aim_share_down := 0.12
+
+@export_group("Aim down sights")
+@export var ads_chest_lean_degrees := 14.0
+@export var ads_head_tilt_degrees := 10.0
+
+@export var eye_up := 0.12
+@export var ads_eye_distance := 0.22
+@export var eye_forward := 0.08
 
 @export_group("Arms")
 @export var left_arm_bones: Array[StringName] = [
@@ -89,6 +97,7 @@ var reload: WeaponReload
 var gun_equipped := false
 var gun_anchor := Vector3.ZERO
 var gun_muzzle := Vector3.ZERO
+var gun_sight := Vector3.ZERO
 
 var hold_main := Transform3D.IDENTITY
 var hold_support := Transform3D.IDENTITY
@@ -210,9 +219,11 @@ func _posture_lean() -> float:
 func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 	var chest_share := chest_aim_share if _aim > 0.0 else chest_aim_share_down
 	var chest_target := _posture_lean() - _aim * chest_share
+	chest_target += deg_to_rad(ads_chest_lean_degrees) * player.aim_amount
 	var head_target := (
 		chest_target * (1.0 - head_level) - _aim * head_aim_share + deg_to_rad(head_forward_tilt)
 	)
+	head_target += deg_to_rad(ads_head_tilt_degrees) * player.aim_amount
 
 	var max_rel := deg_to_rad(head_max_relative_degrees)
 	head_target = chest_target + clampf(head_target - chest_target, -max_rel, max_rel)
@@ -307,7 +318,12 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 
 		reach = maxf(reach - over, 0.15)
 
-	gun_pose = Transform3D(frame, anchor + pivot_off - frame * pivot)
+	var pivot_world := anchor + pivot_off
+	if player.aim_amount > 0.0:
+		var sight_at := Vector3(ads_eye_distance, 0.0, 0.0) - gun_sight + pivot
+		pivot_world = pivot_world.lerp(_eye(skel) + level_frame * sight_at, player.aim_amount)
+
+	gun_pose = Transform3D(frame, pivot_world - frame * pivot)
 	_muzzle_skel = gun_pose * gun_muzzle
 
 	var turn := deg_to_rad(elbow_flare_degrees)
@@ -324,6 +340,13 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 		support_basis = support_basis.orthonormalized().slerp(target.basis.orthonormalized(), w)
 
 	_solve_arm(skel, _left, pole_left, support_pos, support_basis)
+
+
+func _eye(skel: Skeleton3D) -> Vector3:
+	var head := skel.get_bone_global_pose(_chain[-1]).origin
+	var up := (skel.get_bone_global_pose(_head_tip).origin - head).normalized()
+	var forward := Vector3(0.0, -up.z, up.y)
+	return head + up * eye_up + forward * eye_forward
 
 
 func _lower_arms(skel: Skeleton3D) -> void:
@@ -405,7 +428,7 @@ func _hinge_axis(skel: Skeleton3D, fore: int) -> Vector3:
 	return axis.normalized() if axis.length_squared() > 0.0001 else Vector3.BACK
 
 
-func _set_basis(skel: Skeleton3D, idx: int, basis: Basis) -> void:
+func _set_basis(skel: Skeleton3D, idx: int, new_basis: Basis) -> void:
 	var pose := skel.get_bone_global_pose(idx)
-	pose.basis = basis.orthonormalized()
+	pose.basis = new_basis.orthonormalized()
 	skel.set_bone_global_pose(idx, pose)

@@ -149,6 +149,7 @@ const PROBE_UP := 0.8
 @export_group("Body")
 @export var hip_half_width := 0.09
 @export var crouch_blend_speed := 5.0
+@export_range(0.0, 0.29) var aim_crouch := 0.25
 
 @export_range(0.5, 1.0) var idle_hip_ratio := 0.93
 @export_range(0.5, 1.0) var walk_hip_ratio := 0.95
@@ -320,7 +321,8 @@ func _physics_process(delta: float) -> void:
 	var tside := Vector3.UP.cross(tfwd).normalized()
 	var crouching := on_floor and Input.is_action_pressed("crouch")
 
-	_crouch_amt = move_toward(_crouch_amt, 1.0 if crouching else 0.0, crouch_blend_speed * delta)
+	var crouch_goal := 1.0 if crouching else player.aim_amount * aim_crouch
+	_crouch_amt = move_toward(_crouch_amt, crouch_goal, crouch_blend_speed * delta)
 	_since_land += delta
 	_since_step_start += delta
 	_idle_cd = maxf(_idle_cd - delta, 0.0)
@@ -341,7 +343,7 @@ func _physics_process(delta: float) -> void:
 	vertical_speed = _vel.y
 	_clock += delta
 
-	_update_stairs(delta, on_floor, dirx, fwd)
+	_update_stairs(delta, on_floor, dirx)
 	_update_lean(delta, on_floor, move_speed, dirx, fwd)
 
 	if on_floor and not _was_on_floor:
@@ -488,11 +490,11 @@ func _update_turn(tside: Vector3, tfwd: Vector3) -> bool:
 	var pick := -1
 	var best := INF
 	for i in 2:
-		var f := _feet[i]
-		if f.stance_facing == want:
+		var foot := _feet[i]
+		if foot.stance_facing == want:
 			continue
 
-		var key := f.planted.x * float(want)
+		var key := foot.planted.x * float(want)
 		if key < best:
 			best = key
 			pick = i
@@ -837,7 +839,6 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 		pos.y += sin(pow(arc_k, 0.75) * PI) * f.lift
 		f.current = pos
 		f.fdir = _turn_dir(f.start_dir, f.end_dir, smoothstep(0.1, 0.9, k))
-		var fwd := f.fdir
 
 		if k > swing_align_start:
 			var nb := smoothstep(0.0, 1.0, (k - swing_align_start) / (1.0 - swing_align_start))
@@ -852,7 +853,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 					* smoothstep(0.6, 0.85, k) * (1.0 - smoothstep(0.9, 1.0, k))
 
 			var n := f.current_normal
-			var axis := n.cross(fwd)
+			var axis := n.cross(f.fdir)
 			if axis.length_squared() > 0.0001:
 				f.current_normal = n.rotated(axis.normalized(), pitch).normalized()
 
@@ -923,7 +924,7 @@ func _footfall(p: Vector3, d: float) -> Array:
 	return [Vector3(q.x, y + ankle_height, q.z), n]
 
 
-func _update_stairs(delta: float, on_floor: bool, dirx: float, _fwd: Vector3) -> void:
+func _update_stairs(delta: float, on_floor: bool, dirx: float) -> void:
 	var target := 0.0
 
 	if on_floor:

@@ -15,6 +15,7 @@ signal reload_finished
 @export_group("Input")
 @export var fire_action: StringName = &"shoot"
 @export var reload_action: StringName = &"reload"
+@export var aim_action: StringName = &"aim"
 
 var animator: GunAnimator
 var reloader: WeaponReload
@@ -22,6 +23,7 @@ var reloader: WeaponReload
 var ammo := 0
 var recoil: WeaponRecoil
 
+var _aim := 0.0
 var _cooldown := 0.0
 var _press_buffer := 0.0
 var _reload_left := 0.0
@@ -76,6 +78,8 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed(reload_action):
 		reload()
 
+	_update_aim(delta)
+
 	if Input.is_action_just_pressed(fire_action):
 		_press_buffer = stats.trigger_buffer
 	else:
@@ -98,6 +102,15 @@ func _physics_process(delta: float) -> void:
 				reload()
 
 	_cooldown = maxf(_cooldown, 0.0)
+
+
+func _update_aim(delta: float) -> void:
+	var want := Input.is_action_pressed(aim_action) and _reload_left <= 0.0
+	_aim = move_toward(_aim, 1.0 if want else 0.0, delta / maxf(stats.ads_time, 0.01))
+
+	player.aim_amount = smoothstep(0.0, 1.0, _aim)
+	player.aim_speed_scale = lerpf(1.0, stats.ads_move_scale, player.aim_amount)
+	player.aim_zoom = lerpf(1.0, stats.ads_zoom, player.aim_amount)
 
 
 func _gun_ready() -> bool:
@@ -131,7 +144,8 @@ func _shoot() -> void:
 
 
 func _with_spread(dir: Vector3) -> Vector3:
-	var angle := deg_to_rad(stats.spread_degrees) * (randf() + randf() - 1.0)
+	var spread := stats.spread_degrees * lerpf(1.0, stats.ads_spread_scale, player.aim_amount)
+	var angle := deg_to_rad(spread) * (randf() + randf() - 1.0)
 	return dir.rotated(Vector3.BACK, angle)
 
 

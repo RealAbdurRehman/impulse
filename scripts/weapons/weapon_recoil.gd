@@ -98,6 +98,7 @@ func _link() -> void:
 func _on_fired(_muzzle: Transform3D) -> void:
 	var s := weapon.stats
 	var strength := 1.0 + s.recoil_variation * randf_range(-1.0, 1.0)
+	strength *= lerpf(1.0, s.ads_recoil_scale, weapon.player.aim_amount)
 
 	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * strength)
 	_slide.kick(s.recoil_slide * strength)

@@ -27,6 +27,13 @@ size = Vector3(40, 1, 4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_8rti0"]
 size = Vector3(40, 1, 4)
 
+[sub_resource type="BoxMesh" id="BoxMesh_0wfyh"]
+lightmap_size_hint = Vector2i(224, 216)
+size = Vector3(40, 8, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sugp2"]
+size = Vector3(40, 8, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_ax6fg"]
 size = Vector3(1, 20, 4)
 
@@ -76,6 +83,17 @@ mesh = SubResource("BoxMesh_8rti0")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Floor" unique_id=126289966]
 shape = SubResource("BoxShape3D_8rti0")
+
+[node name="Background" type="StaticBody3D" parent="Environment" unique_id=1866207955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Background" unique_id=532407474]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.5)
+mesh = SubResource("BoxMesh_0wfyh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Environment/Background" unique_id=711450557]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.5)
+shape = SubResource("BoxShape3D_sugp2")
 
 [node name="WallLeft" type="StaticBody3D" parent="Environment" unique_id=1337412042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 9.5, 0)

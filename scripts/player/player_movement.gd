@@ -77,6 +77,10 @@ var push := 0.0
 var aim_point := Vector3.ZERO
 var aim_pitch := 0.0
 
+var aim_amount := 0.0
+var aim_speed_scale := 1.0
+var aim_zoom := 1.0
+
 var _stairs_amt := 0.0
 var _target_yaw := 0.0
 var _coyote := 0.0
@@ -137,8 +141,10 @@ func _physics_process(delta: float) -> void:
 		speed = crouch_speed
 	elif moving_backward:
 		speed = walk_speed * backpedal_speed_mult
-	elif Input.is_action_pressed("sprint"):
+	elif Input.is_action_pressed("sprint") and aim_amount < 0.1:
 		speed = run_speed
+
+	speed *= aim_speed_scale
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
 	var blocked := want_dir != 0 and _is_blocked(want_dir)
