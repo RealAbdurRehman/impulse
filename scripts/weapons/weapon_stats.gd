@@ -1,14 +1,12 @@
 class_name WeaponStats
 extends Resource
 
-@export var display_name := "Glock 17"
-
 @export_group("Fire")
 @export var automatic := false
-@export var auto_reload := true
+@export var auto_reload := false
 
 @export var reload_time := 1.6
-@export var magazine_size := 17
+@export var magazine_size := 2
 @export var trigger_buffer := 0.12
 
 @export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 600.0
@@ -47,7 +45,7 @@ extends Resource
 @export_group("Barrel smoke")
 @export var barrel_smoke_size := 0.13
 @export var barrel_smoke_rise := 0.14
-@export var barrel_smoke_lifetime := 1.6
+@export var barrel_smoke_lifetime := 3.2
 
 @export var barrel_cool_time := 3.0
 @export var barrel_heat_per_shot := 0.15
@@ -69,8 +67,6 @@ extends Resource
 @export var eject_casings := true
 
 @export var casing_scale := 1.0
-@export var eject_offset := Vector3(-0.1, 0.005, 0.013)
-
 @export var eject_velocity := Vector3(-0.8, 2.4, 1.6)
 
 @export var eject_spin := 30.0
@@ -86,10 +82,25 @@ extends Resource
 
 @export var recoil_push := 0.04
 
-@export_range(0.0, 20.0, 0.1) var recoil_flip_degrees := 15.0
+@export_range(0.0, 50.0, 0.1) var recoil_flip_degrees := 20.0
 @export_range(0.0, 10.0, 0.1) var recoil_torso_degrees := 6.0
 
-@export_range(0.0, 1.0) var recoil_variation := 0.0
+@export_range(0.0, 1.0) var recoil_variation := 0.5
 @export_range(1.0, 4.0, 0.1) var recoil_stacking := 2.0
 
 @export_range(0.0, 1.0) var recoil_aim_influence := 1.0
+
+@export_group("Slide")
+@export var slide_travel := 0.05
+@export var slide_back_time := 0.03
+@export var slide_forward_time := 0.065
+@export var slide_release_time := 0.045
+
+@export var slide_lock := true
+@export_range(0.5, 1.0) var slide_lock_hold := 0.93
+
+@export var barrel_travel := 0.008
+@export var barrel_tilt_degrees := 2.0
+
+@export var slide_stop_degrees := 8.0
+@export var trigger_pull_degrees := 22.0

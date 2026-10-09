@@ -78,7 +78,6 @@ class Sprite:
 const FLASH_SPREAD := 1.7
 const PUFF_STEP := 0.03
 
-@export var ejector_marker: StringName = &"Ejector"
 @export var casing_node: StringName = &"BulletCasing"
 
 @export_group("Pools")
@@ -128,8 +127,6 @@ func _ready() -> void:
 	set_process(false)
 
 	weapon = get_parent() as Weapon
-	if weapon == null:
-		return
 
 	var dir := (get_script() as Script).resource_path.get_base_dir()
 	_flash_shader = load(dir.path_join("muzzle_flash.gdshader")) as Shader
@@ -142,6 +139,7 @@ func _ready() -> void:
 
 	weapon.fired.connect(_on_fired)
 	weapon.bullet_traced.connect(_on_bullet_traced)
+	weapon.animator.ejected.connect(_eject)
 
 
 func _process(delta: float) -> void:
@@ -158,18 +156,21 @@ func _on_fired(muzzle: Transform3D) -> void:
 	if _flash_root == null:
 		_build_flash()
 
-	_shift = _anchor.get_global_transform_interpolated().origin - _anchor.global_transform.origin
-	if _shift.length() > 0.5:
-		_shift = Vector3.ZERO
-
+	_shift = _current_shift()
 	muzzle.origin += _shift
 
 	_start_flash()
 	_puff(muzzle)
-	_eject()
 
 	_heat = minf(_heat + weapon.stats.barrel_heat_per_shot, 1.0)
 	set_process(true)
+
+
+func _current_shift() -> Vector3:
+	var shift := _anchor.get_global_transform_interpolated().origin - _anchor \
+			.global_transform \
+			.origin
+	return Vector3.ZERO if shift.length() > 0.5 else shift
 
 
 func _on_bullet_traced(from: Vector3, to: Vector3, _hit: Dictionary) -> void:
@@ -206,19 +207,14 @@ func _on_bullet_traced(from: Vector3, to: Vector3, _hit: Dictionary) -> void:
 
 
 func _facing(dir: Vector3, at: Vector3) -> Basis:
-	var cam := get_viewport().get_camera_3d()
-	var view := (cam.global_position - at) if cam != null else Vector3.BACK
-
+	var view := get_viewport().get_camera_3d().global_position - at
 	var z := (view - dir * dir.dot(view)).normalized()
-	if z.length_squared() < 0.0001:
-		z = Vector3.BACK
 
 	return Basis(dir, z.cross(dir), z)
 
 
 func _build_flash() -> void:
-	var holder := weapon.holder
-	_anchor = holder.muzzle if holder.muzzle != null else holder.gun
+	_anchor = weapon.holder.muzzle
 
 	_flash_root = Node3D.new()
 	_flash_root.visible = false
@@ -564,14 +560,10 @@ func _build_casings() -> void:
 	_casings.clear()
 	_casing_next = 0
 
-	var src := gun.get_node_or_null(NodePath(casing_node)) as Node3D
-	if src == null:
-		return
+	var src := gun.get_node(NodePath(casing_node)) as Node3D
 
 	var parts: Array[Dictionary] = []
 	_collect_meshes(src, src, parts)
-	if parts.is_empty():
-		return
 
 	var bounds: AABB
 	for i in parts.size():
@@ -642,7 +634,7 @@ func _collect_meshes(node: Node, root: Node3D, parts: Array[Dictionary]) -> void
 func _relative(node: Node3D, root: Node3D) -> Transform3D:
 	var t := Transform3D.IDENTITY
 	var n: Node = node
-	while n != null and n != root:
+	while n != root:
 		if n is Node3D:
 			t = (n as Node3D).transform * t
 
@@ -659,11 +651,8 @@ func _eject() -> void:
 	if _casing_gun != weapon.holder.gun:
 		_build_casings()
 
-	if _casings.is_empty():
-		return
-
-	var xf := _ejector()
-	xf.origin += _shift
+	var xf := weapon.animator.port_transform()
+	xf.origin += _current_shift()
 
 	var j := s.eject_jitter
 	var v := s.eject_velocity * Vector3(
@@ -672,10 +661,8 @@ func _eject() -> void:
 		randf_range(1.0 - j, 1.0 + j),
 	)
 
-	var inherited := Vector3.ZERO
-	if weapon.player != null and "velocity" in weapon.player:
-		var pv: Vector3 = weapon.player.velocity
-		inherited = Vector3(pv.x, pv.y, 0.0)
+	var pv := weapon.player.velocity
+	var inherited := Vector3(pv.x, pv.y, 0.0)
 
 	var spin := Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
 
@@ -688,17 +675,6 @@ func _eject() -> void:
 		spin * s.eject_spin,
 		s.casing_lifetime,
 	)
-
-
-func _ejector() -> Transform3D:
-	var marker := weapon.holder.gun.get_node_or_null(NodePath(ejector_marker)) as Node3D
-	if marker != null:
-		return marker.global_transform.orthonormalized()
-
-	var xf := weapon.holder.muzzle_transform()
-	xf.origin += xf.basis * weapon.stats.eject_offset
-
-	return xf
 
 
 func _build_tracers() -> void:

@@ -68,7 +68,7 @@ extends PhysicalBoneSimulator3D
 @export_range(0.0, 1.0) var gravity_compensation := 0.0
 
 @export_group("Refs")
-@export var player_body: Node3D
+@export var player_body: PlayerMovement
 @export var animated_skeleton_path: NodePath
 
 @export var gait: GaitDriver
@@ -135,11 +135,7 @@ func _ready() -> void:
 		if child is PhysicalBone3D:
 			physical_bones.append(child)
 
-			var idx := animated_skeleton.find_bone(child.bone_name)
-			if idx == -1:
-				push_warning("No animated bone matches " + child.bone_name)
-			else:
-				bone_indices[child] = idx
+			bone_indices[child] = animated_skeleton.find_bone(child.bone_name)
 
 			var bn := String(child.bone_name)
 			if bn == String(hips_bone_name):
@@ -183,8 +179,7 @@ func _ready() -> void:
 		await get_tree().physics_frame
 
 	for bone in physical_bones:
-		if bone_indices.has(bone):
-			bone.global_transform = _target_body_transform(bone)
+		bone.global_transform = _target_body_transform(bone)
 
 	active = true
 	physical_bones_start_simulation()
@@ -307,9 +302,6 @@ func _recompute_constants() -> void:
 
 
 func _leg_softness() -> float:
-	if gait == null:
-		return 1.0
-
 	return lerpf(1.0, landing_leg_softness, gait.landing_amount)
 
 
@@ -356,17 +348,11 @@ func _bone_ang_c(bone: PhysicalBone3D) -> float:
 
 
 func _body_velocity() -> Vector3:
-	if player_body != null and "velocity" in player_body:
-		return player_body.velocity
-
-	return Vector3.ZERO
+	return player_body.velocity
 
 
 func _physics_process(delta: float) -> void:
 	for bone in physical_bones:
-		if not bone_indices.has(bone):
-			continue
-
 		var target := _target_body_transform(bone)
 
 		_update_feedforward(bone, target, delta)
@@ -457,7 +443,7 @@ func _update_feedforward(bone: PhysicalBone3D, target: Transform3D, delta: float
 func _apply_angular_track(bone: PhysicalBone3D, target: Transform3D, delta: float) -> void:
 	var k := _bone_ang_k(bone)
 	var c := _bone_ang_c(bone)
-	var ff: Vector3 = (_ff_ang.get(bone, Vector3.ZERO) as Vector3) * feedforward
+	var ff: Vector3 = (_ff_ang[bone] as Vector3) * feedforward
 
 	var current_q := bone.global_transform.basis.get_rotation_quaternion()
 	var target_q := target.basis.get_rotation_quaternion()
@@ -483,7 +469,7 @@ func _track_linear(
 	max_rel := INF,
 ) -> void:
 	var body_v := _body_velocity()
-	var ff_v: Vector3 = _ff_lin.get(bone, body_v)
+	var ff_v: Vector3 = _ff_lin[bone]
 
 	var target_v := body_v.lerp(ff_v, feedforward)
 	var rel_v := bone.linear_velocity - target_v
@@ -498,7 +484,7 @@ func _track_linear(
 
 
 func _upright_reference() -> Vector3:
-	if gait and absf(gait.lean_angle) > 0.001 and gait.lean_axis.length_squared() > 0.0001:
+	if absf(gait.lean_angle) > 0.001 and gait.lean_axis.length_squared() > 0.0001:
 		return (Basis(gait.lean_axis.normalized(), gait.lean_angle) * Vector3.UP).normalized()
 
 	return Vector3.UP
@@ -532,15 +518,7 @@ func _apply_upright_torque(
 
 func _target_body_transform(bone: PhysicalBone3D) -> Transform3D:
 	var idx: int = bone_indices[bone]
-	var target_bone_global: Transform3D
-
-	if _anim_poses.size() > idx:
-		target_bone_global = _anim_xform * _anim_poses[idx]
-	else:
-		target_bone_global = animated_skeleton.global_transform \
-				* animated_skeleton.get_bone_global_pose(idx)
-
-	return target_bone_global * bone.body_offset
+	return _anim_xform * _anim_poses[idx] * bone.body_offset
 
 
 func _on_animated_skeleton_updated() -> void:

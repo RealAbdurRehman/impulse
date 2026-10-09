@@ -19,6 +19,12 @@ class Grip:
 @export var main_marker: StringName = &"GripMain"
 @export var support_marker: StringName = &"GripSupport"
 @export var muzzle_marker: StringName = &"Muzzle"
+@export var ejector_marker: StringName = &"Ejector"
+@export var trigger_marker: StringName = &"TriggerPad"
+@export var rack_marker: StringName = &"RackGrab"
+@export var feed_start_marker: StringName = &"FeedStart"
+@export var feed_end_marker: StringName = &"FeedEnd"
+@export var barrel_pivot_marker: StringName = &"BarrelPivot"
 @export var hidden_parts: Array[StringName] = [&"MagFull", &"Bullet", &"BulletCasing"]
 
 @export_group("Main grip")
@@ -41,51 +47,64 @@ class Grip:
 
 @export var finger_radius := 0.011
 
+@export_group("Trigger finger")
+@export var finger_segments := Vector2(0.034, 0.026)
+@export var finger_bend := Vector3(0.1, 0.0, 1.0)
+
 var gun: Node3D
 var muzzle: Node3D
+var ejector: Node3D
+var trigger_pad: Node3D
+var rack_grab: Node3D
+var feed_start: Node3D
+var feed_end: Node3D
+var barrel_pivot: Node3D
 
 var main_hand: PhysicalBone3D
 var support_hand: PhysicalBone3D
 
+var main_grip: Grip
+var support_grip: Grip
+
 var _main_marker: Node3D
 var _support_marker: Node3D
 
+var _finger: Array[MeshInstance3D] = []
+var _finger_to_bone := Transform3D.IDENTITY
+var _finger_base := Vector3.ZERO
+var _finger_side := 1.0
+
 
 func _ready() -> void:
-	if gun_scene == null or spine == null or ragdoll == null:
-		return
-
 	main_hand = _find_hand(&"RightHand")
 	support_hand = _find_hand(&"LeftHand")
-	if main_hand == null or support_hand == null:
-		return
 
 	gun = gun_scene.instantiate() as Node3D
-	if gun == null:
-		return
 
-	_main_marker = gun.get_node_or_null(NodePath(main_marker)) as Node3D
-	_support_marker = gun.get_node_or_null(NodePath(support_marker)) as Node3D
-	if _main_marker == null or _support_marker == null:
-		push_warning(
-			"GunHolder: the gun scene needs %s and %s markers" % [main_marker, support_marker]
-		)
-		return
-
-	muzzle = gun.get_node_or_null(NodePath(muzzle_marker)) as Node3D
+	_main_marker = _marker(main_marker)
+	_support_marker = _marker(support_marker)
+	muzzle = _marker(muzzle_marker)
+	ejector = _marker(ejector_marker)
+	trigger_pad = _marker(trigger_marker)
+	rack_grab = _marker(rack_marker)
+	feed_start = _marker(feed_start_marker)
+	feed_end = _marker(feed_end_marker)
+	barrel_pivot = _marker(barrel_pivot_marker)
 
 	for n in hidden_parts:
-		var part := gun.get_node_or_null(NodePath(n))
-		if part is Node3D:
-			part.visible = false
+		(gun.get_node(NodePath(n)) as Node3D).visible = false
 
 	_assemble.call_deferred()
 
 
 func muzzle_transform() -> Transform3D:
-	var t := muzzle.global_transform if muzzle != null else gun.global_transform
+	var t := muzzle.global_transform
 	t.basis = t.basis.orthonormalized()
 	return t
+
+
+func _marker(marker_name: StringName) -> Node3D:
+	return gun.find_child(String(marker_name), true, false) as Node3D
 
 
 func _assemble() -> void:
@@ -94,12 +113,18 @@ func _assemble() -> void:
 
 	var support := _grip(_support_marker, support_tilt_degrees, support_depth, support_width, -1.0)
 
+	main_grip = main
+	support_grip = support
+
 	var main_in_gun := _hand_frame(main)
 	var support_in_gun := _hand_frame(support)
 
-	var material := _hand_material(main_hand)
+	var material := (main_hand.get_node(^"Hand") as MeshInstance3D).material_override
 	_build_fist(main_hand, main_in_gun, main, material)
 	_build_fist(support_hand, support_in_gun, support, material)
+
+	if has_trigger_finger():
+		pose_trigger_finger(_gun_space(trigger_pad).origin)
 
 	main_hand.add_child(gun)
 	gun.transform = (
@@ -108,16 +133,45 @@ func _assemble() -> void:
 	)
 
 	spine.gun_anchor = (main.hole + support.hole) * 0.5
-	spine.gun_muzzle = _gun_space(muzzle).origin if muzzle != null else spine.gun_anchor
+	spine.gun_muzzle = _gun_space(muzzle).origin
 	spine.hold_main = main_in_gun
 	spine.hold_support = support_in_gun
 	spine.gun_equipped = true
 
 
+func has_trigger_finger() -> bool:
+	return _finger.size() == 2
+
+
+func pose_trigger_finger(pad: Vector3) -> void:
+	var l1 := finger_segments.x
+	var l2 := finger_segments.y
+
+	var to := pad - _finger_base
+	var dist := clampf(to.length(), absf(l1 - l2) + 0.002, (l1 + l2) * 0.999)
+	var dir := to.normalized() if to.length_squared() > 0.000001 else Vector3.RIGHT
+
+	var along := (l1 * l1 + dist * dist - l2 * l2) / (2.0 * dist)
+	var height := sqrt(maxf(l1 * l1 - along * along, 0.0))
+
+	var hint := Vector3(finger_bend.x, finger_bend.y, finger_bend.z * _finger_side)
+	var pole := hint - dir * hint.dot(dir)
+	if pole.length_squared() < 0.000001:
+		pole = dir.cross(Vector3.UP)
+
+	pole = pole.normalized()
+
+	var joint := _finger_base + dir * along + pole * height
+	var tip := _finger_base + dir * dist
+
+	_place_rod(_finger[0], _finger_to_bone * _finger_base, _finger_to_bone * joint)
+	_place_rod(_finger[1], _finger_to_bone * joint, _finger_to_bone * tip)
+
+
 func _gun_space(marker: Node3D) -> Transform3D:
 	var t := Transform3D.IDENTITY
 	var n: Node = marker
-	while n != null and n != gun:
+	while n != gun:
 		if n is Node3D:
 			t = (n as Node3D).transform * t
 
@@ -155,10 +209,7 @@ func _build_fist(
 	g: Grip,
 	material: Material,
 ) -> void:
-	for n in [&"Hand", &"Thumb"]:
-		var old := hand.get_node_or_null(NodePath(n))
-		if old is Node3D:
-			old.visible = false
+	(hand.get_node(^"Hand") as Node3D).visible = false
 
 	var fist := Node3D.new()
 	fist.name = "Fist"
@@ -185,9 +236,15 @@ func _build_fist(
 	for i in 4:
 		var y := (1.5 - float(i)) * gap
 		if i == 0 and g.extend_index:
-			var base := _grip_point(g, front - 0.004, y, palm_w)
-			var tip := base + Vector3(0.07, 0.006, 0.0) - g.frame.z * g.side * 0.005
-			_rod(fist, to_bone * base, to_bone * tip, r, material)
+			_finger_base = _grip_point(g, front - 0.004, y, palm_w)
+			_finger_to_bone = to_bone
+			_finger_side = g.side
+			_finger.clear()
+			_finger.append(_rod(fist, Vector3.ZERO, Vector3.UP * finger_segments.x, r, material))
+			_finger.append(
+				_rod(fist, Vector3.ZERO, Vector3.UP * finger_segments.y, r * 0.9, material)
+			)
+
 			continue
 
 		var path: Array[Vector3] = [
@@ -211,11 +268,17 @@ func _grip_point(g: Grip, x: float, y: float, w: float) -> Vector3:
 	return g.hole + g.frame.x * x + g.frame.y * y + g.frame.z * (g.side * w)
 
 
-func _rod(parent: Node3D, from: Vector3, to: Vector3, radius: float, material: Material) -> void:
+func _rod(
+	parent: Node3D,
+	from: Vector3,
+	to: Vector3,
+	radius: float,
+	material: Material,
+) -> MeshInstance3D:
 	var delta := to - from
 	var length := delta.length()
 	if length < 0.0005:
-		return
+		return null
 
 	var mesh := CapsuleMesh.new()
 	mesh.radius = radius
@@ -223,26 +286,26 @@ func _rod(parent: Node3D, from: Vector3, to: Vector3, radius: float, material: M
 	mesh.radial_segments = 16
 	mesh.rings = 4
 
+	var rod := MeshInstance3D.new()
+	rod.mesh = mesh
+	rod.material_override = material
+	parent.add_child(rod)
+	_place_rod(rod, from, to)
+
+	return rod
+
+
+func _place_rod(rod: MeshInstance3D, from: Vector3, to: Vector3) -> void:
+	var delta := to - from
+	var length := delta.length()
+	if length < 0.0005:
+		return
+
 	var y := delta / length
 	var helper := Vector3.FORWARD if absf(y.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT
 	var x := y.cross(helper).normalized()
 
-	var rod := MeshInstance3D.new()
-	rod.mesh = mesh
-	rod.material_override = material
 	rod.transform = Transform3D(Basis(x, y, x.cross(y)), (from + to) * 0.5)
-	parent.add_child(rod)
-
-
-func _hand_material(hand: PhysicalBone3D) -> Material:
-	var old := hand.get_node_or_null(^"Hand") as MeshInstance3D
-	if old != null and old.material_override != null:
-		return old.material_override
-
-	var fallback := StandardMaterial3D.new()
-	fallback.albedo_color = Color(0.91, 0.455, 0.231)
-	fallback.roughness = 0.8
-	return fallback
 
 
 func _find_hand(suffix: StringName) -> PhysicalBone3D:

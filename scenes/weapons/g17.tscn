@@ -833,7 +833,25 @@ mesh = SubResource("ArrayMesh_ywty7")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1733174, 0.5634322, 0)
 
 [node name="GripMain" type="Marker3D" parent="." unique_id=1575767043]
-transform = Transform3D(0.11, 0, 0, 0, 0.11, 0, 0, 0, 0.11, -0.606, -0.0018419698, 0)
+transform = Transform3D(0.11, 0, 0, 0, 0.11, 0, 0, 0, 0.11, -0.606, -0.04, 0)
 
 [node name="GripSupport" type="Marker3D" parent="." unique_id=861306426]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.71227896, -0.29890963, 0)
+
+[node name="Ejector" type="Marker3D" parent="." unique_id=1767795257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.045, 0.58, 0)
+
+[node name="TriggerPad" type="Marker3D" parent="." unique_id=228221754]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.073913686, 0.14999999, 0)
+
+[node name="RackGrab" type="Marker3D" parent="." unique_id=1053657107]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.5, 0.35)
+
+[node name="FeedStart" type="Marker3D" parent="." unique_id=314780451]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.44, 0)
+
+[node name="FeedEnd" type="Marker3D" parent="." unique_id=952406206]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.024, 0.54, 0)
+
+[node name="BarrelPivot" type="Marker3D" parent="." unique_id=484855921]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.911, 0.538, 0)

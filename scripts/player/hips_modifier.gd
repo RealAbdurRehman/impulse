@@ -1,7 +1,7 @@
 extends SkeletonModifier3D
 class_name HipsModifier
 
-@export var gait: Node
+@export var gait: GaitDriver
 @export var hips_bone: StringName = &"mixamorig7_Hips"
 @export var left_upleg_bone: StringName = &"mixamorig7_LeftUpLeg"
 @export var left_leg_bone: StringName = &"mixamorig7_LeftLeg"
@@ -18,13 +18,8 @@ var _measured := false
 
 func _process_modification() -> void:
 	var skel := get_skeleton()
-	if skel == null or gait == null:
-		return
-
 	if _hips_idx == -1:
 		_hips_idx = skel.find_bone(hips_bone)
-		if _hips_idx == -1:
-			return
 
 	if reset_pose_each_frame:
 		skel.reset_bone_poses()
@@ -33,20 +28,17 @@ func _process_modification() -> void:
 		_measure(skel)
 
 	var to_skel := skel.global_transform.basis.inverse()
-	var lean: float = gait.lean_angle
+	var lean := gait.lean_angle
 
 	var pose := skel.get_bone_global_pose(_hips_idx)
-	var shift_fwd: float = gait.hips_offset_fwd
-	var shift_y: float = gait.hips_offset_y
-	if recoil != null:
-		shift_fwd -= recoil.hips_back
-		shift_y -= recoil.hips_drop
+	var shift_fwd := gait.hips_offset_fwd - recoil.hips_back
+	var shift_y := gait.hips_offset_y - recoil.hips_drop
 
 	var fwd_world: Vector3 = skel.global_transform.basis.orthonormalized() * Vector3.BACK
 	pose.origin += to_skel * (Vector3(0.0, shift_y, 0.0) + fwd_world * shift_fwd)
 
 	if absf(lean) > 0.001:
-		var axis: Vector3 = (to_skel * (gait.lean_axis as Vector3)).normalized()
+		var axis := (to_skel * gait.lean_axis).normalized()
 		pose.basis = Basis(axis, lean) * pose.basis
 
 	skel.set_bone_global_pose(_hips_idx, pose)
@@ -57,20 +49,15 @@ func _measure(skel: Skeleton3D) -> void:
 	var knee := skel.find_bone(left_leg_bone)
 	var foot := skel.find_bone(left_foot_bone)
 
-	if up < 0 or knee < 0 or foot < 0:
-		_measured = true
-		return
-
 	var xf := skel.global_transform
 	var a := xf * skel.get_bone_global_rest(up).origin
 	var b := xf * skel.get_bone_global_rest(knee).origin
 	var c := xf * skel.get_bone_global_rest(foot).origin
 
 	var leg := (a - b).length() + (b - c).length()
-	var root_y: float = (gait.player as Node3D).global_position.y
+	var root_y := gait.player.global_position.y
 
-	if leg > 0.2:
-		gait.leg_length = leg
-		gait.hip_rest_height = a.y - root_y
+	gait.leg_length = leg
+	gait.hip_rest_height = a.y - root_y
 
 	_measured = true

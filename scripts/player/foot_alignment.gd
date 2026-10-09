@@ -16,24 +16,13 @@ var _idx: Array[int] = [-1, -1]
 
 func _process_modification() -> void:
 	var skel := get_skeleton()
-	if skel == null:
-		return
-
 	_align(skel, 0, left_foot_bone, left_foot_target)
 	_align(skel, 1, right_foot_bone, right_foot_target)
 
 
 func _align(skel: Skeleton3D, slot: int, bone_name: StringName, target: Node3D) -> void:
-	if target == null or _idx[slot] == -2:
-		return
-
 	if _idx[slot] == -1:
 		_idx[slot] = skel.find_bone(bone_name)
-
-		if _idx[slot] == -1:
-			_idx[slot] = -2
-
-			return
 
 	var idx := _idx[slot]
 	var skel_basis := skel.global_transform.basis.orthonormalized()

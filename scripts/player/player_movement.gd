@@ -1,3 +1,4 @@
+class_name PlayerMovement
 extends Node3D
 
 @export_group("Speeds")
@@ -52,7 +53,6 @@ extends Node3D
 @export var aim_deadzone := 0.35
 @export var aim_origin_height := 1.35
 
-@export var camera: Camera3D
 @export var hide_system_cursor := false
 
 @export_group("Push")
@@ -256,7 +256,7 @@ func _update_air(delta: float) -> void:
 	if _is_blocked(int(move_dir)) and move_dir != 0.0:
 		move_speed = move_toward(move_speed, 0.0, blocked_brake * delta)
 
-	p.x += (move_dir * move_speed + push) * delta
+	p.x += (move_dir * move_speed) * delta
 	p.y += _vy * delta
 	p.z = plane_z
 
@@ -268,7 +268,7 @@ func _update_air(delta: float) -> void:
 			grounded = true
 
 	global_position = p
-	velocity = Vector3(move_dir * move_speed + push, _vy, 0.0)
+	velocity = Vector3(move_dir * move_speed, _vy, 0.0)
 
 
 func _is_blocked(dir: int) -> bool:
@@ -295,10 +295,7 @@ func _ray(from: Vector3, to: Vector3) -> Dictionary:
 
 
 func _update_aim() -> bool:
-	var cam := camera if camera != null else get_viewport().get_camera_3d()
-	if cam == null:
-		return false
-
+	var cam := get_viewport().get_camera_3d()
 	var mouse := get_viewport().get_mouse_position()
 	var ray_from := cam.project_ray_origin(mouse)
 	var ray_dir := cam.project_ray_normal(mouse)

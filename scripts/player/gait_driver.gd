@@ -39,7 +39,7 @@ class Foot:
 const NO_GROUND := -1.0e20
 const PROBE_UP := 0.8
 
-@export var player: Node3D
+@export var player: PlayerMovement
 
 @export var left_foot_target: Node3D
 @export var right_foot_target: Node3D
@@ -257,9 +257,6 @@ var _shuffle_timer := 4.0
 
 
 func _ready() -> void:
-	if player == null:
-		return
-
 	_rng.randomize()
 	_shuffle_timer = _rng.randf_range(idle_shuffle_interval.x, idle_shuffle_interval.y)
 
@@ -267,8 +264,7 @@ func _ready() -> void:
 
 
 func _setup_feet() -> void:
-	if "run_speed" in player:
-		run_speed = player.run_speed
+	run_speed = player.run_speed
 
 	_plane_z = player.global_position.z
 
@@ -294,8 +290,7 @@ func _make_foot(target: Node3D, pole: Node3D, side: float) -> Foot:
 	f.side = side
 
 	target.top_level = true
-	if pole:
-		pole.top_level = true
+	pole.top_level = true
 
 	var base := player.global_position + _side_vec() * foot_lateral * side
 	var g := _sample_ground(base)
@@ -310,15 +305,14 @@ func _make_foot(target: Node3D, pole: Node3D, side: float) -> Foot:
 
 
 func _physics_process(delta: float) -> void:
-	if player == null or _feet.size() < 2:
+	if _feet.size() < 2:
 		return
 
-	var on_floor: bool = player.is_on_floor()
-	var move_speed := _pf("move_speed")
-	var dirx := signf(_pf("move_dir"))
+	var on_floor := player.is_on_floor()
+	var move_speed := player.move_speed
+	var dirx := signf(player.move_dir)
 
-	var v: Variant = player.get("velocity")
-	_vel = v if v is Vector3 else Vector3.ZERO
+	_vel = player.velocity
 
 	var fwd := _fwd()
 	var side_vec := _side_vec()
@@ -382,7 +376,7 @@ func _physics_process(delta: float) -> void:
 		1.0,
 	)
 
-	if on_floor and player.has_method("drive_root"):
+	if on_floor:
 		var sy := 0.0
 		for f in _feet:
 			sy += _foot_support_y(f)
@@ -659,13 +653,13 @@ func _retarget_landing(f: Foot, k: float, delta: float) -> void:
 	if f.recovery or stairs_amount > 0.1 or k > 0.85:
 		return
 
-	var dirx := signf(_pf("move_dir"))
+	var dirx := signf(player.move_dir)
 	if dirx == 0.0:
 		return
 
 	var left := (1.0 - k) * f.duration
 	var pred := _predict(left)
-	if absf(pred.y - _pf("move_speed")) < 0.05:
+	if absf(pred.y - player.move_speed) < 0.05:
 		return
 
 	var root_x: float = player.global_position.x
@@ -688,16 +682,16 @@ func _lead_for(speed: float) -> float:
 
 
 func _predict(t: float) -> Vector2:
-	var v := _pf("move_speed")
-	var want := _pf("desired_speed")
-	var rate := _pf("decel_ground")
+	var v := player.move_speed
+	var want := player.desired_speed
+	var rate := player.decel_ground
 
-	var want_dir := signf(_pf("desired_dir"))
-	if want_dir != 0.0 and want_dir != signf(_pf("move_dir")) and v > 0.05:
+	var want_dir := signf(player.desired_dir)
+	if want_dir != 0.0 and want_dir != signf(player.move_dir) and v > 0.05:
 		want = 0.0
-		rate = _pf("turn_brake")
+		rate = player.turn_brake
 	elif want > v:
-		rate = _pf("accel_ground")
+		rate = player.accel_ground
 
 	if rate < 0.01 or absf(want - v) < 0.001:
 		return Vector2(v * t, v)
@@ -901,7 +895,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 
 
 func _on_plant(was_recovery: bool) -> void:
-	var impact := clampf(step_impact + absf(_pf("move_speed")) * step_impact_per_speed, 0.0, 0.5)
+	var impact := clampf(step_impact + absf(player.move_speed) * step_impact_per_speed, 0.0, 0.5)
 	impact *= lerpf(1.0, crouch_impact_scale, _crouch_amt)
 	if was_recovery:
 		impact *= 0.35
@@ -1167,7 +1161,7 @@ func _is_front_foot(f: Foot) -> bool:
 
 
 func _crouch_stance() -> float:
-	var walking := clampf(_pf("move_speed") / 0.45, 0.0, 1.0)
+	var walking := clampf(player.move_speed / 0.45, 0.0, 1.0)
 	return _crouch_amt * (1.0 - 0.85 * walking)
 
 
@@ -1203,10 +1197,7 @@ func _fwd() -> Vector3:
 
 
 func _target_fwd() -> Vector3:
-	if "facing" in player:
-		return Vector3(float(player.facing), 0.0, 0.0)
-
-	return _fwd()
+	return Vector3(float(player.facing), 0.0, 0.0)
 
 
 func _side_vec() -> Vector3:
@@ -1216,11 +1207,6 @@ func _side_vec() -> Vector3:
 func _facing_sign() -> float:
 	var s := signf(_target_fwd().x)
 	return s if s != 0.0 else 1.0
-
-
-func _pf(prop: String) -> float:
-	var v: Variant = player.get(prop)
-	return float(v) if v != null else 0.0
 
 
 func _sample_ground(p: Vector3, down := 1.5) -> Array:

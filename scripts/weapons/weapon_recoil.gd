@@ -73,8 +73,6 @@ func _ready() -> void:
 	set_physics_process(false)
 
 	weapon = get_parent() as Weapon
-	if weapon == null:
-		return
 
 	_flip.setup(TAU * flip_frequency_hz, flip_damping)
 	_slide.setup(TAU * slide_frequency_hz, slide_damping)
@@ -85,40 +83,27 @@ func _ready() -> void:
 
 
 func aim_correction() -> float:
-	var facing := 1.0
-	if weapon.player != null and "facing" in weapon.player:
-		facing = float(weapon.player.facing)
-
-	return -facing * _seen * (1.0 - weapon.stats.recoil_aim_influence)
+	return -float(weapon.player.facing) * _seen * (1.0 - weapon.stats.recoil_aim_influence)
 
 
 func _link() -> void:
-	var spine := weapon.holder.spine if weapon.holder != null else null
-	if spine == null:
-		return
-
+	var spine := weapon.holder.spine
 	spine.recoil = self
 
-	var skeleton := spine.get_parent()
-	if skeleton == null:
-		return
-
-	for c in skeleton.get_children():
+	for c in spine.get_parent().get_children():
 		if c is HipsModifier:
 			c.recoil = self
 
 
 func _on_fired(_muzzle: Transform3D) -> void:
 	var s := weapon.stats
-	var strength: int = 1.0 + s.recoil_variation * randf_range(-1.0, 1.0)
+	var strength := 1.0 + s.recoil_variation * randf_range(-1.0, 1.0)
 
 	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * strength)
 	_slide.kick(s.recoil_slide * strength)
 	_body.kick(lerpf(1.0, strength, 0.5))
 
-	var player := weapon.player
-	if player != null and player.has_method(&"push_back") and "facing" in player:
-		player.call(&"push_back", s.recoil_push * strength)
+	weapon.player.push_back(s.recoil_push * strength)
 
 	set_physics_process(true)
 
@@ -129,7 +114,7 @@ func _physics_process(delta: float) -> void:
 	_body.step(delta)
 
 	var s := weapon.stats
-	var cap: int = s.recoil_stacking
+	var cap := s.recoil_stacking
 
 	flip = _limit(_flip.x, deg_to_rad(s.recoil_flip_degrees) * cap)
 	slide = _limit(_slide.x, s.recoil_slide * cap)

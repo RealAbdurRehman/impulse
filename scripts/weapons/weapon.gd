@@ -10,14 +10,14 @@ signal reload_finished
 
 @export var stats: WeaponStats
 @export var holder: GunHolder
-@export var player: Node3D
+@export var player: PlayerMovement
 
 @export_group("Input")
 @export var fire_action: StringName = &"shoot"
 @export var reload_action: StringName = &"reload"
 
-@export var spawn_effects := true
-@export var spawn_recoil := true
+var animator: GunAnimator
+var reloader: WeaponReload
 
 var ammo := 0
 var recoil: WeaponRecoil
@@ -31,36 +31,23 @@ var _linked := false
 
 
 func _ready() -> void:
-	if stats == null:
-		stats = WeaponStats.new()
-
-	var parent := get_parent()
-	if holder == null:
-		holder = parent.get_node_or_null(^"GunHolder") as GunHolder
-
-	if player == null:
-		player = parent as Node3D
-
 	ammo = stats.magazine_size
 
-	if spawn_effects:
-		var fx := WeaponFx.new()
-		fx.name = &"WeaponFx"
-		add_child(fx)
+	animator = GunAnimator.new()
+	animator.name = &"GunAnimator"
+	add_child(animator)
 
-	if spawn_recoil:
-		recoil = WeaponRecoil.new()
-		recoil.name = &"WeaponRecoil"
-		add_child(recoil)
+	var fx := WeaponFx.new()
+	fx.name = &"WeaponFx"
+	add_child(fx)
 
+	recoil = WeaponRecoil.new()
+	recoil.name = &"WeaponRecoil"
+	add_child(recoil)
 
-func equip(new_stats: WeaponStats) -> void:
-	stats = new_stats
-	ammo = stats.magazine_size
-
-	_cooldown = 0.0
-	_reload_left = 0.0
-	ammo_changed.emit(ammo, stats.magazine_size)
+	reloader = WeaponReload.new()
+	reloader.name = &"WeaponReload"
+	add_child(reloader)
 
 
 func reload() -> void:
@@ -86,7 +73,7 @@ func _physics_process(delta: float) -> void:
 			ammo_changed.emit(ammo, stats.magazine_size)
 			reload_finished.emit()
 
-	if InputMap.has_action(reload_action) and Input.is_action_just_pressed(reload_action):
+	if Input.is_action_just_pressed(reload_action):
 		reload()
 
 	if Input.is_action_just_pressed(fire_action):
@@ -114,7 +101,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _gun_ready() -> bool:
-	if holder == null or holder.gun == null or not holder.gun.is_inside_tree():
+	if not holder.gun.is_inside_tree():
 		return false
 
 	if not _linked:
@@ -131,24 +118,16 @@ func _shoot() -> void:
 
 	var muzzle := holder.muzzle_transform()
 	var origin := muzzle.origin
-	origin.z = _plane_z(origin.z)
+	origin.z = player.plane_z
 
 	var forward := Vector3(muzzle.basis.x.x, muzzle.basis.x.y, 0.0).normalized()
-	if recoil != null:
-		forward = forward.rotated(Vector3.BACK, recoil.aim_correction())
+	forward = forward.rotated(Vector3.BACK, recoil.aim_correction())
 
 	fired.emit(muzzle)
 	for i in stats.pellets:
 		_trace(origin, _with_spread(forward))
 
 	ammo_changed.emit(ammo, stats.magazine_size)
-
-
-func _plane_z(fallback: float) -> float:
-	if player != null and "plane_z" in player:
-		return player.plane_z
-
-	return fallback
 
 
 func _with_spread(dir: Vector3) -> Vector3:
@@ -171,9 +150,6 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 
 func _apply_hit(hit: Dictionary, dir: Vector3) -> void:
 	var body := hit.collider as Node3D
-	if body == null:
-		return
-
 	var point: Vector3 = hit.position
 	if body.has_method(&"take_damage"):
 		body.call(&"take_damage", stats.damage, point, dir)
