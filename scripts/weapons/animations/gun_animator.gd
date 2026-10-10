@@ -18,6 +18,7 @@ enum Phase {
 }
 
 signal ejected
+signal slide_locked
 
 @export_group("Parts")
 @export var slide_parts: Array[StringName] = [&"Slide", &"Cover"]
@@ -284,6 +285,7 @@ func _step_slide(delta: float) -> void:
 					_phase = Phase.SETTLE
 					_t = 0.0
 					_from = _s
+					slide_locked.emit()
 				else:
 					_begin_forward(stats.slide_forward_time)
 

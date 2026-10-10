@@ -2,14 +2,14 @@ class_name WeaponStats
 extends Resource
 
 @export_group("Fire")
-@export var automatic := false
+@export var automatic := true
 @export var auto_reload := false
 
 @export var reload_time := 2.4
 @export var magazine_size := 17
 @export var trigger_buffer := 0.12
 
-@export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 600.0
+@export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 300.0
 
 @export_group("Aim down sights")
 @export var ads_time := 0.24
@@ -111,3 +111,6 @@ extends Resource
 
 @export var slide_stop_degrees := 8.0
 @export var trigger_pull_degrees := 22.0
+
+@export_group("Audio")
+@export var sounds: WeaponSounds

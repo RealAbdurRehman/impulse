@@ -2,8 +2,8 @@ extends Camera3D
 
 @export var target: PlayerMovement
 
-@export var follow_speed: float = 10.0
-@export var mouse_look_weight: float = 1.5
+@export var follow_speed: float = 7.0
+@export var mouse_look_weight: float = 2.8
 
 @export_group("Look ahead")
 @export var lookahead_time: float = 0.18

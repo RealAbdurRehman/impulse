@@ -3,13 +3,21 @@ extends Node3D
 
 
 class Casing extends RigidBody3D:
+	signal landed(speed: float)
+
 	var age := 0.0
 	var life := 8.0
+	var struck := false
+	var impact_speed := 0.0
 
 	var pivot := Node3D.new()
 
 
 	func _init() -> void:
+		contact_monitor = true
+		max_contacts_reported = 1
+		body_entered.connect(_on_body_entered)
+
 		add_child(pivot)
 		retire()
 
@@ -17,6 +25,7 @@ class Casing extends RigidBody3D:
 	func launch(at: Transform3D, linear: Vector3, angular: Vector3, lifetime: float) -> void:
 		age = 0.0
 		life = lifetime
+		struck = false
 		pivot.scale = Vector3.ONE
 
 		freeze = false
@@ -37,6 +46,7 @@ class Casing extends RigidBody3D:
 
 
 	func _physics_process(delta: float) -> void:
+		impact_speed = linear_velocity.length()
 		age += delta
 
 		var left := life - age
@@ -44,6 +54,14 @@ class Casing extends RigidBody3D:
 			retire()
 		elif left < 0.5:
 			pivot.scale = Vector3.ONE * (left / 0.5)
+
+
+	func _on_body_entered(_body: Node) -> void:
+		if struck:
+			return
+
+		struck = true
+		landed.emit(impact_speed)
 
 
 class Tracer:
@@ -265,10 +283,10 @@ func _ready() -> void:
 	weapon = get_parent() as Weapon
 
 	var dir := (get_script() as Script).resource_path.get_base_dir()
-	_flash_shader = load(dir.path_join("muzzle_flash.gdshader")) as Shader
-	_smoke_shader = load(dir.path_join("smoke.gdshader")) as Shader
-	_tracer_shader = load(dir.path_join("tracer.gdshader")) as Shader
-	_stream_shader = load(dir.path_join("smoke_stream.gdshader")) as Shader
+	_flash_shader = load(dir.path_join("shaders/muzzle_flash.gdshader")) as Shader
+	_smoke_shader = load(dir.path_join("shaders/smoke.gdshader")) as Shader
+	_tracer_shader = load(dir.path_join("shaders/tracer.gdshader")) as Shader
+	_stream_shader = load(dir.path_join("shaders/smoke_stream.gdshader")) as Shader
 	_noise = _noise_texture()
 
 	_build_sprites()
@@ -986,6 +1004,7 @@ func _build_casings() -> void:
 
 	for i in max_casings:
 		var c := Casing.new()
+		c.landed.connect(_on_casing_landed)
 		c.collision_layer = casing_layer
 		c.collision_mask = casing_mask
 		c.mass = 0.01
@@ -1016,6 +1035,11 @@ func _build_casings() -> void:
 
 		add_child(c)
 		_casings.append(c)
+
+
+func _on_casing_landed(speed: float) -> void:
+	if not _silent:
+		weapon.audio.casing_landed(speed)
 
 
 func _collect_meshes(node: Node, root: Node3D, parts: Array[Dictionary]) -> void:

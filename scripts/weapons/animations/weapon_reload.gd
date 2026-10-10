@@ -15,9 +15,12 @@ enum Cue {
 	GRAB,
 	SEAT,
 	DROP,
+	UNLOCK,
 	TAKE_SLIDE,
 	LET_GO,
 }
+
+signal cued(cue: Cue)
 
 
 class MagShape:
@@ -72,7 +75,8 @@ class Beat:
 @export var carry_bulge := Vector3(0.0, 0.0, 0.05)
 
 @export_group("Slide rack")
-@export var rack_pull := 0.022
+@export_range(0.0, 1.0) var rack_start := 0.45
+@export_range(0.0, 1.0) var rack_pull := 1.0
 @export_range(-90.0, 90.0) var rack_yaw_degrees := 20.0
 @export_range(-90.0, 90.0) var rack_roll_degrees := 15.0
 
@@ -170,9 +174,7 @@ func _physics_process(delta: float) -> void:
 		_next += 1
 
 	if _driving:
-		weapon.animator.drive_slide(
-			_slide_from + _rack_amount(k0, k1, e) / maxf(weapon.stats.slide_travel, 0.0001)
-		)
+		weapon.animator.drive_slide(_rack_slide(k0, k1, e))
 
 	if p >= 1.0:
 		_finish()
@@ -228,7 +230,8 @@ func _key_frame(key: Step, gun_pose: Transform3D, skel: Skeleton3D) -> Transform
 			return Transform3D(mag.basis, mag.origin + Vector3.UP * key.amount) * inverse
 
 		Kind.RACK:
-			var offset := Transform3D(Basis.IDENTITY, Vector3(-key.amount, 0.0, 0.0))
+			var pulled := weapon.animator.slide_position() * weapon.stats.slide_travel
+			var offset := Transform3D(Basis.IDENTITY, Vector3(-pulled, 0.0, 0.0))
 			return gun_pose * offset * _rack_frame() * _grip_rel.affine_inverse()
 
 	return gun_pose * weapon.holder.spine.hold_support
@@ -262,12 +265,14 @@ func _gap(key: Step) -> float:
 	return key.amount if key.kind == Kind.STAGE else stage_distance
 
 
-func _rack_amount(k0: Step, k1: Step, e: float) -> float:
+func _rack_slide(k0: Step, k1: Step, e: float) -> float:
 	if k1.kind != Kind.RACK:
-		return 0.0
+		return _slide_from
 
-	var from := k0.amount if k0.kind == Kind.RACK else 0.0
-	return lerpf(from, k1.amount, e)
+	if k0.kind == Kind.RACK:
+		return lerpf(k0.amount, k1.amount, e)
+
+	return lerpf(_slide_from, minf(k1.amount, _slide_from), e)
 
 
 func _add(
@@ -327,13 +332,14 @@ func _build() -> void:
 		var take := _add(Kind.POUCH, pouch_lift, 1.2, 1.0, 0.0)
 		_add(Kind.STAGE, stage_distance, 3.0, 1.0, 1.0, false, carry_bulge)
 		var seat := _add(Kind.STAGE, 0.0, 1.2, 1.0, 1.0, true)
-		var grab := _add(Kind.RACK, 0.0, 1.6, 0.4, 0.0)
-		var back := _add(Kind.RACK, rack_pull, 1.4, 0.4, 0.0)
+		var grab := _add(Kind.RACK, rack_start, 1.6, 0.4, 0.0)
+		var back := _add(Kind.RACK, rack_pull, 1.8, 0.4, 0.0)
 		_add(Kind.GRIP, 0.0, 3.0, 0.0, 0.0)
 
 		_cue(Cue.DROP, first, 0.15)
 		_cue(Cue.GRAB, take, 0.0)
 		_cue(Cue.SEAT, seat, 1.0)
+		_cue(Cue.UNLOCK, seat, 1.0)
 		_cue(Cue.TAKE_SLIDE, grab, 1.0)
 		_cue(Cue.LET_GO, back, 1.0)
 
@@ -359,6 +365,8 @@ func _build() -> void:
 
 
 func _fire(cue: Cue) -> void:
+	cued.emit(cue)
+
 	match cue:
 		Cue.RELEASE:
 			_jolt = 0.4
@@ -381,7 +389,7 @@ func _fire(cue: Cue) -> void:
 		Cue.DROP:
 			_drop()
 
-		Cue.TAKE_SLIDE:
+		Cue.UNLOCK:
 			_slide_from = weapon.animator.slide_position()
 			_driving = true
 			weapon.animator.drive_slide(_slide_from)

@@ -7,6 +7,7 @@ signal dry_fired
 signal ammo_changed(current: int, capacity: int)
 signal reload_started
 signal reload_finished
+signal aim_changed(aiming: bool)
 
 @export var stats: WeaponStats
 @export var holder: GunHolder
@@ -19,11 +20,13 @@ signal reload_finished
 
 var animator: GunAnimator
 var reloader: WeaponReload
+var audio: WeaponAudio
 
 var ammo := 0
 var recoil: WeaponRecoil
 
 var _aim := 0.0
+var _aiming := false
 var _cooldown := 0.0
 var _press_buffer := 0.0
 var _reload_left := 0.0
@@ -50,6 +53,10 @@ func _ready() -> void:
 	reloader = WeaponReload.new()
 	reloader.name = &"WeaponReload"
 	add_child(reloader)
+
+	audio = WeaponAudio.new()
+	audio.name = &"WeaponAudio"
+	add_child(audio)
 
 
 func reload() -> void:
@@ -106,6 +113,10 @@ func _physics_process(delta: float) -> void:
 
 func _update_aim(delta: float) -> void:
 	var want := Input.is_action_pressed(aim_action) and _reload_left <= 0.0
+	if want != _aiming:
+		_aiming = want
+		aim_changed.emit(want)
+
 	_aim = move_toward(_aim, 1.0 if want else 0.0, delta / maxf(stats.ads_time, 0.01))
 
 	player.aim_amount = smoothstep(0.0, 1.0, _aim)
