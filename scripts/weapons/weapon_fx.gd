@@ -214,8 +214,6 @@ const QUAD: Array[Vector2] = [
 	Vector2(0.0, 1.0),
 ]
 
-@export var casing_node: StringName = &"BulletCasing"
-
 @export_group("Pools")
 @export var sprite_pool := 160
 @export var max_casings := 40
@@ -917,7 +915,8 @@ func _prewarm() -> void:
 	casing.global_transform = spot
 	warm.append(casing)
 
-	var cartridge := weapon.holder.gun.get_node(NodePath(weapon.animator.feed_part)).duplicate() as Node3D
+	var feed := weapon.holder.gun.get_node(NodePath(weapon.stats.feed_part))
+	var cartridge := feed.duplicate() as Node3D
 	cartridge.visible = true
 	cartridge.top_level = true
 	add_child(cartridge)
@@ -931,7 +930,7 @@ func _prewarm() -> void:
 		piece.queue_free()
 
 	_silent = true
-	weapon.animator.slide_node()
+	weapon.animator.rack_node()
 
 	var muzzle := weapon.holder.muzzle_transform()
 	var fwd := Vector3(muzzle.basis.x.x, muzzle.basis.x.y, 0.0).normalized()
@@ -973,7 +972,7 @@ func _build_casings() -> void:
 	_casings.clear()
 	_casing_next = 0
 
-	var src := gun.get_node(NodePath(casing_node)) as Node3D
+	var src := gun.get_node(NodePath(weapon.stats.casing_part)) as Node3D
 
 	var parts: Array[Dictionary] = []
 	_collect_meshes(src, src, parts)

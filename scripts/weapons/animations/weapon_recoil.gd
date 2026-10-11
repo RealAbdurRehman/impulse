@@ -41,16 +41,6 @@ class Spring:
 		return absf(x) < 0.00001 and absf(v) < 0.0001
 
 
-@export_group("Dynamics")
-@export var flip_frequency_hz := 4.5
-@export_range(0.1, 0.95) var flip_damping := 0.62
-
-@export var slide_frequency_hz := 5.4
-@export_range(0.1, 0.95) var slide_damping := 0.6
-
-@export var body_frequency_hz := 1.75
-@export_range(0.1, 0.95) var body_damping := 0.5
-
 @export var arm_lag := 0.033
 
 var weapon: Weapon
@@ -65,6 +55,7 @@ var _flip := Spring.new()
 var _slide := Spring.new()
 var _body := Spring.new()
 
+var _climb := 0.0
 var _seen := 0.0
 var _history := PackedFloat32Array()
 
@@ -74,9 +65,10 @@ func _ready() -> void:
 
 	weapon = get_parent() as Weapon
 
-	_flip.setup(TAU * flip_frequency_hz, flip_damping)
-	_slide.setup(TAU * slide_frequency_hz, slide_damping)
-	_body.setup(TAU * body_frequency_hz, body_damping)
+	var s := weapon.stats
+	_flip.setup(TAU * s.recoil_flip_hz, s.recoil_flip_damping)
+	_slide.setup(TAU * s.recoil_slide_hz, s.recoil_slide_damping)
+	_body.setup(TAU * s.recoil_body_hz, s.recoil_body_damping)
 
 	weapon.fired.connect(_on_fired)
 	_link()
@@ -101,6 +93,7 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	strength *= lerpf(1.0, s.ads_recoil_scale, weapon.player.aim_amount)
 
 	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * strength)
+	_climb += deg_to_rad(s.recoil_climb_degrees) * strength
 	_slide.kick(s.recoil_slide * strength)
 	_body.kick(lerpf(1.0, strength, 0.5))
 
@@ -113,11 +106,12 @@ func _physics_process(delta: float) -> void:
 	_flip.step(delta)
 	_slide.step(delta)
 	_body.step(delta)
+	_climb *= exp(-weapon.stats.recoil_climb_recovery * delta)
 
 	var s := weapon.stats
 	var cap := s.recoil_stacking
 
-	flip = _limit(_flip.x, deg_to_rad(s.recoil_flip_degrees) * cap)
+	flip = _limit(_flip.x + _climb, deg_to_rad(s.recoil_flip_degrees) * cap)
 	slide = _limit(_slide.x, s.recoil_slide * cap)
 
 	var body := _limit(_body.x, cap)
@@ -132,8 +126,9 @@ func _physics_process(delta: float) -> void:
 
 	_seen = _history[0]
 
-	if _flip.resting() and _slide.resting() and _body.resting():
+	if _flip.resting() and _slide.resting() and _body.resting() and absf(_climb) < 0.00001:
 		set_physics_process(false)
+		_climb = 0.0
 		flip = 0.0
 		slide = 0.0
 		torso = 0.0

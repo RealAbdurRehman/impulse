@@ -20,17 +20,8 @@ enum Phase {
 signal ejected
 signal slide_locked
 
-@export_group("Parts")
-@export var slide_parts: Array[StringName] = [&"Slide", &"Cover"]
-@export var barrel_parts: Array[StringName] = [&"Barrel", &"MuzzleNut"]
-@export var trigger_part: StringName = &"Trigger"
-@export var slide_stop_part: StringName = &"SlideStop"
-
 @export_group("Ejection")
 @export_range(0.05, 0.9) var eject_at := 0.35
-
-@export_group("Feed")
-@export var feed_part: StringName = &"Bullet"
 
 @export_group("Feel")
 @export var lock_settle_time := 0.04
@@ -44,6 +35,8 @@ signal slide_locked
 @export var trigger_release_speed := 22.0
 @export var trigger_hold := 0.09
 
+@export var cover_time := 0.08
+
 var weapon: Weapon
 
 var _gun: Node3D
@@ -53,6 +46,8 @@ var _slide: Array[Part] = []
 var _barrel: Array[Part] = []
 var _trigger: Part
 var _stop: Part
+var _handle: Part
+var _cover: Part
 var _pivot := Vector3.ZERO
 var _pad_local := Vector3.ZERO
 var _port := Transform3D.IDENTITY
@@ -76,6 +71,8 @@ var _from := 0.0
 var _duration := 0.05
 
 var _s := 0.0
+var _h := 0.0
+var _cover_t := -1.0
 var _lever := 0.0
 var _pull := 0.0
 var _hold := 0.0
@@ -95,6 +92,11 @@ func _physics_process(delta: float) -> void:
 
 	_step_slide(delta)
 	_step_controls(delta)
+	_step_cover(delta)
+
+	if _phase != Phase.DRIVEN:
+		_h = minf(_h, _s)
+
 	_apply()
 
 	if _settled():
@@ -108,6 +110,7 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	_lock = weapon.ammo <= 0 and weapon.stats.slide_lock
 	_ejected = false
 	_feed_forced = false
+	_open_cover()
 
 	_phase = Phase.BACK
 	_t = 0.0
@@ -137,10 +140,12 @@ func release_slide() -> void:
 		set_physics_process(true)
 
 
-func drive_slide(value: float) -> void:
+func drive_slide(value: float, handle := value) -> void:
 	_lock = false
 	_phase = Phase.DRIVEN
 	_s = value
+	_h = handle
+	_open_cover()
 	set_physics_process(true)
 
 
@@ -148,13 +153,17 @@ func slide_position() -> float:
 	return _s
 
 
-func slide_node() -> Node3D:
+func rack_position() -> float:
+	return _s if _handle == null else _h
+
+
+func rack_node() -> Node3D:
 	_resolve()
-	return _slide[0].node
+	return (_slide[0] if _handle == null else _handle).node
 
 
-func slide_rest() -> Transform3D:
-	return _slide[0].rest
+func rack_rest() -> Transform3D:
+	return (_slide[0] if _handle == null else _handle).rest
 
 
 func port_transform() -> Transform3D:
@@ -182,16 +191,20 @@ func _resolve() -> bool:
 	_gun = gun
 	_scale = maxf(gun.scale.x, 0.0001)
 
+	var stats := weapon.stats
 	_slide.clear()
 	_barrel.clear()
-	for n in slide_parts:
+	for n in stats.slide_parts:
 		_slide.append(_part(gun, n))
 
-	for n in barrel_parts:
+	for n in stats.barrel_parts:
 		_barrel.append(_part(gun, n))
 
-	_trigger = _part(gun, trigger_part)
-	_stop = _part(gun, slide_stop_part)
+	_trigger = _part(gun, stats.trigger_part)
+	_stop = _part(gun, stats.catch_part)
+	_handle = _part(gun, stats.handle_part) if stats.handle_part else null
+	_cover = _part(gun, stats.cover_part) if stats.cover_part else null
+	_cover_t = -1.0
 	_pivot = _in_gun(weapon.holder.barrel_pivot).origin
 	_pad_local = _trigger.rest.affine_inverse() * _in_gun(weapon.holder.trigger_pad).origin
 	_port = _in_gun(weapon.holder.ejector)
@@ -199,13 +212,14 @@ func _resolve() -> bool:
 	if is_instance_valid(_round):
 		_round.queue_free()
 
-	var cartridge := gun.get_node(NodePath(feed_part)) as Node3D
+	var cartridge := gun.get_node(NodePath(stats.feed_part)) as Node3D
 	_resolve_feed(cartridge)
 	_round = cartridge.duplicate() as Node3D
 	_round.visible = false
 	gun.add_child(_round)
 
 	_s = 0.0
+	_h = 0.0
 	_lever = 0.0
 	_pull = 0.0
 	_phase = Phase.IDLE
@@ -314,6 +328,16 @@ func _step_slide(delta: float) -> void:
 				_phase = Phase.IDLE
 
 
+func _open_cover() -> void:
+	if _cover != null and _cover_t < 0.0:
+		_cover_t = 0.0
+
+
+func _step_cover(delta: float) -> void:
+	if _cover_t >= 0.0:
+		_cover_t = minf(_cover_t + delta, cover_time)
+
+
 func _step_controls(delta: float) -> void:
 	var lever_target := 0.0
 	if (
@@ -339,6 +363,18 @@ func _apply() -> void:
 			p.rest.basis,
 			p.rest.origin + Vector3(-travel * _s, 0.0, 0.0),
 		)
+
+	if _handle != null:
+		_handle.node.transform = Transform3D(
+			_handle.rest.basis,
+			_handle.rest.origin + Vector3(-travel * _h, 0.0, 0.0),
+		)
+
+	if _cover != null:
+		var u := maxf(_cover_t, 0.0) / cover_time
+		var open := 1.0 + 2.70158 * pow(u - 1.0, 3.0) + 1.70158 * pow(u - 1.0, 2.0)
+		var shut := Basis(Vector3.RIGHT, -deg_to_rad(stats.cover_degrees) * (1.0 - open))
+		_cover.node.transform = Transform3D(shut * _cover.rest.basis, _cover.rest.origin)
 
 	var back := smoothstep(0.0, barrel_follow, _s)
 	var tilt := deg_to_rad(stats.barrel_tilt_degrees) * smoothstep(barrel_follow * 0.8, 0.4, _s)
@@ -389,6 +425,9 @@ func _apply_round(travel: float) -> void:
 
 func _settled() -> bool:
 	if _phase != Phase.IDLE and _phase != Phase.LOCKED:
+		return false
+
+	if _cover_t >= 0.0 and _cover_t < cover_time:
 		return false
 
 	if _hold > 0.0 or Input.is_action_pressed(weapon.fire_action):

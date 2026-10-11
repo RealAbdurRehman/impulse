@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponStats" format=3 uid="uid://bbaeow0swd2rf"]
+
+[ext_resource type="Script" uid="uid://b48wbk45u40el" path="res://scripts/weapons/weapon_stats.gd" id="1_c63i7"]
+[ext_resource type="PackedScene" uid="uid://b0mx6we0ouf2k" path="res://scenes/weapons/g17.tscn" id="1_h5dv8"]
+[ext_resource type="Resource" uid="uid://bylfdkl4y5msv" path="res://assets/audio/weapons/g17/g17_sounds.tres" id="2_x3472"]
+
+[resource]
+script = ExtResource("1_c63i7")
+scene = ExtResource("1_h5dv8")
+hold_reach = 0.9546
+hold_drop = 0.0148
+hold_side = 0.0319
+sounds = ExtResource("2_x3472")
+metadata/_custom_type_script = "uid://b48wbk45u40el"

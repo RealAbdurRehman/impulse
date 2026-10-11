@@ -7,11 +7,14 @@ class Grip:
 	var frame := Basis.IDENTITY
 	var depth := 0.05
 	var width := 0.035
+	var outline := PackedVector2Array()
 	var side := 1.0
+	var yaw := 0.0
+	var wrist := Transform3D.IDENTITY
 	var extend_index := false
 
 
-@export var gun_scene: PackedScene
+@export var weapon: Weapon
 @export var spine: SpineModifier
 @export var ragdoll: PhysicalBoneSimulator3D
 
@@ -26,27 +29,16 @@ class Grip:
 @export var feed_start_marker: StringName = &"FeedStart"
 @export var feed_end_marker: StringName = &"FeedEnd"
 @export var barrel_pivot_marker: StringName = &"BarrelPivot"
-@export var hidden_parts: Array[StringName] = [&"MagFull", &"Bullet", &"BulletCasing"]
-
-@export_group("Main grip")
-@export var main_depth := 0.053
-@export var main_width := 0.035
-@export var trigger_finger := true
-
-@export_range(-90.0, 90.0) var main_tilt_degrees := 22.0
-
-@export_group("Support grip")
-@export var support_depth := 0.053
-@export var support_width := 0.035
-
-@export_range(-90.0, 90.0) var support_tilt_degrees := 22.0
+@export var shoulder_marker: StringName = &"ShoulderPad"
 
 @export_group("Hands")
 @export var palm_width := 0.082
 @export var palm_thickness := 0.032
 @export var palm_heel := 0.0285
 
-@export var finger_radius := 0.011
+@export var finger_radius := 0.0085
+@export var finger_lengths: Array[float] = [0.085, 0.092, 0.084, 0.07]
+@export var finger_step := 0.01
 
 @export_group("Trigger finger")
 @export var finger_segments := Vector2(0.034, 0.026)
@@ -61,6 +53,7 @@ var rack_grab: Node3D
 var feed_start: Node3D
 var feed_end: Node3D
 var barrel_pivot: Node3D
+var shoulder_pad: Node3D
 
 var main_hand: PhysicalBone3D
 var support_hand: PhysicalBone3D
@@ -81,7 +74,8 @@ func _ready() -> void:
 	main_hand = _find_hand(&"RightHand")
 	support_hand = _find_hand(&"LeftHand")
 
-	gun = gun_scene.instantiate() as Node3D
+	var stats := weapon.stats
+	gun = stats.scene.instantiate() as Node3D
 
 	_main_marker = _marker(main_marker)
 	_support_marker = _marker(support_marker)
@@ -93,8 +87,9 @@ func _ready() -> void:
 	feed_start = _marker(feed_start_marker)
 	feed_end = _marker(feed_end_marker)
 	barrel_pivot = _marker(barrel_pivot_marker)
+	shoulder_pad = _marker(shoulder_marker)
 
-	for n in hidden_parts:
+	for n in [stats.spare_mag_part, stats.feed_part, stats.casing_part]:
 		(gun.get_node(NodePath(n)) as Node3D).visible = false
 
 	_assemble.call_deferred()
@@ -111,16 +106,32 @@ func _marker(marker_name: StringName) -> Node3D:
 
 
 func _assemble() -> void:
-	var main := _grip(_main_marker, main_tilt_degrees, main_depth, main_width, 1.0)
-	main.extend_index = trigger_finger
+	var stats := weapon.stats
 
-	var support := _grip(_support_marker, support_tilt_degrees, support_depth, support_width, -1.0)
+	var main := _grip(
+		stats.main_grip_part,
+		_main_marker,
+		stats.main_grip_axis,
+		Vector3.FORWARD,
+		stats.main_grip_yaw_degrees,
+		1.0,
+	)
+	main.extend_index = stats.trigger_finger
+
+	var support := _grip(
+		stats.support_grip_part,
+		_support_marker,
+		stats.support_grip_axis,
+		stats.support_palm_facing,
+		stats.support_grip_yaw_degrees,
+		-1.0,
+	)
 
 	main_grip = main
 	support_grip = support
 
-	var main_in_gun := _hand_frame(main)
-	var support_in_gun := _hand_frame(support)
+	var main_in_gun := _bone_frame(main)
+	var support_in_gun := _bone_frame(support)
 
 	var material := (main_hand.get_node(^"Hand") as MeshInstance3D).material_override
 	_build_fist(main_hand, main_in_gun, main, material)
@@ -135,7 +146,18 @@ func _assemble() -> void:
 		* Transform3D(Basis.from_scale(gun.scale), Vector3.ZERO)
 	)
 
-	spine.gun_anchor = (main.hole + support.hole) * 0.5
+	spine.ads_eye_distance = stats.ads_eye_distance
+	spine.elbow_flare_degrees = stats.hold_elbow_flare_degrees
+	spine.support_flare_degrees = stats.support_elbow_flare_degrees
+	spine.hold_reach = stats.hold_reach
+	spine.hold_reach_min = stats.hold_reach_min
+	spine.hold_drop = stats.hold_drop
+	spine.hold_side = stats.hold_side
+	spine.hold_twist_degrees = stats.hold_twist_degrees
+	spine.hold_yaw_degrees = stats.hold_yaw_degrees
+	spine.ads_yaw_degrees = stats.ads_yaw_degrees
+
+	spine.gun_anchor = _gun_space(shoulder_pad).origin
 	spine.gun_muzzle = _gun_space(muzzle).origin
 	spine.gun_sight = _gun_space(sight).origin
 	spine.hold_main = main_in_gun
@@ -173,26 +195,31 @@ func pose_trigger_finger(pad: Vector3) -> void:
 
 
 func _gun_space(marker: Node3D) -> Transform3D:
-	var t := Transform3D.IDENTITY
-	var n: Node = marker
-	while n != gun:
-		if n is Node3D:
-			t = (n as Node3D).transform * t
-
-		n = n.get_parent()
-
+	var t := GripFit.local(marker, gun)
 	return Transform3D(t.basis.orthonormalized(), t.origin * gun.scale)
 
 
-func _grip(marker: Node3D, tilt: float, depth: float, width: float, side: float) -> Grip:
-	var t := _gun_space(marker)
+func _grip(
+	part: StringName,
+	marker: Node3D,
+	axis: Vector3,
+	palm: Vector3,
+	yaw: float,
+	side: float,
+) -> Grip:
+	var fit := GripFit.new(gun, part).fit(GripFit.local(marker, gun).origin, axis, palm, side)
 
 	var g := Grip.new()
-	g.hole = t.origin
-	g.frame = t.basis * Basis(Vector3.BACK, -deg_to_rad(tilt))
-	g.depth = depth
-	g.width = width
+	g.hole = fit.hole * gun.scale
+	g.frame = Basis(fit.fingers, side * fit.fingers.cross(fit.palm), -side * fit.palm)
+	g.depth = fit.depth * gun.scale.x
+	g.width = fit.width * gun.scale.x
+	for p in fit.outline:
+		g.outline.append(p * gun.scale.x)
+
 	g.side = side
+	g.yaw = deg_to_rad(yaw)
+	g.wrist = _hand_frame(g)
 	return g
 
 
@@ -205,6 +232,10 @@ func _hand_frame(g: Grip) -> Transform3D:
 	wrist -= z_axis * (palm_thickness * 0.5 + g.width * 0.5)
 
 	return Transform3D(Basis(x_axis, y_axis, z_axis), wrist)
+
+
+func _bone_frame(g: Grip) -> Transform3D:
+	return Transform3D(g.wrist.basis * Basis(Vector3.BACK, g.yaw), g.wrist.origin)
 
 
 func _build_fist(
@@ -222,20 +253,31 @@ func _build_fist(
 
 	var to_bone := hand_in_gun.affine_inverse()
 	var r := finger_radius
-	var palm_len := palm_heel + g.depth + r
+	var knuckle := _knuckle(g)
+	var palm_len := palm_heel + g.depth * 0.5 + knuckle.x
 
 	var palm := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(palm_width, palm_len, palm_thickness)
 	palm.mesh = box
 	palm.material_override = material
-	palm.position = Vector3(0.0, palm_len * 0.5, 0.0)
+	palm.transform = to_bone * g.wrist * Transform3D(
+		Basis.IDENTITY,
+		Vector3(0.0, palm_len * 0.5, 0.0),
+	)
 	fist.add_child(palm)
 
-	var palm_w := g.width * 0.5 + palm_thickness * 0.5
+	var palm_w := -knuckle.y
 	var front := g.depth * 0.5 + r
-	var far := -(g.width * 0.5 + r)
 	var gap := palm_width * 0.25
+
+	_rod(
+		fist,
+		to_bone * _grip_point(g, knuckle.x, 1.5 * gap + 0.004, palm_w),
+		to_bone * _grip_point(g, knuckle.x, -1.5 * gap - 0.004, palm_w),
+		palm_thickness * 0.5 - 0.002,
+		material,
+	)
 
 	for i in 4:
 		var y := (1.5 - float(i)) * gap
@@ -251,21 +293,60 @@ func _build_fist(
 
 			continue
 
-		var path: Array[Vector3] = [
-			_grip_point(g, front - 0.006, y, palm_w),
-			_grip_point(g, front, y, palm_w - 0.026),
-			_grip_point(g, front, y, -g.width * 0.5 + 0.001),
-			_grip_point(g, front - 0.016, y, far),
-			_grip_point(g, front - 0.036, y, far),
-		]
+		var path := _finger_path(g, finger_lengths[i])
 		for k in path.size() - 1:
-			_rod(fist, to_bone * path[k], to_bone * path[k + 1], r, material)
+			var tip := 1.0 if k < path.size() - 2 else 0.85
+			_rod(
+				fist,
+				to_bone * _grip_point(g, path[k].x, y, -path[k].y),
+				to_bone * _grip_point(g, path[k + 1].x, y, -path[k + 1].y),
+				r * tip,
+				material,
+			)
 
 	var thumb_base := _grip_point(g, -g.depth * 0.5, palm_width * 0.5 - 0.004, palm_w)
 	var thumb_mid := thumb_base + Vector3(0.032, 0.002, 0.0) - g.frame.z * g.side * 0.004
 	var thumb_tip := thumb_mid + Vector3(0.032, 0.003, 0.0) - g.frame.z * g.side * 0.002
 	_rod(fist, to_bone * thumb_base, to_bone * thumb_mid, r * 1.1, material)
 	_rod(fist, to_bone * thumb_mid, to_bone * thumb_tip, r * 1.05, material)
+
+
+func _knuckle(g: Grip) -> Vector2:
+	return Vector2(g.depth * 0.5 + finger_radius - 0.006, -(g.width * 0.5 + palm_thickness * 0.5))
+
+
+func _finger_path(g: Grip, length: float) -> Array[Vector2]:
+	var ring := g.outline
+	var count := ring.size()
+
+	var offset := PackedVector2Array()
+	for j in count:
+		var tangent := (ring[(j + 1) % count] - ring[(j + count - 1) % count]).normalized()
+		offset.append(ring[j] + Vector2(tangent.y, -tangent.x) * finger_radius)
+
+	var knuckle := _knuckle(g)
+	var start := 0
+	for j in count:
+		if offset[j].distance_to(knuckle) < offset[start].distance_to(knuckle):
+			start = j
+
+	var path: Array[Vector2] = [knuckle]
+	var left := length
+	var from := knuckle
+	for j in range(start, start + count):
+		var to := offset[j % count]
+		var step := from.distance_to(to)
+		if step >= left:
+			path.append(from.lerp(to, left / step))
+			return path
+
+		if to.distance_to(path[-1]) >= finger_step:
+			path.append(to)
+
+		left -= step
+		from = to
+
+	return path
 
 
 func _grip_point(g: Grip, x: float, y: float, w: float) -> Vector3:

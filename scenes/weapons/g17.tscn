@@ -782,7 +782,7 @@ mesh = SubResource("ArrayMesh_6ema7")
 mesh = SubResource("ArrayMesh_8ix2l")
 
 [node name="EmptyMag" type="Node3D" parent="." unique_id=2070489669]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5021973, -0.113673046, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5021973, -0.11367304, 0)
 
 [node name="Object_19" type="MeshInstance3D" parent="EmptyMag" unique_id=844552797]
 mesh = SubResource("ArrayMesh_uypfl")
@@ -858,3 +858,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.911, 0.538, 0)
 
 [node name="Sight" type="Marker3D" parent="." unique_id=1671618886]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.78, 0.66619176, 0)
+
+[node name="ShoulderPad" type="Marker3D" parent="." unique_id=1999868579]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.008, 0.123, 0.29)

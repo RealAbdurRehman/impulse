@@ -29,6 +29,7 @@ extends Resource
 @export_range(0.0, 0.2, 0.005) var casing_gap := 0.03
 
 @export_group("Burst")
+@export_range(0.5, 1.5, 0.01) var fire_pitch := 1.0
 @export_range(0.0, 3.0, 0.1) var burst_drop_db := 1.0
 @export_range(0.0, 12.0, 0.1) var burst_max_drop_db := 4.0
 @export_range(0.1, 2.0, 0.05) var burst_reset := 0.6

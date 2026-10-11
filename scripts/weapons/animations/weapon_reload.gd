@@ -53,10 +53,6 @@ class Beat:
 	var cue := Cue.SEAT
 
 
-@export_group("Parts")
-@export var mag_part: StringName = &"EmptyMag"
-@export var spare_part: StringName = &"MagFull"
-
 @export_group("Gun")
 @export var tilt_degrees := 25.0
 @export var gun_pull := 0.06
@@ -75,8 +71,6 @@ class Beat:
 @export var carry_bulge := Vector3(0.0, 0.0, 0.05)
 
 @export_group("Slide rack")
-@export_range(0.0, 1.0) var rack_start := 0.45
-@export_range(0.0, 1.0) var rack_pull := 1.0
 @export_range(-90.0, 90.0) var rack_yaw_degrees := 20.0
 @export_range(-90.0, 90.0) var rack_roll_degrees := 15.0
 
@@ -93,6 +87,7 @@ var active := false
 var tilt := 0.0
 var pull := 0.0
 var support_weight := 0.0
+var rack_amount := 0.0
 
 var _gun: Node3D
 var _scale := 1.0
@@ -168,13 +163,18 @@ func _physics_process(delta: float) -> void:
 	tilt = deg_to_rad(tilt_degrees) * level + deg_to_rad(seat_jolt_degrees) * _jolt
 	pull = gun_pull * level
 	support_weight = smoothstep(0.0, 0.03, p) * (1.0 - smoothstep(0.97, 1.0, p))
+	rack_amount = lerpf(
+		1.0 if k0.kind == Kind.RACK else 0.0,
+		1.0 if k1.kind == Kind.RACK else 0.0,
+		e,
+	)
 
 	while _next < _beats.size() and p >= _beats[_next].at:
 		_fire(_beats[_next].cue)
 		_next += 1
 
 	if _driving:
-		weapon.animator.drive_slide(_rack_slide(k0, k1, e))
+		weapon.animator.drive_slide(_rack_slide(k0, k1, e), _rack_handle(k0, k1, e))
 
 	if p >= 1.0:
 		_finish()
@@ -230,7 +230,7 @@ func _key_frame(key: Step, gun_pose: Transform3D, skel: Skeleton3D) -> Transform
 			return Transform3D(mag.basis, mag.origin + Vector3.UP * key.amount) * inverse
 
 		Kind.RACK:
-			var pulled := weapon.animator.slide_position() * weapon.stats.slide_travel
+			var pulled := weapon.animator.rack_position() * weapon.stats.slide_travel
 			var offset := Transform3D(Basis.IDENTITY, Vector3(-pulled, 0.0, 0.0))
 			return gun_pose * offset * _rack_frame() * _grip_rel.affine_inverse()
 
@@ -269,10 +269,20 @@ func _rack_slide(k0: Step, k1: Step, e: float) -> float:
 	if k1.kind != Kind.RACK:
 		return _slide_from
 
+	if weapon.stats.handle_part:
+		return maxf(_slide_from, _rack_handle(k0, k1, e))
+
 	if k0.kind == Kind.RACK:
 		return lerpf(k0.amount, k1.amount, e)
 
 	return lerpf(_slide_from, minf(k1.amount, _slide_from), e)
+
+
+func _rack_handle(k0: Step, k1: Step, e: float) -> float:
+	if k1.kind != Kind.RACK:
+		return 0.0
+
+	return lerpf(k0.amount if k0.kind == Kind.RACK else 0.0, k1.amount, e)
 
 
 func _add(
@@ -332,8 +342,8 @@ func _build() -> void:
 		var take := _add(Kind.POUCH, pouch_lift, 1.2, 1.0, 0.0)
 		_add(Kind.STAGE, stage_distance, 3.0, 1.0, 1.0, false, carry_bulge)
 		var seat := _add(Kind.STAGE, 0.0, 1.2, 1.0, 1.0, true)
-		var grab := _add(Kind.RACK, rack_start, 1.6, 0.4, 0.0)
-		var back := _add(Kind.RACK, rack_pull, 1.8, 0.4, 0.0)
+		var grab := _add(Kind.RACK, weapon.stats.rack_start, 1.6, 0.4, 0.0)
+		var back := _add(Kind.RACK, weapon.stats.rack_pull, 1.8, 0.4, 0.0)
 		_add(Kind.GRIP, 0.0, 3.0, 0.0, 0.0)
 
 		_cue(Cue.DROP, first, 0.15)
@@ -446,6 +456,7 @@ func _finish() -> void:
 	tilt = 0.0
 	pull = 0.0
 	support_weight = 0.0
+	rack_amount = 0.0
 
 	if _driving:
 		_driving = false
@@ -532,8 +543,9 @@ func _resolve() -> void:
 	_gun = holder.gun
 	_scale = maxf(_gun.scale.x, 0.0001)
 
-	_mag = _gun.get_node(NodePath(mag_part)) as Node3D
-	var spare := _gun.get_node(NodePath(spare_part)) as Node3D
+	var stats := weapon.stats
+	_mag = _gun.get_node(NodePath(stats.mag_part)) as Node3D
+	var spare := _gun.get_node(NodePath(stats.spare_mag_part)) as Node3D
 	_mag_shape = _shape_of(_mag)
 	_spare_shape = _shape_of(spare)
 
@@ -541,10 +553,7 @@ func _resolve() -> void:
 	_seated = Transform3D(seated.basis.orthonormalized(), seated.origin * _scale)
 
 	var grip := holder.support_grip
-	_grip_rel = holder.spine.hold_support.affine_inverse() * Transform3D(
-		grip.frame.orthonormalized(),
-		grip.hole,
-	)
+	_grip_rel = grip.wrist.affine_inverse() * Transform3D(grip.frame.orthonormalized(), grip.hole)
 	_in_hand = _grip_rel * Transform3D(Basis.IDENTITY, Vector3(0.0, -hold_along, 0.0))
 
 	_resolve_rack()
@@ -563,7 +572,7 @@ func _resolve() -> void:
 
 
 func _resolve_rack() -> void:
-	var slide := weapon.animator.slide_node()
+	var slide := weapon.animator.rack_node()
 	var points := PackedVector3Array()
 	_gather(slide, slide, points)
 
@@ -581,12 +590,12 @@ func _resolve_rack() -> void:
 
 
 func _rest_in_gun(marker: Node3D) -> Transform3D:
-	var slide := weapon.animator.slide_node()
+	var slide := weapon.animator.rack_node()
 	var t := Transform3D.IDENTITY
 	var n: Node = marker
 	while n != _gun:
 		if n is Node3D:
-			var local := weapon.animator.slide_rest() if n == slide else (n as Node3D).transform
+			var local := weapon.animator.rack_rest() if n == slide else (n as Node3D).transform
 			t = local * t
 
 		n = n.get_parent()

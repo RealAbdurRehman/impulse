@@ -1,6 +1,42 @@
 class_name WeaponStats
 extends Resource
 
+@export_group("Model")
+@export var scene: PackedScene
+
+@export var slide_parts: Array[StringName] = [&"Slide", &"Cover"]
+@export var barrel_parts: Array[StringName] = [&"Barrel", &"MuzzleNut"]
+@export var handle_part: StringName
+@export var cover_part: StringName
+@export var trigger_part: StringName = &"Trigger"
+@export var catch_part: StringName = &"SlideStop"
+
+@export var feed_part: StringName = &"Bullet"
+@export var casing_part: StringName = &"BulletCasing"
+@export var mag_part: StringName = &"EmptyMag"
+@export var spare_mag_part: StringName = &"MagFull"
+
+@export_group("Hold")
+@export var main_grip_part: StringName = &"LowerFrame"
+@export var main_grip_axis := Vector3.UP
+@export_range(-90.0, 90.0) var main_grip_yaw_degrees := 0.0
+
+@export var support_grip_part: StringName = &"LowerFrame"
+@export var support_grip_axis := Vector3.UP
+@export var support_palm_facing := Vector3.BACK
+@export_range(-90.0, 90.0) var support_grip_yaw_degrees := 0.0
+
+@export var trigger_finger := true
+
+@export var hold_elbow_flare_degrees := -60.0
+@export var support_elbow_flare_degrees := -60.0
+@export var hold_reach := 0.5
+@export var hold_reach_min := 0.15
+@export var hold_drop := 0.05
+@export var hold_side := 0.0
+@export_range(-45.0, 45.0) var hold_twist_degrees := 0.0
+@export_range(-45.0, 45.0) var hold_yaw_degrees := 0.0
+
 @export_group("Fire")
 @export var automatic := true
 @export var auto_reload := false
@@ -13,6 +49,8 @@ extends Resource
 
 @export_group("Aim down sights")
 @export var ads_time := 0.24
+@export var ads_eye_distance := 0.22
+@export_range(-45.0, 45.0) var ads_yaw_degrees := 0.0
 @export var ads_zoom := 0.9
 @export var ads_move_scale := 0.55
 @export_range(0.0, 1.0) var ads_spread_scale := 0.3
@@ -28,6 +66,10 @@ extends Resource
 @export_flags_3d_physics var hit_mask := 3
 
 @export_range(0.0, 20.0, 0.1) var spread_degrees := 0.5
+
+@export_range(0.0, 2.0, 0.01) var bloom_per_shot := 0.0
+@export_range(0.0, 20.0, 0.1) var bloom_max := 3.0
+@export_range(0.1, 30.0, 0.1) var bloom_recovery := 6.0
 
 @export_group("Muzzle flash")
 @export var flash_length := 0.3
@@ -92,6 +134,18 @@ extends Resource
 @export_range(0.0, 50.0, 0.1) var recoil_flip_degrees := 20.0
 @export_range(0.0, 10.0, 0.1) var recoil_torso_degrees := 6.0
 
+@export_range(0.0, 3.0, 0.05) var recoil_climb_degrees := 0.0
+@export_range(0.5, 10.0, 0.1) var recoil_climb_recovery := 3.0
+
+@export_range(1.0, 20.0, 0.1) var recoil_flip_hz := 4.5
+@export_range(0.1, 0.95) var recoil_flip_damping := 0.62
+
+@export_range(1.0, 20.0, 0.1) var recoil_slide_hz := 5.4
+@export_range(0.1, 0.95) var recoil_slide_damping := 0.6
+
+@export_range(0.5, 10.0, 0.1) var recoil_body_hz := 1.75
+@export_range(0.1, 0.95) var recoil_body_damping := 0.5
+
 @export_range(0.0, 1.0) var recoil_variation := 0.5
 @export_range(1.0, 4.0, 0.1) var recoil_stacking := 2.0
 
@@ -110,7 +164,12 @@ extends Resource
 @export var barrel_tilt_degrees := 2.0
 
 @export var slide_stop_degrees := 8.0
+@export var cover_degrees := 177.0
 @export var trigger_pull_degrees := 22.0
+
+@export_group("Reload")
+@export_range(0.0, 1.0) var rack_start := 0.45
+@export_range(0.0, 1.0) var rack_pull := 1.0
 
 @export_group("Audio")
 @export var sounds: WeaponSounds

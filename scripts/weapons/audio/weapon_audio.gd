@@ -97,8 +97,15 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	var drop := -minf(float(_burst) * _sounds.burst_drop_db, _sounds.burst_max_drop_db)
 	_burst += 1
 
-	_shot.append(_play(_sounds.fire, drop))
-	_shot.append(_play(_sounds.fire, drop + _sounds.body_db, _sounds.body_pitch, BODY_BUS))
+	_shot.append(_play(_sounds.fire, drop, _sounds.fire_pitch))
+	_shot.append(
+		_play(
+			_sounds.fire,
+			drop + _sounds.body_db,
+			_sounds.body_pitch * _sounds.fire_pitch,
+			BODY_BUS,
+		),
+	)
 
 
 func _on_cue(cue: WeaponReload.Cue) -> void:

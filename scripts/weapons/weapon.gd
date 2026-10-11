@@ -27,6 +27,7 @@ var recoil: WeaponRecoil
 
 var _aim := 0.0
 var _aiming := false
+var _bloom := 0.0
 var _cooldown := 0.0
 var _press_buffer := 0.0
 var _reload_left := 0.0
@@ -95,6 +96,8 @@ func _physics_process(delta: float) -> void:
 	var pressed := _press_buffer > 0.0
 	var held := stats.automatic and Input.is_action_pressed(fire_action)
 
+	_bloom = maxf(_bloom - stats.bloom_recovery * delta, 0.0)
+
 	_cooldown -= delta
 	if _cooldown <= 0.0 and _reload_left <= 0.0 and (pressed or held):
 		_press_buffer = 0.0
@@ -139,6 +142,7 @@ func _gun_ready() -> bool:
 
 func _shoot() -> void:
 	ammo -= 1
+	_bloom = minf(_bloom + stats.bloom_per_shot, stats.bloom_max)
 
 	var muzzle := holder.muzzle_transform()
 	var origin := muzzle.origin
@@ -155,7 +159,8 @@ func _shoot() -> void:
 
 
 func _with_spread(dir: Vector3) -> Vector3:
-	var spread := stats.spread_degrees * lerpf(1.0, stats.ads_spread_scale, player.aim_amount)
+	var base := stats.spread_degrees + _bloom
+	var spread := base * lerpf(1.0, stats.ads_spread_scale, player.aim_amount)
 	var angle := deg_to_rad(spread) * (randf() + randf() - 1.0)
 	return dir.rotated(Vector3.BACK, angle)
 

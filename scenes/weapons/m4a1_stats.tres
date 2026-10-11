@@ -1,0 +1,77 @@
+[gd_resource type="Resource" script_class="WeaponStats" format=3 uid="uid://c1cimbvnu8wjs"]
+
+[ext_resource type="Script" uid="uid://b48wbk45u40el" path="res://scripts/weapons/weapon_stats.gd" id="1_stats"]
+[ext_resource type="PackedScene" uid="uid://53g6u5wrcrn" path="res://scenes/weapons/m4a1.tscn" id="2_scene"]
+[ext_resource type="Resource" uid="uid://diti17wpe3hib" path="res://assets/audio/weapons/m4a1/m4a1_sounds.tres" id="3_sounds"]
+
+[resource]
+script = ExtResource("1_stats")
+scene = ExtResource("2_scene")
+slide_parts = Array[StringName]([&"Bolt"])
+barrel_parts = Array[StringName]([])
+handle_part = &"ChargingHandle"
+cover_part = &"DustCover"
+catch_part = &"BoltCatch"
+main_grip_part = &"PistolGrip"
+main_grip_yaw_degrees = -30.0
+support_grip_part = &"Handguard"
+support_grip_axis = Vector3(1, 0, 0)
+support_palm_facing = Vector3(0, 0.87, 0.5)
+support_grip_yaw_degrees = 60.0
+hold_elbow_flare_degrees = -40.0
+support_elbow_flare_degrees = 70.0
+hold_reach = 0.2
+hold_reach_min = -0.06
+hold_side = 0.16
+hold_twist_degrees = 30.0
+hold_yaw_degrees = 18.0
+reload_time = 3.2
+magazine_size = 30
+rounds_per_minute = 800.0
+ads_time = 0.3
+ads_eye_distance = 0.11
+ads_yaw_degrees = 6.0
+ads_zoom = 0.8
+ads_move_scale = 0.5
+damage = 20.0
+max_range = 90.0
+impact_impulse = 1.5
+spread_degrees = 0.8
+bloom_per_shot = 0.12
+bloom_max = 2.5
+bloom_recovery = 5.0
+flash_length = 0.42
+flash_width = 0.14
+flash_duration = 0.045
+light_energy = 0.15
+light_range = 2.6
+barrel_cool_time = 4.0
+barrel_heat_per_shot = 0.02
+tracer_speed = 200.0
+tracer_chance = 0.35
+eject_velocity = Vector3(-0.6, 1.6, 3)
+eject_spin = 35.0
+eject_jitter = 0.35
+recoil_slide = 0.035
+recoil_hips_back = 0.03
+recoil_push = 0.02
+recoil_flip_degrees = 7.0
+recoil_torso_degrees = 5.0
+recoil_climb_degrees = 1.3
+recoil_climb_recovery = 2.0
+recoil_flip_hz = 9.0
+recoil_flip_damping = 0.5
+recoil_slide_hz = 8.0
+recoil_slide_damping = 0.55
+recoil_body_hz = 2.6
+recoil_body_damping = 0.45
+recoil_stacking = 2.5
+slide_travel = 0.1
+slide_back_time = 0.02
+slide_forward_time = 0.035
+barrel_travel = 0.0
+barrel_tilt_degrees = 0.0
+slide_stop_degrees = -8.0
+trigger_pull_degrees = 18.0
+rack_start = 0.12
+sounds = ExtResource("3_sounds")
