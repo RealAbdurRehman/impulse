@@ -25,11 +25,11 @@ extends Resource
 @export var support_grip_axis := Vector3.UP
 @export var support_palm_facing := Vector3.BACK
 @export_range(-90.0, 90.0) var support_grip_yaw_degrees := 0.0
-
-@export var trigger_finger := true
+@export_range(0.2, 1.0) var support_grip_cover := 1.0
 
 @export var hold_elbow_flare_degrees := -60.0
 @export var support_elbow_flare_degrees := -60.0
+@export_range(0.0, 1.0) var low_aim_raise := 1.0
 @export var hold_reach := 0.5
 @export var hold_reach_min := 0.15
 @export var hold_drop := 0.05

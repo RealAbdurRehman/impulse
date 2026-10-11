@@ -49,7 +49,6 @@ var _stop: Part
 var _handle: Part
 var _cover: Part
 var _pivot := Vector3.ZERO
-var _pad_local := Vector3.ZERO
 var _port := Transform3D.IDENTITY
 var _round: Node3D
 var _feed_half := 0.0
@@ -206,7 +205,6 @@ func _resolve() -> bool:
 	_cover = _part(gun, stats.cover_part) if stats.cover_part else null
 	_cover_t = -1.0
 	_pivot = _in_gun(weapon.holder.barrel_pivot).origin
-	_pad_local = _trigger.rest.affine_inverse() * _in_gun(weapon.holder.trigger_pad).origin
 	_port = _in_gun(weapon.holder.ejector)
 
 	if is_instance_valid(_round):
@@ -393,8 +391,7 @@ func _apply() -> void:
 		Vector3.ZERO,
 	)
 
-	if weapon.holder.has_trigger_finger():
-		weapon.holder.pose_trigger_finger(_trigger.node.transform * _pad_local * _scale)
+	weapon.holder.pull_trigger(_pull)
 
 	_apply_round(travel)
 

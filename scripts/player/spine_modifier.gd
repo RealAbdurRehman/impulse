@@ -16,6 +16,7 @@ extends SkeletonModifier3D
 @export var head_tip_bone: StringName = &"mixamorig7_HeadTop_End"
 
 @export var torso_shares: Array[float] = [0.35, 0.45, 0.2]
+@export var twist_shares: Array[float] = [0.5, 0.5, 0.0]
 @export var smoothing_speed := 10.0
 
 @export_group("Posture")
@@ -55,7 +56,16 @@ extends SkeletonModifier3D
 
 @export var eye_up := 0.12
 @export var eye_forward := 0.08
-@export var eye_side := 0.035
+@export var eye_side := 0.075
+
+@export_group("Looking down")
+@export var low_aim_start_degrees := 15.0
+@export var low_aim_full_degrees := 45.0
+
+@export_group("Head")
+@export var head_radius := 0.135
+@export var head_centre_up := 0.078
+@export var stock_clearance := 0.06
 
 @export_group("Arms")
 @export var left_arm_bones: Array[StringName] = [
@@ -98,6 +108,7 @@ var hold_side := 0.0
 var hold_twist_degrees := 0.0
 var hold_yaw_degrees := 0.0
 var ads_yaw_degrees := 0.0
+var low_aim_raise := 1.0
 
 var gun_equipped := false
 var gun_anchor := Vector3.ZERO
@@ -275,7 +286,7 @@ func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 		var next := _head_tip if i == _chain.size() - 1 else _chain[i + 1]
 		var pose := skel.get_bone_global_pose(_chain[i])
 		var axis := (skel.get_bone_global_pose(next).origin - pose.origin).normalized()
-		var share := torso_shares[i] if i < 3 else -0.5
+		var share := twist_shares[i] if i < 3 else -0.5
 		pose.basis = Basis(axis, -_twist * share) * pose.basis
 		skel.set_bone_global_pose(_chain[i], pose)
 
@@ -331,28 +342,70 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 
 		reach = maxf(reach - over, hold_reach_min)
 
+	var raise := maxf(
+		player.aim_amount,
+		low_aim_raise * smoothstep(low_aim_start_degrees, low_aim_full_degrees, -rad_to_deg(_aim)),
+	)
 	var pivot_world := anchor
-	if player.aim_amount > 0.0:
+	if raise > 0.0:
 		var sight_at := Vector3(ads_eye_distance, 0.0, 0.0) - gun_sight + gun_anchor
-		pivot_world = pivot_world.lerp(_eye(skel) + level_frame * sight_at, player.aim_amount)
+		pivot_world = anchor.lerp(_eye(skel) + level_frame * sight_at, raise)
+
+	pivot_world += _stock_push(skel, pivot_world, frame) * (1.0 - player.aim_amount)
+
+	for i in 6:
+		var support_grip := pivot_world + frame * support_rel
+		var main_grip := pivot_world + frame * main_rel
+		var over_support := _support_excess(
+			pivot_world,
+			frame,
+			support_rel,
+			s_left,
+			limit_left,
+			reload_hand,
+		)
+		var over_main := (main_grip - s_right).length() - limit_right
+		if maxf(over_support, over_main) <= 0.0:
+			break
+
+		if over_support >= over_main:
+			pivot_world += (s_left - support_grip).normalized() * over_support
+		else:
+			pivot_world += (s_right - main_grip).normalized() * over_main
 
 	gun_pose = Transform3D(frame, pivot_world - frame * gun_anchor)
 	_muzzle_skel = gun_pose * gun_muzzle
 
 	var pole_right := _elbow_pole(body.y, -body.z, deg_to_rad(elbow_flare_degrees))
-	var support_flare := lerpf(support_flare_degrees, elbow_flare_degrees, reload.rack_amount)
+	var support_flare := lerpf(support_flare_degrees, reload.rack_elbow_degrees, reload.rack_amount)
 	var pole_left := _elbow_pole(body.y, body.z, deg_to_rad(support_flare))
 
 	_solve_arm(skel, _right, pole_right, gun_pose * hold_main.origin, frame * hold_main.basis)
 	var support_pos := gun_pose * hold_support.origin
 	var support_basis := frame * hold_support.basis
 	if reload_hand:
-		var target := reload.support_pose(gun_pose, skel)
+		var target := reload.support_pose(gun_pose, skel, s_left)
 		var w := reload.support_weight
 		support_pos = support_pos.lerp(target.origin, w)
 		support_basis = support_basis.orthonormalized().slerp(target.basis.orthonormalized(), w)
 
 	_solve_arm(skel, _left, pole_left, support_pos, support_basis)
+
+
+func _stock_push(skel: Skeleton3D, pivot: Vector3, frame: Basis) -> Vector3:
+	var head := skel.get_bone_global_pose(_chain[-1]).origin
+	var up := (skel.get_bone_global_pose(_head_tip).origin - head).normalized()
+	var centre := head + up * head_centre_up
+	var need := head_radius + stock_clearance
+
+	var push := Vector3.ZERO
+	for along in [0.0, 0.1, 0.2]:
+		var away := pivot + frame * Vector3(along, 0.0, 0.0) - centre
+		var shortfall := need - away.length()
+		if shortfall > push.length():
+			push = away.normalized() * shortfall
+
+	return push
 
 
 func _gun_frame(pitch: float) -> Basis:
@@ -421,7 +474,7 @@ func _solve_arm(
 		absf(upper_len - fore_len) + 0.02,
 		(upper_len + fore_len) * 0.9995,
 	)
-	var dir := to.normalized() if to.length_squared() > 0.000001 else Vector3.BACK
+	var dir := to.normalized()
 
 	var along := (upper_len * upper_len + dist * dist - fore_len * fore_len) / (2.0 * dist)
 	var height := sqrt(maxf(upper_len * upper_len - along * along, 0.0))
@@ -460,7 +513,7 @@ func _hinge_axis(skel: Skeleton3D, fore: int) -> Vector3:
 	var axis := (skel.get_meta(key, fallback) as Vector3).normalized()
 
 	axis -= Vector3.UP * axis.dot(Vector3.UP)
-	return axis.normalized() if axis.length_squared() > 0.0001 else Vector3.BACK
+	return axis.normalized()
 
 
 func _set_basis(skel: Skeleton3D, idx: int, new_basis: Basis) -> void:

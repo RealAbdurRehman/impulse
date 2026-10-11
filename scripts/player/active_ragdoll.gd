@@ -57,7 +57,7 @@ extends PhysicalBoneSimulator3D
 @export var spine_limits := Vector3(65.0, 35.0, 65.0)
 @export var head_limits := Vector3(75.0, 60.0, 60.0)
 @export var shoulder_limits := Vector3(175.0, 150.0, 175.0)
-@export var wrist_limits := Vector3(70.0, 110.0, 70.0)
+@export var wrist_limits := Vector3(170.0, 110.0, 170.0)
 @export var hip_limits := Vector3(135.0, 45.0, 135.0)
 @export var ankle_limits := Vector3(55.0, 25.0, 55.0)
 

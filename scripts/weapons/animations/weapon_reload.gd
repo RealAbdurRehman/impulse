@@ -71,6 +71,8 @@ class Beat:
 @export var carry_bulge := Vector3(0.0, 0.0, 0.05)
 
 @export_group("Slide rack")
+@export_range(-180.0, 0.0) var rack_elbow_degrees := -75.0
+@export var rack_lift := 0.1
 @export_range(-90.0, 90.0) var rack_yaw_degrees := 20.0
 @export_range(-90.0, 90.0) var rack_roll_degrees := 15.0
 
@@ -169,6 +171,8 @@ func _physics_process(delta: float) -> void:
 		e,
 	)
 
+	weapon.holder.loosen_support(smoothstep(0.0, 0.12, p) * (1.0 - smoothstep(0.88, 1.0, p)))
+
 	while _next < _beats.size() and p >= _beats[_next].at:
 		_fire(_beats[_next].cue)
 		_next += 1
@@ -200,12 +204,12 @@ func _process(_delta: float) -> void:
 	var gap := lerpf(_gap(k0), _gap(k1), e)
 	var aligned := gun_rigid * _seated * Transform3D(Basis.IDENTITY, Vector3(0.0, -gap, 0.0))
 
-	var ramp := smoothstep(0.4, 1.0, at.y) if k1.align > k0.align else smoothstep(0.0, 0.6, at.y)
+	var ramp := smoothstep(0.7, 1.0, at.y) if k1.align > k0.align else smoothstep(0.0, 0.6, at.y)
 	var weight := lerpf(k0.align, k1.align, ramp)
 	_view.global_transform = _mix(held, aligned, weight)
 
 
-func support_pose(gun_pose: Transform3D, skel: Skeleton3D) -> Transform3D:
+func support_pose(gun_pose: Transform3D, skel: Skeleton3D, shoulder: Vector3) -> Transform3D:
 	var at := _locate(_progress())
 	var k1 := _keys[int(at.x)]
 	var k0 := _previous(int(at.x))
@@ -214,7 +218,20 @@ func support_pose(gun_pose: Transform3D, skel: Skeleton3D) -> Transform3D:
 	var from := _key_frame(k0, gun_pose, skel)
 	var to := _key_frame(k1, gun_pose, skel)
 
-	return _mix(from, to, e, k1.bulge)
+	var pose := _mix(from, to, e)
+	pose.origin = _arc(from.origin, to.origin, e, shoulder) + k1.bulge * sin(PI * e)
+	if (k0.kind == Kind.RACK) != (k1.kind == Kind.RACK):
+		var over_gun := smoothstep(0.0, 0.3, e) * (1.0 - smoothstep(0.7, 1.0, e))
+		pose.origin += gun_pose.basis * Vector3(0.0, rack_lift * over_gun, 0.0)
+	return pose
+
+
+func _arc(a: Vector3, b: Vector3, u: float, pivot: Vector3) -> Vector3:
+	var from := a - pivot
+	var to := b - pivot
+	var turn := Quaternion(from.normalized(), to.normalized()).normalized()
+	var dir := Quaternion.IDENTITY.slerp(turn, u) * from.normalized()
+	return pivot + dir * lerpf(from.length(), to.length(), u)
 
 
 func _key_frame(key: Step, gun_pose: Transform3D, skel: Skeleton3D) -> Transform3D:
@@ -230,7 +247,7 @@ func _key_frame(key: Step, gun_pose: Transform3D, skel: Skeleton3D) -> Transform
 			return Transform3D(mag.basis, mag.origin + Vector3.UP * key.amount) * inverse
 
 		Kind.RACK:
-			var pulled := weapon.animator.rack_position() * weapon.stats.slide_travel
+			var pulled := key.amount * weapon.stats.slide_travel
 			var offset := Transform3D(Basis.IDENTITY, Vector3(-pulled, 0.0, 0.0))
 			return gun_pose * offset * _rack_frame() * _grip_rel.affine_inverse()
 
@@ -322,13 +339,13 @@ func _build() -> void:
 	_next = 0
 
 	if _tactical:
-		var first := _add(Kind.STAGE, 0.0, 0.7, 0.5, 1.0)
-		var out := _add(Kind.STAGE, stage_distance, 1.4, 1.0, 1.0)
+		var first := _add(Kind.STAGE, 0.0, 1.2, 0.5, 1.0)
+		var out := _add(Kind.STAGE, stage_distance, 1.4, 1.0, 0.0)
 		_add(Kind.POUCH, pouch_lift, 2.2, 1.0, 0.0, false, reach_bulge, 1.0)
 		var stow := _add(Kind.POUCH, 0.0, 0.9, 1.0, 0.0, false, Vector3.ZERO, 1.0)
 		_add(Kind.POUCH, 0.0, 1.4, 1.0, 0.0, false, Vector3(0.0, 0.03, 0.0), 0.0)
 		var take := _add(Kind.POUCH, pouch_lift, 1.0, 1.0, 0.0, false, Vector3.ZERO, 0.0)
-		_add(Kind.STAGE, stage_distance, 2.6, 1.0, 1.0, false, carry_bulge)
+		_add(Kind.STAGE, stage_distance, 2.6, 1.0, 0.0, false, carry_bulge)
 		var seat := _add(Kind.STAGE, 0.0, 1.1, 1.0, 1.0, true)
 		_add(Kind.GRIP, 0.0, 1.7, 0.0, 0.0)
 
@@ -340,7 +357,7 @@ func _build() -> void:
 	else:
 		var first := _add(Kind.POUCH, 0.0, 2.5, 1.0, 0.0, false, reach_bulge, 0.0)
 		var take := _add(Kind.POUCH, pouch_lift, 1.2, 1.0, 0.0)
-		_add(Kind.STAGE, stage_distance, 3.0, 1.0, 1.0, false, carry_bulge)
+		_add(Kind.STAGE, stage_distance, 3.0, 1.0, 0.0, false, carry_bulge)
 		var seat := _add(Kind.STAGE, 0.0, 1.2, 1.0, 1.0, true)
 		var grab := _add(Kind.RACK, weapon.stats.rack_start, 1.6, 0.4, 0.0)
 		var back := _add(Kind.RACK, weapon.stats.rack_pull, 1.8, 0.4, 0.0)
@@ -431,8 +448,8 @@ func _shape(key: Step, u: float) -> float:
 	return u * u if key.accelerate else smoothstep(0.0, 1.0, u)
 
 
-func _mix(a: Transform3D, b: Transform3D, u: float, bulge := Vector3.ZERO) -> Transform3D:
-	var origin := a.origin.lerp(b.origin, u) + bulge * sin(PI * u)
+func _mix(a: Transform3D, b: Transform3D, u: float) -> Transform3D:
+	var origin := a.origin.lerp(b.origin, u)
 	var basis := a.basis.orthonormalized().slerp(b.basis.orthonormalized(), u)
 	return Transform3D(basis, origin)
 
@@ -453,6 +470,7 @@ func _finish() -> void:
 		return
 
 	active = false
+	weapon.holder.loosen_support(0.0)
 	tilt = 0.0
 	pull = 0.0
 	support_weight = 0.0
@@ -553,7 +571,8 @@ func _resolve() -> void:
 	_seated = Transform3D(seated.basis.orthonormalized(), seated.origin * _scale)
 
 	var grip := holder.support_grip
-	_grip_rel = grip.wrist.affine_inverse() * Transform3D(grip.frame.orthonormalized(), grip.hole)
+	var bone := holder.spine.hold_support
+	_grip_rel = bone.affine_inverse() * Transform3D(grip.frame.orthonormalized(), grip.hole)
 	_in_hand = _grip_rel * Transform3D(Basis.IDENTITY, Vector3(0.0, -hold_along, 0.0))
 
 	_resolve_rack()
@@ -583,7 +602,7 @@ func _resolve_rack() -> void:
 		high = maxf(high, point.z)
 
 	var half := (high - low) * 0.5 * _scale
-	_rack_inset = weapon.holder.support_grip.depth * 0.5 + weapon.holder.finger_radius * 0.4 - half
+	_rack_inset = weapon.holder.support_grip.depth * 0.5 + weapon.holder.hand_skin * 0.4 - half
 
 	var frame := _rest_in_gun(weapon.holder.rack_grab)
 	_rack = Transform3D(frame.basis.orthonormalized(), frame.origin * _scale)

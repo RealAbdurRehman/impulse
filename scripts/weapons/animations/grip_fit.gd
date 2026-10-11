@@ -14,7 +14,8 @@ class Fit:
 	var palm := Vector3.FORWARD
 	var depth := 0.0
 	var width := 0.0
-	var outline := PackedVector2Array()
+	var block := Transform3D.IDENTITY
+	var span := Vector2.ZERO
 
 
 const SLICE := 0.01
@@ -53,7 +54,7 @@ func fit(origin: Vector3, axis: Vector3, palm: Vector3, side: float) -> Fit:
 	var at := origin
 	var a := Vector3(axis.x, axis.y, 0.0).normalized()
 	for i in 3:
-		var line := _line(origin, a)
+		var line := _line(at, a)
 		at = line[0]
 		a = line[1]
 
@@ -69,9 +70,16 @@ func fit(origin: Vector3, axis: Vector3, palm: Vector3, side: float) -> Fit:
 	result.palm = n
 	result.depth = box.size.x
 	result.width = box.size.y
-	for p in points:
-		result.outline.append(p - centre)
 
+	var across := Vector3(a.y, -a.x, 0.0)
+	var flat := _waist(at, a, across, Vector3.BACK)
+	var section := _box(flat)
+	var mid := section.get_center()
+	result.block = Transform3D(
+		Basis(a, across, a.cross(across)),
+		at + across * mid.x + Vector3.BACK * mid.y,
+	)
+	result.span = section.size
 	return result
 
 
