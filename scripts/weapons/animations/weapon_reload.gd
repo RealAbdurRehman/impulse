@@ -90,6 +90,7 @@ var tilt := 0.0
 var pull := 0.0
 var support_weight := 0.0
 var rack_amount := 0.0
+var lowered := 0.0
 
 var _gun: Node3D
 var _scale := 1.0
@@ -171,7 +172,7 @@ func _physics_process(delta: float) -> void:
 		e,
 	)
 
-	weapon.holder.loosen_support(smoothstep(0.0, 0.12, p) * (1.0 - smoothstep(0.88, 1.0, p)))
+	lowered = smoothstep(0.0, 0.12, p) * (1.0 - smoothstep(0.88, 1.0, p))
 
 	while _next < _beats.size() and p >= _beats[_next].at:
 		_fire(_beats[_next].cue)
@@ -470,7 +471,7 @@ func _finish() -> void:
 		return
 
 	active = false
-	weapon.holder.loosen_support(0.0)
+	lowered = 0.0
 	tilt = 0.0
 	pull = 0.0
 	support_weight = 0.0

@@ -50,6 +50,10 @@ extends SkeletonModifier3D
 @export_range(0.0, 1.0) var chest_aim_share := 0.4
 @export_range(0.0, 1.0) var chest_aim_share_down := 0.12
 
+@export_group("Reload")
+@export var reload_aim_up_degrees := 35.0
+@export var reload_aim_down_degrees := 30.0
+
 @export_group("Aim down sights")
 @export var ads_chest_lean_degrees := 14.0
 @export var ads_head_tilt_degrees := 10.0
@@ -97,6 +101,11 @@ extends SkeletonModifier3D
 
 var recoil: WeaponRecoil
 var reload: WeaponReload
+var clearance: ArmClearance
+
+var support_shift := Vector3.ZERO
+var support_turn_degrees := Vector3.ZERO
+var support_reach := 0.0
 
 var ads_eye_distance := 0.22
 var elbow_flare_degrees := -60.0
@@ -128,6 +137,7 @@ var _right: Array[int] = []
 var _chest_off := 0.0
 var _head_off := 0.0
 var _aim := 0.0
+var _aim_input := 0.0
 var _clock := 0.0
 var _arm_flip := 0.0
 var _twist := 0.0
@@ -188,7 +198,12 @@ func _process_modification() -> void:
 	var dt := get_physics_process_delta_time()
 	_clock += dt
 
-	_aim = lerpf(_aim, _target_pitch(skel), 1.0 - exp(-aim_smoothing * dt))
+	_aim_input = lerpf(_aim_input, _target_pitch(skel), 1.0 - exp(-aim_smoothing * dt))
+	_aim = lerpf(
+		_aim_input,
+		clampf(_aim_input, -deg_to_rad(reload_aim_down_degrees), deg_to_rad(reload_aim_up_degrees)),
+		reload.lowered,
+	)
 
 	_apply_spine(skel, dt)
 
@@ -381,13 +396,26 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	var pole_left := _elbow_pole(body.y, body.z, deg_to_rad(support_flare))
 
 	_solve_arm(skel, _right, pole_right, gun_pose * hold_main.origin, frame * hold_main.basis)
-	var support_pos := gun_pose * hold_support.origin
-	var support_basis := frame * hold_support.basis
+	var support_pos := gun_pose * hold_support.origin + frame * support_shift
+	var turn := Basis.from_euler(support_turn_degrees * deg_to_rad(1.0) * support_reach)
+	var support_basis := frame * turn * hold_support.basis
+	var cleared := support_reach
 	if reload_hand:
 		var target := reload.support_pose(gun_pose, skel, s_left)
 		var w := reload.support_weight
 		support_pos = support_pos.lerp(target.origin, w)
 		support_basis = support_basis.orthonormalized().slerp(target.basis.orthonormalized(), w)
+		cleared = maxf(cleared, w)
+
+	support_pos = clearance.resolve(
+		s_left,
+		support_pos,
+		pole_left,
+		_upper_len[_left[0]],
+		_fore_len[_left[0]],
+		cleared,
+		dt,
+	)
 
 	_solve_arm(skel, _left, pole_left, support_pos, support_basis)
 

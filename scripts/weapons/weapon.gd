@@ -4,6 +4,7 @@ extends Node
 signal fired(muzzle: Transform3D)
 signal bullet_traced(from: Vector3, to: Vector3, hit: Dictionary)
 signal dry_fired
+signal fire_mode_changed(automatic: bool)
 signal ammo_changed(current: int, capacity: int)
 signal reload_started
 signal reload_finished
@@ -17,12 +18,14 @@ signal aim_changed(aiming: bool)
 @export var fire_action: StringName = &"shoot"
 @export var reload_action: StringName = &"reload"
 @export var aim_action: StringName = &"aim"
+@export var fire_mode_action: StringName = &"fire_mode"
 
 var animator: GunAnimator
 var reloader: WeaponReload
 var audio: WeaponAudio
 
 var ammo := 0
+var automatic := true
 var recoil: WeaponRecoil
 
 var _aim := 0.0
@@ -31,6 +34,7 @@ var _bloom := 0.0
 var _cooldown := 0.0
 var _press_buffer := 0.0
 var _reload_left := 0.0
+var _select_left := 0.0
 
 var _exclude: Array[RID] = []
 var _linked := false
@@ -38,6 +42,7 @@ var _linked := false
 
 func _ready() -> void:
 	ammo = stats.magazine_size
+	automatic = stats.automatic
 
 	animator = GunAnimator.new()
 	animator.name = &"GunAnimator"
@@ -68,6 +73,15 @@ func reload() -> void:
 	reload_started.emit()
 
 
+func switch_fire_mode() -> void:
+	if not stats.selector_part or _reload_left > 0.0 or _select_left > 0.0:
+		return
+
+	automatic = not automatic
+	_select_left = stats.selector_time
+	fire_mode_changed.emit(automatic)
+
+
 func is_reloading() -> bool:
 	return _reload_left > 0.0
 
@@ -86,6 +100,10 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed(reload_action):
 		reload()
 
+	_select_left = maxf(_select_left - delta, 0.0)
+	if Input.is_action_just_pressed(fire_mode_action):
+		switch_fire_mode()
+
 	_update_aim(delta)
 
 	if Input.is_action_just_pressed(fire_action):
@@ -94,12 +112,12 @@ func _physics_process(delta: float) -> void:
 		_press_buffer = maxf(_press_buffer - delta, 0.0)
 
 	var pressed := _press_buffer > 0.0
-	var held := stats.automatic and Input.is_action_pressed(fire_action)
+	var held := automatic and Input.is_action_pressed(fire_action)
 
 	_bloom = maxf(_bloom - stats.bloom_recovery * delta, 0.0)
 
 	_cooldown -= delta
-	if _cooldown <= 0.0 and _reload_left <= 0.0 and (pressed or held):
+	if _cooldown <= 0.0 and _reload_left <= 0.0 and _select_left <= 0.0 and (pressed or held):
 		_press_buffer = 0.0
 		if ammo > 0:
 			_cooldown += 60.0 / stats.rounds_per_minute

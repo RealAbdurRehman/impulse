@@ -19,6 +19,7 @@ enum Phase {
 
 signal ejected
 signal slide_locked
+signal selector_clicked
 
 @export_group("Ejection")
 @export_range(0.05, 0.9) var eject_at := 0.35
@@ -37,6 +38,9 @@ signal slide_locked
 
 @export var cover_time := 0.08
 
+@export_range(0.05, 0.6) var selector_reach := 0.35
+@export_range(0.2, 0.95) var selector_land := 0.7
+
 var weapon: Weapon
 
 var _gun: Node3D
@@ -48,6 +52,7 @@ var _trigger: Part
 var _stop: Part
 var _handle: Part
 var _cover: Part
+var _selector: Part
 var _pivot := Vector3.ZERO
 var _port := Transform3D.IDENTITY
 var _round: Node3D
@@ -76,6 +81,13 @@ var _lever := 0.0
 var _pull := 0.0
 var _hold := 0.0
 
+var _sel := 0.0
+var _sel_from := 0.0
+var _sel_to := 0.0
+var _sel_t := -1.0
+var _sel_hit := false
+var _reach := 0.0
+
 
 func _ready() -> void:
 	weapon = get_parent() as Weapon
@@ -83,6 +95,7 @@ func _ready() -> void:
 	weapon.dry_fired.connect(_on_dry_fired)
 	weapon.ammo_changed.connect(_on_ammo_changed)
 	weapon.reload_finished.connect(_on_reload_finished)
+	weapon.fire_mode_changed.connect(_on_fire_mode_changed)
 
 
 func _physics_process(delta: float) -> void:
@@ -92,6 +105,7 @@ func _physics_process(delta: float) -> void:
 	_step_slide(delta)
 	_step_controls(delta)
 	_step_cover(delta)
+	_step_selector(delta)
 
 	if _phase != Phase.DRIVEN:
 		_h = minf(_h, _s)
@@ -129,6 +143,16 @@ func _on_ammo_changed(current: int, _capacity: int) -> void:
 
 func _on_reload_finished() -> void:
 	_release()
+
+
+func _on_fire_mode_changed(automatic: bool) -> void:
+	_resolve()
+
+	_sel_from = _sel
+	_sel_to = 1.0 if automatic else 0.0
+	_sel_t = 0.0
+	_sel_hit = false
+	set_physics_process(true)
 
 
 func release_slide() -> void:
@@ -203,6 +227,7 @@ func _resolve() -> bool:
 	_stop = _part(gun, stats.catch_part)
 	_handle = _part(gun, stats.handle_part) if stats.handle_part else null
 	_cover = _part(gun, stats.cover_part) if stats.cover_part else null
+	_selector = _part(gun, stats.selector_part) if stats.selector_part else null
 	_cover_t = -1.0
 	_pivot = _in_gun(weapon.holder.barrel_pivot).origin
 	_port = _in_gun(weapon.holder.ejector)
@@ -220,6 +245,9 @@ func _resolve() -> bool:
 	_h = 0.0
 	_lever = 0.0
 	_pull = 0.0
+	_sel = 1.0 if weapon.automatic else 0.0
+	_sel_t = -1.0
+	_reach = 0.0
 	_phase = Phase.IDLE
 	if weapon.ammo <= 0 and weapon.stats.slide_lock:
 		_s = weapon.stats.slide_lock_hold
@@ -336,6 +364,34 @@ func _step_cover(delta: float) -> void:
 		_cover_t = minf(_cover_t + delta, cover_time)
 
 
+func _step_selector(delta: float) -> void:
+	if _sel_t < 0.0:
+		return
+
+	_sel_t += delta
+	var u := minf(_sel_t / weapon.stats.selector_time, 1.0)
+
+	var swing := clampf((u - selector_reach) / (selector_land - selector_reach), 0.0, 1.0)
+	var travel := 1.0 + 2.70158 * pow(swing - 1.0, 3.0) + 1.70158 * pow(swing - 1.0, 2.0)
+	_sel = lerpf(_sel_from, _sel_to, travel)
+
+	if u < selector_reach:
+		_reach = 1.0 - pow(1.0 - u / selector_reach, 2.0)
+	elif u < selector_land:
+		_reach = 1.0
+	else:
+		_reach = 1.0 - smoothstep(0.0, 1.0, (u - selector_land) / (1.0 - selector_land))
+
+	if not _sel_hit and travel >= 1.0:
+		_sel_hit = true
+		selector_clicked.emit()
+
+	if u >= 1.0:
+		_sel = _sel_to
+		_sel_t = -1.0
+		_reach = 0.0
+
+
 func _step_controls(delta: float) -> void:
 	var lever_target := 0.0
 	if (
@@ -393,6 +449,14 @@ func _apply() -> void:
 
 	weapon.holder.pull_trigger(_pull)
 
+	if _selector != null:
+		var angle := deg_to_rad(stats.selector_degrees) * _sel
+		_selector.node.transform = Transform3D(
+			Basis(Vector3.BACK, angle) * _selector.rest.basis,
+			_selector.rest.origin,
+		)
+		weapon.holder.operate_selector(_in_gun(weapon.holder.selector_pad).origin * _scale, _reach)
+
 	_apply_round(travel)
 
 
@@ -428,6 +492,9 @@ func _settled() -> bool:
 		return false
 
 	if _hold > 0.0 or Input.is_action_pressed(weapon.fire_action):
+		return false
+
+	if _sel_t >= 0.0:
 		return false
 
 	var lever_goal := 1.0 if _phase == Phase.LOCKED else 0.0

@@ -47,6 +47,13 @@ extends Resource
 
 @export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 300.0
 
+@export_group("Selector")
+@export var selector_part: StringName
+@export_range(-180.0, 180.0) var selector_degrees := 90.0
+@export_range(0.1, 2.0) var selector_time := 0.3
+@export_range(0.0, 1.0) var selector_jolt := 0.35
+@export var selector_hand_turn_degrees := Vector3.ZERO
+
 @export_group("Aim down sights")
 @export var ads_time := 0.24
 @export var ads_eye_distance := 0.22

@@ -71,6 +71,7 @@ func _ready() -> void:
 	_body.setup(TAU * s.recoil_body_hz, s.recoil_body_damping)
 
 	weapon.fired.connect(_on_fired)
+	weapon.animator.selector_clicked.connect(_on_selector_clicked)
 	_link()
 
 
@@ -98,6 +99,14 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	_body.kick(lerpf(1.0, strength, 0.5))
 
 	weapon.player.push_back(s.recoil_push * strength)
+
+	set_physics_process(true)
+
+
+func _on_selector_clicked() -> void:
+	var s := weapon.stats
+	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * s.selector_jolt)
+	_body.kick(s.selector_jolt)
 
 	set_physics_process(true)
 
