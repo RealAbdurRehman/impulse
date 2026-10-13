@@ -54,6 +54,7 @@ func _ready() -> void:
 	weapon.fired.connect(_on_fired)
 	weapon.dry_fired.connect(_handle.bind(_sounds.dry_fire))
 	weapon.animator.slide_locked.connect(_handle.bind(_sounds.slide_lock))
+	weapon.animator.selector_clicked.connect(_handle.bind(_sounds.fire_mode))
 	weapon.reloader.cued.connect(_on_cue)
 	weapon.aim_changed.connect(_on_aim)
 
@@ -117,7 +118,8 @@ func _on_cue(cue: WeaponReload.Cue) -> void:
 			_handle(_sounds.mag_in, _sounds.tactical_db if weapon.ammo > 0 else 0.0)
 
 		WeaponReload.Cue.UNLOCK:
-			_handle(_sounds.slide_release)
+			if _sounds.slide_release:
+				_handle(_sounds.slide_release)
 
 		WeaponReload.Cue.TAKE_SLIDE:
 			_handle(_sounds.rack_back)

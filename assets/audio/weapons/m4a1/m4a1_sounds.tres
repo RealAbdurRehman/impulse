@@ -30,18 +30,17 @@
 [ext_resource type="AudioStream" uid="uid://ciaeu67xnitpn" path="res://assets/audio/weapons/casings/casing_24.wav" id="28_8oyvt"]
 [ext_resource type="AudioStream" uid="uid://lt3m7bytjir0" path="res://assets/audio/weapons/casings/casing_25.wav" id="29_oag51"]
 [ext_resource type="AudioStream" uid="uid://156c635wwyv4" path="res://assets/audio/weapons/g17/dry_fire.wav" id="30_3k0tf"]
-[ext_resource type="AudioStream" uid="uid://e7qx2kx06r02" path="res://assets/audio/weapons/g17/fire_1.wav" id="31_fuy3b"]
-[ext_resource type="AudioStream" uid="uid://dogdo78bkutd5" path="res://assets/audio/weapons/g17/fire_2.wav" id="32_vjva6"]
-[ext_resource type="AudioStream" uid="uid://dkona0pp7raq5" path="res://assets/audio/weapons/g17/fire_3.wav" id="33_0b2t2"]
-[ext_resource type="AudioStream" uid="uid://d3g514ugmnwgf" path="res://assets/audio/weapons/g17/fire_4.wav" id="34_mng5e"]
-[ext_resource type="AudioStream" uid="uid://bc7jwuangg4fq" path="res://assets/audio/weapons/g17/fire_5.wav" id="35_c7ll1"]
-[ext_resource type="AudioStream" uid="uid://t01gxg54mbo8" path="res://assets/audio/weapons/g17/mag_in.wav" id="36_kjqfs"]
-[ext_resource type="AudioStream" uid="uid://dvwfelwowlujg" path="res://assets/audio/weapons/g17/mag_out.wav" id="37_745gk"]
-[ext_resource type="AudioStream" uid="uid://sr51nymyy4va" path="res://assets/audio/weapons/g17/rack_back.wav" id="38_yq4sj"]
-[ext_resource type="AudioStream" uid="uid://bsq0hepr5gcoo" path="res://assets/audio/weapons/g17/rack_forward.wav" id="39_624yq"]
 [ext_resource type="Script" uid="uid://bv15q7wn1smpd" path="res://scripts/weapons/audio/weapon_sounds.gd" id="40_b1sln"]
 [ext_resource type="AudioStream" uid="uid://bd58xb84jas4x" path="res://assets/audio/weapons/g17/slide_lock.wav" id="41_a1p16"]
-[ext_resource type="AudioStream" uid="uid://bc3yq723irn0b" path="res://assets/audio/weapons/g17/slide_release.wav" id="42_vu0hk"]
+[ext_resource type="AudioStream" uid="uid://ouydg50y2s" path="res://assets/audio/weapons/m4a1/fire_1.wav" id="fire_1"]
+[ext_resource type="AudioStream" uid="uid://cytwjv5fr64l4" path="res://assets/audio/weapons/m4a1/fire_2.wav" id="fire_2"]
+[ext_resource type="AudioStream" uid="uid://cml7l0eouo0f4" path="res://assets/audio/weapons/m4a1/fire_3.wav" id="fire_3"]
+[ext_resource type="AudioStream" uid="uid://d11jnvnvct11m" path="res://assets/audio/weapons/m4a1/fire_4.wav" id="fire_4"]
+[ext_resource type="AudioStream" uid="uid://d0r21y0abkx3k" path="res://assets/audio/weapons/fire_mode/fire_mode.wav" id="fire_mode"]
+[ext_resource type="AudioStream" uid="uid://5dx65kghxoi" path="res://assets/audio/weapons/m4a1/mag_in.wav" id="mag_in"]
+[ext_resource type="AudioStream" uid="uid://nvyxgyv40swy" path="res://assets/audio/weapons/m4a1/mag_out.wav" id="mag_out"]
+[ext_resource type="AudioStream" uid="uid://c3wn2hdfqdh2k" path="res://assets/audio/weapons/m4a1/rack_back.wav" id="rack_back"]
+[ext_resource type="AudioStream" uid="uid://deaegqoy64jdq" path="res://assets/audio/weapons/m4a1/rack_forward.wav" id="rack_forward"]
 
 [sub_resource type="Resource" id="SoundSet_aim_in"]
 script = ExtResource("1_cosx0")
@@ -79,36 +78,44 @@ pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_fire"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("31_fuy3b"), ExtResource("32_vjva6"), ExtResource("33_0b2t2"), ExtResource("34_mng5e"), ExtResource("35_c7ll1")])
+streams = Array[AudioStream]([ExtResource("fire_1"), ExtResource("fire_2"), ExtResource("fire_3"), ExtResource("fire_4")])
 gains = null
 volume_db = -8.0
 
+[sub_resource type="Resource" id="SoundSet_fire_mode"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("fire_mode")])
+gains = null
+volume_db = -7.0
+
 [sub_resource type="Resource" id="SoundSet_mag_in"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("36_kjqfs")])
+streams = Array[AudioStream]([ExtResource("mag_in")])
 gains = null
-volume_db = -6.0
+volume_db = -9.5
 pitch_variation = 0.04
-skip = 0.27
+skip = 0.35
 
 [sub_resource type="Resource" id="SoundSet_mag_out"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("37_745gk")])
+streams = Array[AudioStream]([ExtResource("mag_out")])
 gains = null
+volume_db = -12.0
 pitch_variation = 0.04
+skip = 0.17
 
 [sub_resource type="Resource" id="SoundSet_rack_back"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("38_yq4sj")])
+streams = Array[AudioStream]([ExtResource("rack_back")])
 gains = null
-volume_db = -7.0
+volume_db = -13.0
 pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_rack_forward"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("39_624yq")])
+streams = Array[AudioStream]([ExtResource("rack_forward")])
 gains = null
-volume_db = -6.0
+volume_db = -12.0
 pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_slide_lock"]
@@ -119,25 +126,17 @@ volume_db = -8.0
 pitch_variation = 0.04
 skip = 0.05
 
-[sub_resource type="Resource" id="SoundSet_slide_release"]
-script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("42_vu0hk")])
-gains = null
-volume_db = -8.0
-pitch_variation = 0.04
-
 [resource]
 script = ExtResource("40_b1sln")
 fire = SubResource("SoundSet_fire")
 dry_fire = SubResource("SoundSet_dry_fire")
 slide_lock = SubResource("SoundSet_slide_lock")
-slide_release = SubResource("SoundSet_slide_release")
 rack_back = SubResource("SoundSet_rack_back")
 rack_forward = SubResource("SoundSet_rack_forward")
 mag_out = SubResource("SoundSet_mag_out")
 mag_in = SubResource("SoundSet_mag_in")
+fire_mode = SubResource("SoundSet_fire_mode")
 aim_in = SubResource("SoundSet_aim_in")
 aim_out = SubResource("SoundSet_aim_out")
 casing = SubResource("SoundSet_casing")
-fire_pitch = 0.8
 metadata/_custom_type_script = "uid://bv15q7wn1smpd"

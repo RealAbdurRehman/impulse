@@ -14,6 +14,9 @@ extends Resource
 @export var mag_out: SoundSet
 @export var mag_in: SoundSet
 
+@export_group("Selector")
+@export var fire_mode: SoundSet
+
 @export_group("Aiming")
 @export var aim_in: SoundSet
 @export var aim_out: SoundSet
