@@ -226,6 +226,8 @@ const QUAD: Array[Vector2] = [
 @export_flags_3d_physics var casing_layer := 4
 @export_flags_3d_physics var casing_mask := 1
 
+static var _noise_textures := { }
+
 var weapon: Weapon
 
 var _noise: Texture2D
@@ -1113,6 +1115,9 @@ func _build_tracers() -> void:
 
 
 func _noise_texture() -> Texture2D:
+	if _noise_textures.has(noise_size):
+		return _noise_textures[noise_size]
+
 	var n := FastNoiseLite.new()
 	n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	n.seed = 11
@@ -1124,4 +1129,6 @@ func _noise_texture() -> Texture2D:
 	var img := n.get_seamless_image(noise_size, noise_size, false, false, 0.2, true)
 	img.generate_mipmaps()
 
-	return ImageTexture.create_from_image(img)
+	var texture := ImageTexture.create_from_image(img)
+	_noise_textures[noise_size] = texture
+	return texture

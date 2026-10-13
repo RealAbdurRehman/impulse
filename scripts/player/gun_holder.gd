@@ -1,6 +1,8 @@
 class_name GunHolder
 extends Node
 
+signal assembled
+
 
 class Grip:
 	var hole := Vector3.ZERO
@@ -111,6 +113,12 @@ func _ready() -> void:
 		(gun.get_node(NodePath(n)) as Node3D).visible = false
 
 	_assemble.call_deferred()
+
+
+func release() -> void:
+	gun.queue_free()
+	_thumb.queue_free()
+	_finger.queue_free()
 
 
 func muzzle_transform() -> Transform3D:
@@ -228,10 +236,13 @@ func _assemble() -> void:
 	spine.hold_main = main_in_gun
 	spine.hold_support = support_in_gun
 	spine.support_turn_degrees = stats.selector_hand_turn_degrees
+	spine.support_shift = Vector3.ZERO
+	spine.support_reach = 0.0
 	var arms := spine.left_arm_bones.duplicate()
 	arms.append_array(spine.right_arm_bones)
 	spine.clearance = ArmClearance.new(ragdoll, spine.get_skeleton(), arms)
 	spine.gun_equipped = true
+	assembled.emit()
 
 
 func _gun_space(marker: Node3D) -> Transform3D:
