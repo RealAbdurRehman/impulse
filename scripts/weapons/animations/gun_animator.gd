@@ -20,6 +20,9 @@ enum Phase {
 signal ejected
 signal slide_locked
 signal selector_clicked
+signal cycled_back
+signal cycled_forward
+signal cycle_finished
 
 @export_group("Ejection")
 @export_range(0.05, 0.9) var eject_at := 0.35
@@ -67,6 +70,12 @@ var _feed_to_angle := 0.0
 var _feeding := false
 var _ejected := false
 var _feed_forced := false
+var _manual := false
+var _cycle_feed := false
+var _eject_wanted := true
+var _eject_at := 0.35
+var _back_time := 0.03
+var _forward_time := 0.065
 
 var _phase := Phase.IDLE
 var _lock := false
@@ -120,14 +129,21 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	_resolve()
 
 	_hold = trigger_hold
-	_lock = weapon.ammo <= 0 and weapon.stats.slide_lock
-	_ejected = false
-	_feed_forced = false
 	_open_cover()
 
-	_phase = Phase.BACK
-	_t = 0.0
-	_from = _s
+	if weapon.stats.manual_cycle:
+		set_physics_process(true)
+		return
+
+	_lock = weapon.ammo <= 0 and weapon.stats.slide_lock
+	_feed_forced = false
+	_start_stroke(
+		false,
+		weapon.stats.slide_back_time,
+		weapon.stats.slide_forward_time,
+		eject_at,
+		true,
+	)
 	set_physics_process(true)
 
 
@@ -163,6 +179,35 @@ func release_slide() -> void:
 		set_physics_process(true)
 
 
+func cycle(eject: bool, feed: bool) -> void:
+	_resolve()
+
+	var stats := weapon.stats
+	_lock = false
+	_cycle_feed = feed
+	_start_stroke(
+		true,
+		stats.cycle_back_time,
+		stats.cycle_forward_time,
+		stats.cycle_eject_at,
+		eject,
+	)
+	set_physics_process(true)
+
+
+func _start_stroke(manual: bool, back: float, forward: float, at: float, eject: bool) -> void:
+	_manual = manual
+	_back_time = back
+	_forward_time = forward
+	_eject_at = at
+	_eject_wanted = eject
+	_ejected = false
+
+	_phase = Phase.BACK
+	_t = 0.0
+	_from = _s
+
+
 func drive_slide(value: float, handle := value) -> void:
 	_lock = false
 	_phase = Phase.DRIVEN
@@ -190,7 +235,7 @@ func rack_rest() -> Transform3D:
 
 
 func port_transform() -> Transform3D:
-	var travel := weapon.stats.slide_travel / _scale
+	var travel := 0.0 if weapon.stats.manual_cycle else weapon.stats.slide_travel / _scale
 	var local := _port.origin + Vector3(-travel * _s, 0.0, 0.0)
 	var basis := _gun.global_transform.basis.orthonormalized() * _port.basis.orthonormalized()
 	return Transform3D(basis, _gun.global_transform * local)
@@ -300,7 +345,7 @@ func _in_gun(node: Node3D) -> Transform3D:
 
 
 func _begin_forward(time: float) -> void:
-	_feeding = weapon.ammo > 0 or _feed_forced
+	_feeding = _cycle_feed if _manual else weapon.ammo > 0 or _feed_forced
 	_phase = Phase.FORWARD
 	_t = 0.0
 	_from = _s
@@ -313,21 +358,25 @@ func _step_slide(delta: float) -> void:
 	match _phase:
 		Phase.BACK:
 			_t += delta
-			var duration := maxf(stats.slide_back_time * (1.0 - _from), 0.006)
+			var duration := maxf(_back_time * (1.0 - _from), 0.006)
 			var u := minf(_t / duration, 1.0)
 			_s = lerpf(_from, 1.0, 1.0 - (1.0 - u) * (1.0 - u))
-			if not _ejected and _s >= eject_at:
+			if not _ejected and _s >= _eject_at:
 				_ejected = true
-				ejected.emit()
+				if _eject_wanted:
+					ejected.emit()
 
 			if u >= 1.0:
+				if _manual:
+					cycled_back.emit()
+
 				if _lock:
 					_phase = Phase.SETTLE
 					_t = 0.0
 					_from = _s
 					slide_locked.emit()
 				else:
-					_begin_forward(stats.slide_forward_time)
+					_begin_forward(_forward_time)
 
 		Phase.SETTLE:
 			_t += delta
@@ -344,6 +393,8 @@ func _step_slide(delta: float) -> void:
 				_s = 0.0
 				_phase = Phase.BOUNCE
 				_t = 0.0
+				if _manual:
+					cycled_forward.emit()
 
 		Phase.BOUNCE:
 			_t += delta
@@ -352,6 +403,8 @@ func _step_slide(delta: float) -> void:
 			if u >= 1.0:
 				_s = 0.0
 				_phase = Phase.IDLE
+				if _manual:
+					cycle_finished.emit()
 
 
 func _open_cover() -> void:
@@ -403,7 +456,10 @@ func _step_controls(delta: float) -> void:
 	_lever = lerpf(_lever, lever_target, 1.0 - exp(-lever_speed * delta))
 
 	_hold = maxf(_hold - delta, 0.0)
-	var pulled := _hold > 0.0 or Input.is_action_pressed(weapon.fire_action)
+	var pulled := _hold > 0.0
+	if not weapon.stats.manual_cycle:
+		pulled = pulled or Input.is_action_pressed(weapon.fire_action)
+
 	var speed := trigger_pull_speed if pulled else trigger_release_speed
 	_pull = lerpf(_pull, 1.0 if pulled else 0.0, 1.0 - exp(-speed * delta))
 
@@ -457,6 +513,9 @@ func _apply() -> void:
 		)
 		weapon.holder.operate_selector(_in_gun(weapon.holder.selector_pad).origin * _scale, _reach)
 
+	if stats.manual_cycle:
+		weapon.holder.follow_pump(stats.slide_travel * _s)
+
 	_apply_round(travel)
 
 
@@ -491,7 +550,8 @@ func _settled() -> bool:
 	if _cover_t >= 0.0 and _cover_t < cover_time:
 		return false
 
-	if _hold > 0.0 or Input.is_action_pressed(weapon.fire_action):
+	var squeezed := Input.is_action_pressed(weapon.fire_action)
+	if _hold > 0.0 or (squeezed and not weapon.stats.manual_cycle):
 		return false
 
 	if _sel_t >= 0.0:

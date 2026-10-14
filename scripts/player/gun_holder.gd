@@ -34,6 +34,7 @@ class Grip:
 @export var barrel_pivot_marker: StringName = &"BarrelPivot"
 @export var shoulder_marker: StringName = &"ShoulderPad"
 @export var selector_marker: StringName = &"SelectorPad"
+@export var shell_port_marker: StringName = &"ShellPort"
 
 @export_group("Wrist")
 @export var wrist_back := 0.0285
@@ -69,6 +70,7 @@ var feed_end: Node3D
 var barrel_pivot: Node3D
 var shoulder_pad: Node3D
 var selector_pad: Node3D
+var shell_port: Node3D
 var selector_by_support := false
 
 var main_hand: PhysicalBone3D
@@ -108,6 +110,7 @@ func _ready() -> void:
 	barrel_pivot = _marker(barrel_pivot_marker)
 	shoulder_pad = _marker(shoulder_marker)
 	selector_pad = _marker(selector_marker)
+	shell_port = _marker(shell_port_marker)
 
 	for n in [stats.spare_mag_part, stats.feed_part, stats.casing_part]:
 		(gun.get_node(NodePath(n)) as Node3D).visible = false
@@ -125,6 +128,10 @@ func muzzle_transform() -> Transform3D:
 	var t := muzzle.global_transform
 	t.basis = t.basis.orthonormalized()
 	return t
+
+
+func follow_pump(distance: float) -> void:
+	spine.support_shift = Vector3(-distance, 0.0, 0.0)
 
 
 func operate_selector(contact: Vector3, amount: float) -> void:
@@ -225,10 +232,13 @@ func _assemble() -> void:
 	spine.hold_reach = stats.hold_reach
 	spine.hold_reach_min = stats.hold_reach_min
 	spine.hold_drop = stats.hold_drop
+	spine.hold_up_forward = stats.hold_up_forward
 	spine.hold_side = stats.hold_side
 	spine.hold_twist_degrees = stats.hold_twist_degrees
 	spine.hold_yaw_degrees = stats.hold_yaw_degrees
 	spine.ads_yaw_degrees = stats.ads_yaw_degrees
+	spine.max_aim_up_degrees = stats.aim_up_limit_degrees
+	spine.max_aim_down_degrees = stats.aim_down_limit_degrees
 
 	spine.gun_anchor = _gun_space(shoulder_pad).origin
 	spine.gun_muzzle = _gun_space(muzzle).origin

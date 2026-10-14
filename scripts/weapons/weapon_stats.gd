@@ -33,9 +33,12 @@ extends Resource
 @export var hold_reach := 0.5
 @export var hold_reach_min := 0.15
 @export var hold_drop := 0.05
+@export var hold_up_forward := 0.0
 @export var hold_side := 0.0
 @export_range(-45.0, 45.0) var hold_twist_degrees := 0.0
 @export_range(-45.0, 45.0) var hold_yaw_degrees := 0.0
+@export_range(10.0, 90.0) var aim_up_limit_degrees := 80.0
+@export_range(10.0, 90.0) var aim_down_limit_degrees := 70.0
 
 @export_group("Fire")
 @export var automatic := true
@@ -46,6 +49,16 @@ extends Resource
 @export var trigger_buffer := 0.12
 
 @export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 300.0
+
+@export_group("Action")
+@export var manual_cycle := false
+@export var auto_cycle := false
+
+@export var cycle_back_time := 0.16
+@export var cycle_forward_time := 0.2
+@export_range(0.05, 1.0) var cycle_eject_at := 0.85
+@export_range(0.0, 1.0) var cycle_jolt := 0.0
+@export var cycle_settle_time := 0.0
 
 @export_group("Selector")
 @export var selector_part: StringName
@@ -73,6 +86,11 @@ extends Resource
 @export_flags_3d_physics var hit_mask := 3
 
 @export_range(0.0, 20.0, 0.1) var spread_degrees := 0.5
+@export_range(0.0, 1.0, 0.05) var pellet_jitter := 0.7
+
+@export var falloff_start := 0.0
+@export var falloff_end := 0.0
+@export_range(0.0, 1.0, 0.05) var falloff_floor := 0.3
 
 @export_range(0.0, 2.0, 0.01) var bloom_per_shot := 0.0
 @export_range(0.0, 20.0, 0.1) var bloom_max := 3.0
@@ -113,6 +131,7 @@ extends Resource
 
 @export var tracer_length := 2.0
 @export var tracer_width := 0.055
+@export_range(0.0, 1.0, 0.05) var tracer_variation := 0.0
 
 @export var tracer_color := Color(1.0, 0.97, 0.85)
 @export var tracer_glow_color := Color(1.0, 0.55, 0.22)
@@ -140,6 +159,7 @@ extends Resource
 
 @export_range(0.0, 50.0, 0.1) var recoil_flip_degrees := 20.0
 @export_range(0.0, 10.0, 0.1) var recoil_torso_degrees := 6.0
+@export_range(60.0, 140.0, 1.0) var recoil_flip_ceiling_degrees := 90.0
 
 @export_range(0.0, 3.0, 0.05) var recoil_climb_degrees := 0.0
 @export_range(0.5, 10.0, 0.1) var recoil_climb_recovery := 3.0
@@ -177,6 +197,12 @@ extends Resource
 @export_group("Reload")
 @export_range(0.0, 1.0) var rack_start := 0.45
 @export_range(0.0, 1.0) var rack_pull := 1.0
+
+@export_group("Shell reload")
+@export var reload_by_shell := false
+@export var shell_time := 0.6
+@export var shell_return_time := 0.5
+@export var shell_release_time := 0.45
 
 @export_group("Audio")
 @export var sounds: WeaponSounds

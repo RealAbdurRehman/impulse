@@ -28,16 +28,24 @@ var ammo := 0
 var automatic := true
 var recoil: WeaponRecoil
 
+var chambered := true
+var needs_cycle := false
+
+var reload_shells := 0
+var reload_total := 0.0
+
 var _aim := 0.0
 var _aiming := false
 var _bloom := 0.0
 var _cooldown := 0.0
 var _press_buffer := 0.0
+var _recover := 0.0
 var _reload_left := 0.0
 var _select_left := 0.0
 
 var _exclude: Array[RID] = []
 var _linked := false
+var _cycling := false
 
 
 func _ready() -> void:
@@ -50,15 +58,22 @@ func _ready() -> void:
 
 	var fx := WeaponFx.new()
 	fx.name = &"WeaponFx"
+	fx.tracer_pool = maxi(fx.tracer_pool, stats.pellets * 2)
 	add_child(fx)
 
 	recoil = WeaponRecoil.new()
 	recoil.name = &"WeaponRecoil"
 	add_child(recoil)
 
-	reloader = WeaponReload.new()
+	if stats.reload_by_shell:
+		reloader = ShellReload.new()
+	else:
+		reloader = WeaponReload.new()
+
 	reloader.name = &"WeaponReload"
 	add_child(reloader)
+	reloader.cued.connect(_on_reload_cue)
+	animator.cycle_finished.connect(_on_cycle_finished)
 
 	audio = WeaponAudio.new()
 	audio.name = &"WeaponAudio"
@@ -69,8 +84,24 @@ func reload() -> void:
 	if _reload_left > 0.0 or ammo >= stats.magazine_size:
 		return
 
-	_reload_left = stats.reload_time
+	if stats.reload_by_shell:
+		reload_shells = stats.magazine_size - ammo
+		reload_total = float(reload_shells) * stats.shell_time + stats.shell_return_time
+	else:
+		reload_total = stats.reload_time
+
+	_reload_left = reload_total
 	reload_started.emit()
+
+
+func cycle() -> void:
+	var spent := needs_cycle
+	chambered = ammo > 0
+	needs_cycle = false
+
+	_cycling = true
+	_cooldown = stats.cycle_back_time + stats.cycle_forward_time
+	animator.cycle(spent, chambered)
 
 
 func switch_fire_mode() -> void:
@@ -93,8 +124,10 @@ func _physics_process(delta: float) -> void:
 	if _reload_left > 0.0:
 		_reload_left -= delta
 		if _reload_left <= 0.0:
-			ammo = stats.magazine_size
-			ammo_changed.emit(ammo, stats.magazine_size)
+			if not stats.reload_by_shell:
+				ammo = stats.magazine_size
+				ammo_changed.emit(ammo, stats.magazine_size)
+
 			reload_finished.emit()
 
 	if Input.is_action_just_pressed(reload_action):
@@ -112,12 +145,15 @@ func _physics_process(delta: float) -> void:
 		_press_buffer = maxf(_press_buffer - delta, 0.0)
 
 	var pressed := _press_buffer > 0.0
-	var held := automatic and Input.is_action_pressed(fire_action)
+	var held := automatic and not stats.manual_cycle and Input.is_action_pressed(fire_action)
 
 	_bloom = maxf(_bloom - stats.bloom_recovery * delta, 0.0)
 
 	_cooldown -= delta
-	if _cooldown <= 0.0 and _reload_left <= 0.0 and _select_left <= 0.0 and (pressed or held):
+	_recover = maxf(_recover - delta, 0.0)
+	if stats.manual_cycle:
+		_manual_step(pressed)
+	elif _cooldown <= 0.0 and _reload_left <= 0.0 and _select_left <= 0.0 and (pressed or held):
 		_press_buffer = 0.0
 		if ammo > 0:
 			_cooldown += 60.0 / stats.rounds_per_minute
@@ -130,6 +166,51 @@ func _physics_process(delta: float) -> void:
 				reload()
 
 	_cooldown = maxf(_cooldown, 0.0)
+
+
+func _manual_step(pressed: bool) -> void:
+	var loading := _reload_left > 0.0 and not stats.reload_by_shell
+	if _cycling or _cooldown > 0.0 or _select_left > 0.0 or loading:
+		return
+
+	if pressed:
+		if chambered and ammo > 0:
+			_press_buffer = 0.0
+			_stop_reload()
+			_cooldown += 60.0 / stats.rounds_per_minute
+			_shoot()
+		elif needs_cycle or ammo > 0:
+			_stop_reload()
+			if _recover <= 0.0:
+				_press_buffer = 0.0
+				cycle()
+		else:
+			_press_buffer = 0.0
+			if _reload_left <= 0.0:
+				dry_fired.emit()
+				if stats.auto_reload:
+					reload()
+
+	elif stats.auto_cycle and needs_cycle and _reload_left <= 0.0 and _recover <= 0.0:
+		cycle()
+
+
+func _stop_reload() -> void:
+	if _reload_left > 0.0:
+		_reload_left = 0.0
+		_recover = stats.shell_release_time
+		reload_finished.emit()
+
+
+func _on_cycle_finished() -> void:
+	_cycling = false
+	_cooldown = maxf(_cooldown, stats.cycle_settle_time)
+
+
+func _on_reload_cue(cue: WeaponReload.Cue) -> void:
+	if stats.reload_by_shell and cue == WeaponReload.Cue.SEAT:
+		ammo = mini(ammo + 1, stats.magazine_size)
+		ammo_changed.emit(ammo, stats.magazine_size)
 
 
 func _update_aim(delta: float) -> void:
@@ -160,6 +241,10 @@ func _gun_ready() -> bool:
 
 func _shoot() -> void:
 	ammo -= 1
+	if stats.manual_cycle:
+		chambered = false
+		needs_cycle = true
+
 	_bloom = minf(_bloom + stats.bloom_per_shot, stats.bloom_max)
 
 	var muzzle := holder.muzzle_transform()
@@ -171,16 +256,19 @@ func _shoot() -> void:
 
 	fired.emit(muzzle)
 	for i in stats.pellets:
-		_trace(origin, _with_spread(forward))
+		_trace(origin, _pellet_direction(forward, i))
 
 	ammo_changed.emit(ammo, stats.magazine_size)
 
 
-func _with_spread(dir: Vector3) -> Vector3:
+func _pellet_direction(dir: Vector3, index: int) -> Vector3:
 	var base := stats.spread_degrees + _bloom
-	var spread := base * lerpf(1.0, stats.ads_spread_scale, player.aim_amount)
-	var angle := deg_to_rad(spread) * (randf() + randf() - 1.0)
-	return dir.rotated(Vector3.BACK, angle)
+	var cone := deg_to_rad(base * lerpf(1.0, stats.ads_spread_scale, player.aim_amount))
+	if stats.pellets == 1:
+		return dir.rotated(Vector3.BACK, cone * (randf() + randf() - 1.0))
+
+	var slot := (float(index) + lerpf(0.5, randf(), stats.pellet_jitter)) / float(stats.pellets)
+	return dir.rotated(Vector3.BACK, cone * (slot * 2.0 - 1.0))
 
 
 func _trace(origin: Vector3, dir: Vector3) -> void:
@@ -192,15 +280,23 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		bullet_traced.emit(origin, end, hit)
 		return
 
-	_apply_hit(hit, dir)
+	_apply_hit(hit, dir, origin.distance_to(hit.position))
 	bullet_traced.emit(origin, hit.position, hit)
 
 
-func _apply_hit(hit: Dictionary, dir: Vector3) -> void:
+func _apply_hit(hit: Dictionary, dir: Vector3, distance: float) -> void:
 	var body := hit.collider as Node3D
 	var point: Vector3 = hit.position
 	if body.has_method(&"take_damage"):
-		body.call(&"take_damage", stats.damage, point, dir)
+		body.call(&"take_damage", _damage_at(distance), point, dir)
 
 	if body.has_method(&"apply_impulse"):
 		body.call(&"apply_impulse", dir * stats.impact_impulse, point - body.global_position)
+
+
+func _damage_at(distance: float) -> float:
+	if stats.falloff_end <= stats.falloff_start:
+		return stats.damage
+
+	var k := smoothstep(stats.falloff_start, stats.falloff_end, distance)
+	return stats.damage * lerpf(1.0, stats.falloff_floor, k)

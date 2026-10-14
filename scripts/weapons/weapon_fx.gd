@@ -348,22 +348,23 @@ func _on_bullet_traced(from: Vector3, to: Vector3, _hit: Dictionary) -> void:
 	_tracer_next = (_tracer_next + 1) % _tracers.size()
 
 	var dir := (to - from) / dist
+	var vary := s.tracer_variation
 
 	t.from = from
 	t.dir = dir
 	t.basis = _facing(dir, from)
 	t.dist = dist
 	t.head = 0.0
-	t.length = s.tracer_length
+	t.length = s.tracer_length * (1.0 + vary * randf_range(-0.6, 0.6))
 	t.width = s.tracer_width
-	t.speed = s.tracer_speed
+	t.speed = s.tracer_speed * (1.0 + vary * randf_range(-0.4, 0.4))
 	t.mesh.visible = false
 	t.active = true
 
 	t.material.set_shader_parameter("core_color", _rgb(s.tracer_color))
 	t.material.set_shader_parameter("glow_color", _rgb(s.tracer_glow_color))
 	t.material.set_shader_parameter("seed", Vector2(randf(), randf()))
-	t.material.set_shader_parameter("length_m", s.tracer_length)
+	t.material.set_shader_parameter("length_m", t.length)
 	t.material.set_shader_parameter("level", 0.0 if _silent else 1.0)
 
 	set_process(true)

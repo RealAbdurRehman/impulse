@@ -113,6 +113,7 @@ var support_flare_degrees := -60.0
 var hold_reach := 0.5
 var hold_reach_min := 0.15
 var hold_drop := 0.05
+var hold_up_forward := 0.0
 var hold_side := 0.0
 var hold_twist_degrees := 0.0
 var hold_yaw_degrees := 0.0
@@ -344,9 +345,10 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	var limit_right: float = (_upper_len[_right[0]] + _fore_len[_right[0]]) * max_arm_extension
 
 	var reach := hold_reach - slide - reload_pull
+	var forward := Vector3(0.0, 0.0, hold_up_forward * smoothstep(0.4, 1.3, _aim + tilt))
 	var anchor := Vector3.ZERO
 	for i in 6:
-		anchor = mid + body * Vector3(reach, lift - hold_drop, hold_side)
+		anchor = mid + body * Vector3(reach, lift - hold_drop, hold_side) + forward
 
 		var over := maxf(
 			_support_excess(anchor, frame, support_rel, s_left, limit_left, reload_hand),

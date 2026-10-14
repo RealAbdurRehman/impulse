@@ -72,6 +72,7 @@ func _ready() -> void:
 
 	weapon.fired.connect(_on_fired)
 	weapon.animator.selector_clicked.connect(_on_selector_clicked)
+	weapon.animator.cycled_forward.connect(_on_cycled_forward)
 	_link()
 
 
@@ -93,7 +94,14 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	var strength := 1.0 + s.recoil_variation * randf_range(-1.0, 1.0)
 	strength *= lerpf(1.0, s.ads_recoil_scale, weapon.player.aim_amount)
 
-	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * strength)
+	var flip_peak := maxf(deg_to_rad(s.recoil_flip_degrees), 0.0001)
+	var pitch := clampf(weapon.player.aim_pitch, -PI * 0.5, deg_to_rad(s.aim_up_limit_degrees))
+	strength = minf(
+		strength,
+		maxf(deg_to_rad(s.recoil_flip_ceiling_degrees) - pitch, 0.0) / flip_peak,
+	)
+
+	_flip.kick(flip_peak * strength)
 	_climb += deg_to_rad(s.recoil_climb_degrees) * strength
 	_slide.kick(s.recoil_slide * strength)
 	_body.kick(lerpf(1.0, strength, 0.5))
@@ -107,6 +115,14 @@ func _on_selector_clicked() -> void:
 	var s := weapon.stats
 	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * s.selector_jolt)
 	_body.kick(s.selector_jolt)
+
+	set_physics_process(true)
+
+
+func _on_cycled_forward() -> void:
+	var s := weapon.stats
+	_flip.kick(deg_to_rad(s.recoil_flip_degrees) * s.cycle_jolt)
+	_body.kick(s.cycle_jolt)
 
 	set_physics_process(true)
 

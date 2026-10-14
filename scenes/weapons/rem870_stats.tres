@@ -1,0 +1,84 @@
+[gd_resource type="Resource" script_class="WeaponStats" format=3 uid="uid://c8kjesil16hjo"]
+
+[ext_resource type="Script" uid="uid://b48wbk45u40el" path="res://scripts/weapons/weapon_stats.gd" id="1_stats"]
+[ext_resource type="PackedScene" uid="uid://4laxbtfvfsjx" path="res://scenes/weapons/rem870.tscn" id="2_scene"]
+[ext_resource type="Resource" uid="uid://xtcw4hlv81rg" path="res://assets/audio/weapons/rem870/rem870_sounds.tres" id="3_sounds"]
+
+[resource]
+script = ExtResource("1_stats")
+scene = ExtResource("2_scene")
+slide_parts = Array[StringName]([&"Pump", &"Bolt"])
+barrel_parts = Array[StringName]([])
+catch_part = &"Carrier"
+spare_mag_part = &"Bullet"
+main_grip_part = &"GripGuide"
+support_grip_part = &"Pump"
+support_grip_axis = Vector3(1, 0, 0)
+support_palm_facing = Vector3(0, 0.87, 0.5)
+support_grip_cover = 0.4
+hold_elbow_flare_degrees = -30.0
+support_elbow_flare_degrees = -40.0
+hold_reach = 0.1
+hold_reach_min = -0.06
+hold_up_forward = 0.2
+hold_side = 0.22
+hold_twist_degrees = 40.0
+aim_down_limit_degrees = 55.0
+automatic = false
+magazine_size = 6
+trigger_buffer = 0.6
+rounds_per_minute = 240.0
+manual_cycle = true
+cycle_jolt = 0.3
+cycle_settle_time = 0.2
+ads_time = 0.3
+ads_eye_distance = 0.16
+ads_yaw_degrees = 4.0
+ads_zoom = 0.85
+ads_move_scale = 0.5
+ads_spread_scale = 0.55
+ads_recoil_scale = 0.8
+damage = 12.0
+max_range = 40.0
+pellets = 8
+spread_degrees = 4.5
+falloff_start = 8.0
+falloff_end = 28.0
+falloff_floor = 0.25
+flash_length = 0.5
+flash_width = 0.18
+light_energy = 0.2
+light_range = 3.2
+smoke_size = 1.2
+smoke_opacity = 0.4
+barrel_heat_per_shot = 0.06
+tracer_speed = 130.0
+tracer_length = 0.9
+tracer_width = 0.03
+tracer_variation = 0.5
+tracer_color = Color(0.92, 0.96, 1, 1)
+tracer_glow_color = Color(0.6, 0.75, 1, 1)
+eject_velocity = Vector3(-0.5, 2.6, 1.8)
+eject_spin = 25.0
+eject_jitter = 0.35
+recoil_slide = 0.07
+recoil_hips_back = 0.06
+recoil_hips_drop = 0.025
+recoil_push = 0.08
+recoil_flip_degrees = 22.0
+recoil_torso_degrees = 10.0
+recoil_flip_ceiling_degrees = 100.0
+recoil_flip_hz = 2.0
+recoil_flip_damping = 0.8
+recoil_body_hz = 2.0
+recoil_variation = 0.2
+slide_travel = 0.09
+slide_lock = false
+barrel_travel = 0.0
+barrel_tilt_degrees = 0.0
+slide_stop_degrees = 0.0
+trigger_pull_degrees = 18.0
+reload_by_shell = true
+shell_time = 1.5
+shell_return_time = 0.8
+sounds = ExtResource("3_sounds")

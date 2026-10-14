@@ -55,6 +55,8 @@ func _ready() -> void:
 	weapon.dry_fired.connect(_handle.bind(_sounds.dry_fire))
 	weapon.animator.slide_locked.connect(_handle.bind(_sounds.slide_lock))
 	weapon.animator.selector_clicked.connect(_handle.bind(_sounds.fire_mode))
+	weapon.animator.cycled_back.connect(_handle.bind(_sounds.rack_back))
+	weapon.animator.cycled_forward.connect(_handle.bind(_sounds.rack_forward))
 	weapon.reloader.cued.connect(_on_cue)
 	weapon.aim_changed.connect(_on_aim)
 
