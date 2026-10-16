@@ -1,0 +1,150 @@
+[gd_resource type="Resource" script_class="WeaponSounds" format=3 uid="uid://qm46j8svt88m"]
+
+[ext_resource type="Script" uid="uid://b7hkrnit0b7qy" path="res://scripts/weapons/audio/sound_set.gd" id="1_cosx0"]
+[ext_resource type="AudioStream" uid="uid://d358pux0a0o61" path="res://assets/audio/weapons/aiming/aim_1.mp3" id="2_2f2p4"]
+[ext_resource type="AudioStream" uid="uid://lp8663v64wn6" path="res://assets/audio/weapons/aiming/aim_2.mp3" id="3_7axqk"]
+[ext_resource type="AudioStream" uid="uid://ctim74b8ox15e" path="res://assets/audio/weapons/aiming/aim_3.mp3" id="4_ghle0"]
+[ext_resource type="AudioStream" uid="uid://cflxsawhgr0wd" path="res://assets/audio/weapons/casings/brass/casing_1.wav" id="5_cn2im"]
+[ext_resource type="AudioStream" uid="uid://nd7o7aknlxdn" path="res://assets/audio/weapons/casings/brass/casing_2.wav" id="6_i4jid"]
+[ext_resource type="AudioStream" uid="uid://b5v6w20y3k1wi" path="res://assets/audio/weapons/casings/brass/casing_3.wav" id="7_dxh08"]
+[ext_resource type="AudioStream" uid="uid://bds5iw7mgmdt" path="res://assets/audio/weapons/casings/brass/casing_4.wav" id="8_ycsxd"]
+[ext_resource type="AudioStream" uid="uid://bqotw4kydcx47" path="res://assets/audio/weapons/casings/brass/casing_5.wav" id="9_knktv"]
+[ext_resource type="AudioStream" uid="uid://7mcqf3w6vrw7" path="res://assets/audio/weapons/casings/brass/casing_6.wav" id="10_h584j"]
+[ext_resource type="AudioStream" uid="uid://dpk0wae3gcp46" path="res://assets/audio/weapons/casings/brass/casing_7.wav" id="11_pfj8n"]
+[ext_resource type="AudioStream" uid="uid://c5iyujvnt55sv" path="res://assets/audio/weapons/casings/brass/casing_8.wav" id="12_7nm0h"]
+[ext_resource type="AudioStream" uid="uid://vb2f5lumvrms" path="res://assets/audio/weapons/casings/brass/casing_9.wav" id="13_l3dte"]
+[ext_resource type="AudioStream" uid="uid://xto6rii77joo" path="res://assets/audio/weapons/casings/brass/casing_10.wav" id="14_37thu"]
+[ext_resource type="AudioStream" uid="uid://sujfa4tbfcpu" path="res://assets/audio/weapons/casings/brass/casing_11.wav" id="15_a2cwo"]
+[ext_resource type="AudioStream" uid="uid://c48pwww8e6uj8" path="res://assets/audio/weapons/casings/brass/casing_12.wav" id="16_dof8k"]
+[ext_resource type="AudioStream" uid="uid://c46cvwkul5c43" path="res://assets/audio/weapons/casings/brass/casing_13.wav" id="17_5jih6"]
+[ext_resource type="AudioStream" uid="uid://kwrf18173m6g" path="res://assets/audio/weapons/casings/brass/casing_14.wav" id="18_jph7m"]
+[ext_resource type="AudioStream" uid="uid://blchttjumph32" path="res://assets/audio/weapons/casings/brass/casing_15.wav" id="19_pua7h"]
+[ext_resource type="AudioStream" uid="uid://buqp1v62sdnep" path="res://assets/audio/weapons/casings/brass/casing_16.wav" id="20_s6j68"]
+[ext_resource type="AudioStream" uid="uid://dgdydis7348pk" path="res://assets/audio/weapons/casings/brass/casing_17.wav" id="21_w735h"]
+[ext_resource type="AudioStream" uid="uid://boc8vtc7ol7r6" path="res://assets/audio/weapons/casings/brass/casing_18.wav" id="22_vmmrr"]
+[ext_resource type="AudioStream" uid="uid://ds3tgsustfaxi" path="res://assets/audio/weapons/casings/brass/casing_19.wav" id="23_heasv"]
+[ext_resource type="AudioStream" uid="uid://d0byf8h6swym1" path="res://assets/audio/weapons/casings/brass/casing_20.wav" id="24_1pktu"]
+[ext_resource type="AudioStream" uid="uid://dhdjffb4xedfj" path="res://assets/audio/weapons/casings/brass/casing_21.wav" id="25_frdod"]
+[ext_resource type="AudioStream" uid="uid://cyq6uhh5wgh73" path="res://assets/audio/weapons/casings/brass/casing_22.wav" id="26_8em3v"]
+[ext_resource type="AudioStream" uid="uid://u723tb7rswa6" path="res://assets/audio/weapons/casings/brass/casing_23.wav" id="27_2p7am"]
+[ext_resource type="AudioStream" uid="uid://ciaeu67xnitpn" path="res://assets/audio/weapons/casings/brass/casing_24.wav" id="28_0qlw1"]
+[ext_resource type="AudioStream" uid="uid://lt3m7bytjir0" path="res://assets/audio/weapons/casings/brass/casing_25.wav" id="29_jw5ai"]
+[ext_resource type="AudioStream" uid="uid://156c635wwyv4" path="res://assets/audio/weapons/g17/dry_fire.wav" id="30_3k0tf"]
+[ext_resource type="Script" uid="uid://bv15q7wn1smpd" path="res://scripts/weapons/audio/weapon_sounds.gd" id="40_b1sln"]
+[ext_resource type="AudioStream" uid="uid://bd58xb84jas4x" path="res://assets/audio/weapons/g17/slide_lock.wav" id="41_a1p16"]
+[ext_resource type="AudioStream" uid="uid://weck6455apo1" path="res://assets/audio/weapons/m4a1/slide_release.wav" id="bolt_up"]
+[ext_resource type="AudioStream" uid="uid://b6l4e54svqu6j" path="res://assets/audio/weapons/rem870/fire_1.wav" id="fire_1"]
+[ext_resource type="AudioStream" uid="uid://bk74b184yk320" path="res://assets/audio/weapons/rem870/fire_2.wav" id="fire_2"]
+[ext_resource type="AudioStream" uid="uid://dxev8pdbixkf7" path="res://assets/audio/weapons/rem870/fire_3.wav" id="fire_3"]
+[ext_resource type="AudioStream" uid="uid://d0r21y0abkx3k" path="res://assets/audio/weapons/fire_mode/fire_mode.wav" id="fire_mode"]
+[ext_resource type="AudioStream" uid="uid://5dx65kghxoi" path="res://assets/audio/weapons/m4a1/mag_in.wav" id="mag_in"]
+[ext_resource type="AudioStream" uid="uid://nvyxgyv40swy" path="res://assets/audio/weapons/m4a1/mag_out.wav" id="mag_out"]
+[ext_resource type="AudioStream" uid="uid://c3wn2hdfqdh2k" path="res://assets/audio/weapons/m4a1/rack_back.wav" id="rack_back"]
+[ext_resource type="AudioStream" uid="uid://deaegqoy64jdq" path="res://assets/audio/weapons/m4a1/rack_forward.wav" id="rack_forward"]
+
+[sub_resource type="Resource" id="SoundSet_aim_in"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("2_2f2p4"), ExtResource("3_7axqk"), ExtResource("4_ghle0")])
+gains = PackedFloat32Array(-6, 0, -1.5)
+volume_db = -20.0
+volume_variation_db = 1.5
+pitch_variation = 0.04
+skip = 0.2
+
+[sub_resource type="Resource" id="SoundSet_aim_out"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("2_2f2p4"), ExtResource("3_7axqk"), ExtResource("4_ghle0")])
+gains = PackedFloat32Array(-6, 0, -1.5)
+volume_db = -20.0
+volume_variation_db = 1.5
+pitch_variation = 0.04
+skip = 0.2
+
+[sub_resource type="Resource" id="SoundSet_bolt_lift"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("bolt_up")])
+gains = null
+volume_db = -13.0
+pitch_variation = 0.04
+
+[sub_resource type="Resource" id="SoundSet_slide_lock"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("41_a1p16")])
+gains = null
+volume_db = -8.0
+pitch_variation = 0.04
+skip = 0.05
+
+[sub_resource type="Resource" id="SoundSet_casing"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("5_cn2im"), ExtResource("6_i4jid"), ExtResource("7_dxh08"), ExtResource("8_ycsxd"), ExtResource("9_knktv"), ExtResource("10_h584j"), ExtResource("11_pfj8n"), ExtResource("12_7nm0h"), ExtResource("13_l3dte"), ExtResource("14_37thu"), ExtResource("15_a2cwo"), ExtResource("16_dof8k"), ExtResource("17_5jih6"), ExtResource("18_jph7m"), ExtResource("19_pua7h"), ExtResource("20_s6j68"), ExtResource("21_w735h"), ExtResource("22_vmmrr"), ExtResource("23_heasv"), ExtResource("24_1pktu"), ExtResource("25_frdod"), ExtResource("26_8em3v"), ExtResource("27_2p7am"), ExtResource("28_0qlw1"), ExtResource("29_jw5ai")])
+gains = null
+volume_db = -20.0
+volume_variation_db = 2.0
+pitch_variation = 0.1
+
+[sub_resource type="Resource" id="SoundSet_dry_fire"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("30_3k0tf")])
+gains = null
+volume_db = -9.0
+volume_variation_db = 1.5
+pitch_variation = 0.04
+
+[sub_resource type="Resource" id="SoundSet_fire"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("fire_1"), ExtResource("fire_2"), ExtResource("fire_3")])
+gains = null
+volume_db = -3.0
+
+[sub_resource type="Resource" id="SoundSet_fire_mode"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("fire_mode")])
+gains = null
+volume_db = -7.0
+
+[sub_resource type="Resource" id="SoundSet_mag_in"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("mag_in")])
+gains = null
+volume_db = -9.5
+pitch_variation = 0.04
+skip = 0.35
+
+[sub_resource type="Resource" id="SoundSet_mag_out"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("mag_out")])
+gains = null
+volume_db = -12.0
+pitch_variation = 0.04
+skip = 0.17
+
+[sub_resource type="Resource" id="SoundSet_rack_back"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("rack_back")])
+gains = null
+volume_db = -13.0
+pitch_variation = 0.04
+
+[sub_resource type="Resource" id="SoundSet_rack_forward"]
+script = ExtResource("1_cosx0")
+streams = Array[AudioStream]([ExtResource("rack_forward")])
+gains = null
+volume_db = -12.0
+pitch_variation = 0.04
+
+[resource]
+script = ExtResource("40_b1sln")
+fire = SubResource("SoundSet_fire")
+dry_fire = SubResource("SoundSet_dry_fire")
+rack_back = SubResource("SoundSet_rack_back")
+rack_forward = SubResource("SoundSet_rack_forward")
+bolt_lift = SubResource("SoundSet_bolt_lift")
+bolt_lower = SubResource("SoundSet_slide_lock")
+mag_out = SubResource("SoundSet_mag_out")
+mag_in = SubResource("SoundSet_mag_in")
+fire_mode = SubResource("SoundSet_fire_mode")
+aim_in = SubResource("SoundSet_aim_in")
+aim_out = SubResource("SoundSet_aim_out")
+casing = SubResource("SoundSet_casing")
+fire_pitch = 0.75

@@ -20,14 +20,22 @@ extends Resource
 @export var main_grip_part: StringName = &"LowerFrame"
 @export var main_grip_axis := Vector3.UP
 @export_range(-90.0, 90.0) var main_grip_yaw_degrees := 0.0
+@export_range(0.0, 0.2) var main_hand_length := 0.0
+@export_range(0.0, 0.1) var main_hand_height := 0.05
 
 @export var support_grip_part: StringName = &"LowerFrame"
 @export var support_grip_axis := Vector3.UP
 @export var support_palm_facing := Vector3.BACK
 @export_range(-90.0, 90.0) var support_grip_yaw_degrees := 0.0
 @export_range(0.2, 1.0) var support_grip_cover := 1.0
+@export var support_grip_drop := 0.0
 
+@export_range(0.0, 1.0) var wrist_follow_main := 0.0
+@export_range(0.0, 1.0) var wrist_follow_support := 0.0
+@export_range(0.0, 1.0) var wrist_follow_bolt := 1.0
+@export_range(-45.0, 45.0) var wrist_bolt_lift_degrees := 0.0
 @export var hold_elbow_flare_degrees := -60.0
+@export var bolt_elbow_flare_degrees := -60.0
 @export var support_elbow_flare_degrees := -60.0
 @export_range(0.0, 1.0) var low_aim_raise := 1.0
 @export var hold_reach := 0.5
@@ -59,6 +67,19 @@ extends Resource
 @export_range(0.05, 1.0) var cycle_eject_at := 0.85
 @export_range(0.0, 1.0) var cycle_jolt := 0.0
 @export var cycle_settle_time := 0.0
+
+@export_group("Bolt action")
+@export_range(0.0, 140.0) var bolt_lift_degrees := 0.0
+@export var bolt_reach_time := 0.2
+@export var bolt_lift_time := 0.13
+@export var bolt_pause_time := 0.04
+@export var bolt_lower_time := 0.13
+@export var bolt_return_time := 0.22
+@export var bolt_hand_offset := Vector3.ZERO
+@export_range(-90.0, 90.0) var bolt_hand_turn_degrees := 0.0
+@export var bolt_hand_arc := Vector3(0.0, 0.03, 0.02)
+@export var chamber_after_reload := false
+@export var ads_breaks_on_cycle := false
 
 @export_group("Selector")
 @export var selector_part: StringName
@@ -195,6 +216,7 @@ extends Resource
 @export var trigger_pull_degrees := 22.0
 
 @export_group("Reload")
+@export var mag_hold_proud := 0.0
 @export_range(0.0, 1.0) var rack_start := 0.45
 @export_range(0.0, 1.0) var rack_pull := 1.0
 

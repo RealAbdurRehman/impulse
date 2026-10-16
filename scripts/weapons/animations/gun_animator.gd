@@ -9,11 +9,16 @@ class Part:
 
 enum Phase {
 	IDLE,
+	REACH,
+	LIFT,
 	BACK,
+	HOLD,
 	SETTLE,
 	LOCKED,
 	FORWARD,
 	BOUNCE,
+	LOWER,
+	RETURN,
 	DRIVEN,
 }
 
@@ -23,6 +28,8 @@ signal selector_clicked
 signal cycled_back
 signal cycled_forward
 signal cycle_finished
+signal bolt_lifted
+signal bolt_lowered
 
 @export_group("Ejection")
 @export_range(0.05, 0.9) var eject_at := 0.35
@@ -71,6 +78,11 @@ var _feeding := false
 var _ejected := false
 var _feed_forced := false
 var _manual := false
+var _bolt_gun := false
+var _knob := Vector3.ZERO
+var _palm := Vector3.ZERO
+var _turn := 0.0
+var _hand := 0.0
 var _cycle_feed := false
 var _eject_wanted := true
 var _eject_at := 0.35
@@ -203,7 +215,7 @@ func _start_stroke(manual: bool, back: float, forward: float, at: float, eject: 
 	_eject_wanted = eject
 	_ejected = false
 
-	_phase = Phase.BACK
+	_phase = Phase.REACH if manual and _bolt_gun else Phase.BACK
 	_t = 0.0
 	_from = _s
 
@@ -277,19 +289,31 @@ func _resolve() -> bool:
 	_pivot = _in_gun(weapon.holder.barrel_pivot).origin
 	_port = _in_gun(weapon.holder.ejector)
 
+	_bolt_gun = stats.bolt_lift_degrees > 0.0
+	if _bolt_gun:
+		_knob = _in_gun(weapon.holder.rack_grab).origin
+		_palm = weapon.holder.main_grip.block.origin
+
 	if is_instance_valid(_round):
 		_round.queue_free()
 
 	var cartridge := gun.get_node(NodePath(stats.feed_part)) as Node3D
-	_resolve_feed(cartridge)
-	_round = cartridge.duplicate() as Node3D
+	var upright := _upright(cartridge)
+	_resolve_feed(cartridge, upright)
+	_round = Node3D.new()
 	_round.visible = false
+	var copy := cartridge.duplicate() as Node3D
+	copy.transform = Transform3D(upright, Vector3.ZERO)
+	copy.visible = true
+	_round.add_child(copy)
 	gun.add_child(_round)
 
 	_s = 0.0
 	_h = 0.0
 	_lever = 0.0
 	_pull = 0.0
+	_turn = 0.0
+	_hand = 0.0
 	_sel = 1.0 if weapon.automatic else 0.0
 	_sel_t = -1.0
 	_reach = 0.0
@@ -310,12 +334,21 @@ func _part(gun: Node3D, part_name: StringName) -> Part:
 	return p
 
 
-func _resolve_feed(cartridge: Node3D) -> void:
+func _upright(cartridge: Node3D) -> Basis:
+	var basis := cartridge.transform.basis
+	var upright := Basis.from_scale(basis.get_scale())
+	if (basis * Vector3.UP).x < -0.5:
+		upright = Basis(Vector3.BACK, PI) * upright
+
+	return upright
+
+
+func _resolve_feed(cartridge: Node3D, upright: Basis) -> void:
 	var bounds := AABB()
 	var first := true
 	for child in cartridge.get_children():
 		var mesh := child as MeshInstance3D
-		var box := mesh.transform * mesh.mesh.get_aabb()
+		var box := Transform3D(upright, Vector3.ZERO) * mesh.transform * mesh.mesh.get_aabb()
 		bounds = box if first else bounds.merge(box)
 		first = false
 
@@ -356,6 +389,29 @@ func _step_slide(delta: float) -> void:
 	var stats := weapon.stats
 
 	match _phase:
+		Phase.REACH:
+			_t += delta
+			var u := minf(_t / maxf(stats.bolt_reach_time, 0.01), 1.0)
+			_hand = u
+			if u >= 1.0:
+				_phase = Phase.LIFT
+				_t = 0.0
+				bolt_lifted.emit()
+
+		Phase.LIFT:
+			_t += delta
+			var u := minf(_t / maxf(stats.bolt_lift_time, 0.01), 1.0)
+			_turn = smoothstep(0.0, 1.0, u)
+			if u >= 1.0:
+				_phase = Phase.BACK
+				_t = 0.0
+				_from = _s
+
+		Phase.HOLD:
+			_t += delta
+			if _t >= stats.bolt_pause_time:
+				_begin_forward(_forward_time)
+
 		Phase.BACK:
 			_t += delta
 			var duration := maxf(_back_time * (1.0 - _from), 0.006)
@@ -375,6 +431,9 @@ func _step_slide(delta: float) -> void:
 					_t = 0.0
 					_from = _s
 					slide_locked.emit()
+				elif _bolt_gun:
+					_phase = Phase.HOLD
+					_t = 0.0
 				else:
 					_begin_forward(_forward_time)
 
@@ -391,7 +450,7 @@ func _step_slide(delta: float) -> void:
 			_s = _from * (1.0 - u * u)
 			if u >= 1.0:
 				_s = 0.0
-				_phase = Phase.BOUNCE
+				_phase = Phase.LOWER if _bolt_gun and _manual else Phase.BOUNCE
 				_t = 0.0
 				if _manual:
 					cycled_forward.emit()
@@ -405,6 +464,25 @@ func _step_slide(delta: float) -> void:
 				_phase = Phase.IDLE
 				if _manual:
 					cycle_finished.emit()
+
+		Phase.LOWER:
+			_t += delta
+			var u := minf(_t / maxf(stats.bolt_lower_time, 0.01), 1.0)
+			_turn = 1.0 - smoothstep(0.0, 1.0, u)
+			if u >= 1.0:
+				_turn = 0.0
+				_phase = Phase.RETURN
+				_t = 0.0
+				bolt_lowered.emit()
+
+		Phase.RETURN:
+			_t += delta
+			var u := minf(_t / maxf(stats.bolt_return_time, 0.01), 1.0)
+			_hand = 1.0 - u
+			if u >= 1.0:
+				_hand = 0.0
+				_phase = Phase.IDLE
+				cycle_finished.emit()
 
 
 func _open_cover() -> void:
@@ -468,9 +546,10 @@ func _apply() -> void:
 	var stats := weapon.stats
 
 	var travel := stats.slide_travel / _scale
+	var turn := _bolt_turn()
 	for p in _slide:
 		p.node.transform = Transform3D(
-			p.rest.basis,
+			Basis(Vector3.RIGHT, turn) * p.rest.basis,
 			p.rest.origin + Vector3(-travel * _s, 0.0, 0.0),
 		)
 
@@ -513,10 +592,36 @@ func _apply() -> void:
 		)
 		weapon.holder.operate_selector(_in_gun(weapon.holder.selector_pad).origin * _scale, _reach)
 
-	if stats.manual_cycle:
+	if _bolt_gun:
+		_work_hand(travel, turn)
+	elif stats.manual_cycle:
 		weapon.holder.follow_pump(stats.slide_travel * _s)
 
 	_apply_round(travel)
+
+
+func _bolt_turn() -> float:
+	if not _bolt_gun:
+		return 0.0
+
+	var lift := deg_to_rad(weapon.stats.bolt_lift_degrees) * _turn
+	return -signf(_knob.z - _slide[0].rest.origin.z) * lift
+
+
+func _work_hand(travel: float, turn: float) -> void:
+	var stats := weapon.stats
+	var axis := _slide[0].rest.origin
+	var knob := axis + Basis(Vector3.RIGHT, turn) * (_knob - axis)
+	knob.x -= travel * _s
+
+	var reach := smoothstep(0.3, 1.0, _hand)
+	var carry := smoothstep(0.0, 0.5, _hand)
+	var side := signf(_knob.z)
+	var arc := stats.bolt_hand_arc * Vector3(1.0, 1.0, side) * sin(PI * reach)
+
+	var shift := (knob * _scale + stats.bolt_hand_offset - _palm) * reach + arc
+	var turn_hand := deg_to_rad(stats.bolt_hand_turn_degrees) * reach
+	weapon.holder.work_bolt(shift, turn_hand, reach, carry)
 
 
 func _apply_round(travel: float) -> void:
@@ -554,7 +659,7 @@ func _settled() -> bool:
 	if _hold > 0.0 or (squeezed and not weapon.stats.manual_cycle):
 		return false
 
-	if _sel_t >= 0.0:
+	if _sel_t >= 0.0 or _hand > 0.0 or _turn > 0.0:
 		return false
 
 	var lever_goal := 1.0 if _phase == Phase.LOCKED else 0.0

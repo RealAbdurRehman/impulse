@@ -10,6 +10,10 @@ extends Resource
 @export var rack_back: SoundSet
 @export var rack_forward: SoundSet
 
+@export_group("Bolt")
+@export var bolt_lift: SoundSet
+@export var bolt_lower: SoundSet
+
 @export_group("Magazine")
 @export var mag_out: SoundSet
 @export var mag_in: SoundSet

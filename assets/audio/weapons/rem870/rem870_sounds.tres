@@ -3,21 +3,24 @@
 [ext_resource type="AudioStream" uid="uid://d358pux0a0o61" path="res://assets/audio/weapons/aiming/aim_1.mp3" id="aim_1"]
 [ext_resource type="AudioStream" uid="uid://lp8663v64wn6" path="res://assets/audio/weapons/aiming/aim_2.mp3" id="aim_2"]
 [ext_resource type="AudioStream" uid="uid://ctim74b8ox15e" path="res://assets/audio/weapons/aiming/aim_3.mp3" id="aim_3"]
-[ext_resource type="AudioStream" uid="uid://cflxsawhgr0wd" path="res://assets/audio/weapons/casings/casing_1.wav" id="casing_1"]
-[ext_resource type="AudioStream" uid="uid://nd7o7aknlxdn" path="res://assets/audio/weapons/casings/casing_2.wav" id="casing_2"]
-[ext_resource type="AudioStream" uid="uid://b5v6w20y3k1wi" path="res://assets/audio/weapons/casings/casing_3.wav" id="casing_3"]
-[ext_resource type="AudioStream" uid="uid://bds5iw7mgmdt" path="res://assets/audio/weapons/casings/casing_4.wav" id="casing_4"]
-[ext_resource type="AudioStream" uid="uid://bqotw4kydcx47" path="res://assets/audio/weapons/casings/casing_5.wav" id="casing_5"]
-[ext_resource type="AudioStream" uid="uid://7mcqf3w6vrw7" path="res://assets/audio/weapons/casings/casing_6.wav" id="casing_6"]
 [ext_resource type="AudioStream" uid="uid://156c635wwyv4" path="res://assets/audio/weapons/g17/dry_fire.wav" id="dry_fire"]
-[ext_resource type="AudioStream" uid="uid://ouydg50y2s" path="res://assets/audio/weapons/m4a1/fire_1.wav" id="fire_1"]
-[ext_resource type="AudioStream" uid="uid://cytwjv5fr64l4" path="res://assets/audio/weapons/m4a1/fire_2.wav" id="fire_2"]
-[ext_resource type="AudioStream" uid="uid://cml7l0eouo0f4" path="res://assets/audio/weapons/m4a1/fire_3.wav" id="fire_3"]
-[ext_resource type="AudioStream" uid="uid://d11jnvnvct11m" path="res://assets/audio/weapons/m4a1/fire_4.wav" id="fire_4"]
-[ext_resource type="AudioStream" uid="uid://c3wn2hdfqdh2k" path="res://assets/audio/weapons/m4a1/rack_back.wav" id="rack_back"]
-[ext_resource type="AudioStream" uid="uid://deaegqoy64jdq" path="res://assets/audio/weapons/m4a1/rack_forward.wav" id="rack_forward"]
+[ext_resource type="AudioStream" uid="uid://b6l4e54svqu6j" path="res://assets/audio/weapons/rem870/fire_1.wav" id="fire_1"]
+[ext_resource type="AudioStream" uid="uid://bk74b184yk320" path="res://assets/audio/weapons/rem870/fire_2.wav" id="fire_2"]
+[ext_resource type="AudioStream" uid="uid://dxev8pdbixkf7" path="res://assets/audio/weapons/rem870/fire_3.wav" id="fire_3"]
+[ext_resource type="AudioStream" uid="uid://dycaupv1nh007" path="res://assets/audio/weapons/rem870/mag_in.wav" id="mag_in"]
+[ext_resource type="AudioStream" uid="uid://bc1480m2p474p" path="res://assets/audio/weapons/rem870/rack_back.wav" id="rack_back"]
+[ext_resource type="AudioStream" uid="uid://bhi6726b1fqok" path="res://assets/audio/weapons/rem870/rack_forward.wav" id="rack_forward"]
 [ext_resource type="Script" uid="uid://b7hkrnit0b7qy" path="res://scripts/weapons/audio/sound_set.gd" id="set"]
-[ext_resource type="AudioStream" uid="uid://5dx65kghxoi" path="res://assets/audio/weapons/m4a1/mag_in.wav" id="shell_in"]
+[ext_resource type="AudioStream" uid="uid://bdn1n8c15mhya" path="res://assets/audio/weapons/casings/shells/casing_1.wav" id="shell_1"]
+[ext_resource type="AudioStream" uid="uid://7afj688e33vs" path="res://assets/audio/weapons/casings/shells/casing_2.wav" id="shell_2"]
+[ext_resource type="AudioStream" uid="uid://nlidtom4i7r4" path="res://assets/audio/weapons/casings/shells/casing_3.wav" id="shell_3"]
+[ext_resource type="AudioStream" uid="uid://8ffc68efs8p8" path="res://assets/audio/weapons/casings/shells/casing_5.wav" id="shell_5"]
+[ext_resource type="AudioStream" uid="uid://dt3lmfwjwgbfq" path="res://assets/audio/weapons/casings/shells/casing_6.wav" id="shell_6"]
+[ext_resource type="AudioStream" uid="uid://byugnlift6pm1" path="res://assets/audio/weapons/casings/shells/casing_7.wav" id="shell_7"]
+[ext_resource type="AudioStream" uid="uid://dvov8lunusbxi" path="res://assets/audio/weapons/casings/shells/casing_8.wav" id="shell_8"]
+[ext_resource type="AudioStream" uid="uid://csmae0mtoha81" path="res://assets/audio/weapons/casings/shells/casing_9.wav" id="shell_9"]
+[ext_resource type="AudioStream" uid="uid://bkg7jpulsyhnu" path="res://assets/audio/weapons/casings/shells/casing_11.wav" id="shell_11"]
+[ext_resource type="AudioStream" uid="uid://60h7406mymn4" path="res://assets/audio/weapons/casings/shells/casing_12.wav" id="shell_12"]
 [ext_resource type="Script" uid="uid://bv15q7wn1smpd" path="res://scripts/weapons/audio/weapon_sounds.gd" id="sounds"]
 
 [sub_resource type="Resource" id="SoundSet_aim"]
@@ -31,9 +34,9 @@ skip = 0.2
 
 [sub_resource type="Resource" id="SoundSet_casing"]
 script = ExtResource("set")
-streams = Array[AudioStream]([ExtResource("casing_1"), ExtResource("casing_2"), ExtResource("casing_3"), ExtResource("casing_4"), ExtResource("casing_5"), ExtResource("casing_6")])
-gains = null
-volume_db = -20.0
+streams = Array[AudioStream]([ExtResource("shell_1"), ExtResource("shell_2"), ExtResource("shell_3"), ExtResource("shell_5"), ExtResource("shell_6"), ExtResource("shell_7"), ExtResource("shell_8"), ExtResource("shell_9"), ExtResource("shell_11"), ExtResource("shell_12")])
+gains = PackedFloat32Array(-0.5, 1.9, 0.5, -1.8, -4.3, -0.5, -1.5, -3.6, 3.5, -0.3)
+volume_db = -21.0
 volume_variation_db = 2.0
 pitch_variation = 0.1
 
@@ -47,30 +50,30 @@ pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_fire"]
 script = ExtResource("set")
-streams = Array[AudioStream]([ExtResource("fire_1"), ExtResource("fire_2"), ExtResource("fire_3"), ExtResource("fire_4")])
+streams = Array[AudioStream]([ExtResource("fire_1"), ExtResource("fire_2"), ExtResource("fire_3")])
 gains = null
-volume_db = -6.0
+volume_db = -4.5
+pitch_variation = 0.02
 
-[sub_resource type="Resource" id="SoundSet_shell_in"]
+[sub_resource type="Resource" id="SoundSet_mag_in"]
 script = ExtResource("set")
-streams = Array[AudioStream]([ExtResource("shell_in")])
+streams = Array[AudioStream]([ExtResource("mag_in")])
 gains = null
-volume_db = -14.0
+volume_db = -7.5
 pitch_variation = 0.06
-skip = 0.35
 
 [sub_resource type="Resource" id="SoundSet_rack_back"]
 script = ExtResource("set")
 streams = Array[AudioStream]([ExtResource("rack_back")])
 gains = null
-volume_db = -9.0
+volume_db = -12.0
 pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_rack_forward"]
 script = ExtResource("set")
 streams = Array[AudioStream]([ExtResource("rack_forward")])
 gains = null
-volume_db = -8.0
+volume_db = -11.0
 pitch_variation = 0.04
 
 [resource]
@@ -79,9 +82,7 @@ fire = SubResource("SoundSet_fire")
 dry_fire = SubResource("SoundSet_dry_fire")
 rack_back = SubResource("SoundSet_rack_back")
 rack_forward = SubResource("SoundSet_rack_forward")
-mag_in = SubResource("SoundSet_shell_in")
+mag_in = SubResource("SoundSet_mag_in")
 aim_in = SubResource("SoundSet_aim")
 aim_out = SubResource("SoundSet_aim")
 casing = SubResource("SoundSet_casing")
-fire_pitch = 0.65
-body_pitch = 0.75

@@ -57,6 +57,8 @@ func _ready() -> void:
 	weapon.animator.selector_clicked.connect(_handle.bind(_sounds.fire_mode))
 	weapon.animator.cycled_back.connect(_handle.bind(_sounds.rack_back))
 	weapon.animator.cycled_forward.connect(_handle.bind(_sounds.rack_forward))
+	weapon.animator.bolt_lifted.connect(_handle_set.bind(_sounds.bolt_lift))
+	weapon.animator.bolt_lowered.connect(_handle_set.bind(_sounds.bolt_lower))
 	weapon.reloader.cued.connect(_on_cue)
 	weapon.aim_changed.connect(_on_aim)
 
@@ -128,6 +130,11 @@ func _on_cue(cue: WeaponReload.Cue) -> void:
 
 		WeaponReload.Cue.LET_GO:
 			_handle(_sounds.rack_forward)
+
+
+func _handle_set(sound: SoundSet) -> void:
+	if sound != null:
+		_handle(sound)
 
 
 func _handle(sound: SoundSet, extra_db := 0.0, pitch := 1.0) -> void:

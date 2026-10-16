@@ -46,6 +46,7 @@ var _select_left := 0.0
 var _exclude: Array[RID] = []
 var _linked := false
 var _cycling := false
+var _reload_queued := false
 
 
 func _ready() -> void:
@@ -82,6 +83,10 @@ func _ready() -> void:
 
 func reload() -> void:
 	if _reload_left > 0.0 or ammo >= stats.magazine_size:
+		return
+
+	if _cycling:
+		_reload_queued = true
 		return
 
 	if stats.reload_by_shell:
@@ -129,6 +134,8 @@ func _physics_process(delta: float) -> void:
 				ammo_changed.emit(ammo, stats.magazine_size)
 
 			reload_finished.emit()
+			if stats.chamber_after_reload and stats.auto_cycle and not chambered and ammo > 0:
+				cycle()
 
 	if Input.is_action_just_pressed(reload_action):
 		reload()
@@ -205,6 +212,9 @@ func _stop_reload() -> void:
 func _on_cycle_finished() -> void:
 	_cycling = false
 	_cooldown = maxf(_cooldown, stats.cycle_settle_time)
+	if _reload_queued:
+		_reload_queued = false
+		reload()
 
 
 func _on_reload_cue(cue: WeaponReload.Cue) -> void:
@@ -215,6 +225,7 @@ func _on_reload_cue(cue: WeaponReload.Cue) -> void:
 
 func _update_aim(delta: float) -> void:
 	var want := Input.is_action_pressed(aim_action) and _reload_left <= 0.0
+	want = want and not (stats.ads_breaks_on_cycle and _cycling)
 	if want != _aiming:
 		_aiming = want
 		aim_changed.emit(want)

@@ -912,10 +912,11 @@ func _prewarm() -> void:
 	trail_piece.global_transform = spot
 	warm.append(trail_piece)
 
-	var casing := _casings[0].pivot.get_child(0).duplicate() as Node3D
+	var model := _casings[0].pivot.get_child(0) as Node3D
+	var casing := model.duplicate() as Node3D
 	casing.top_level = true
 	add_child(casing)
-	casing.global_transform = spot
+	casing.global_transform = Transform3D(spot.basis * model.transform.basis, spot.origin)
 	warm.append(casing)
 
 	var feed := weapon.holder.gun.get_node(NodePath(weapon.stats.feed_part))
@@ -923,7 +924,7 @@ func _prewarm() -> void:
 	cartridge.visible = true
 	cartridge.top_level = true
 	add_child(cartridge)
-	cartridge.global_transform = spot
+	cartridge.global_transform = Transform3D(spot.basis * feed.transform.basis, spot.origin)
 	warm.append(cartridge)
 
 	await get_tree().process_frame

@@ -94,6 +94,10 @@ extends SkeletonModifier3D
 @export var breath_sway := 0.004
 @export var landing_dip := 0.04
 
+@export_group("Wrist")
+@export var wrist_follow_speed := 14.0
+@export_range(0.0, 90.0) var wrist_follow_limit_degrees := 70.0
+
 @export_group("Recoil")
 @export var recoil_arm_follow := 18.0
 @export_range(0.0, 1.0) var recoil_arm_share := 0.2
@@ -104,11 +108,27 @@ var reload: WeaponReload
 var clearance: ArmClearance
 
 var support_shift := Vector3.ZERO
+var main_shift := Vector3.ZERO
+var main_turn := 0.0
+var palm_follow := false
+var palm_pivots_at_wrist := false
+var main_wrist := 0.0
+var main_wrist_weight := 0.0
+var main_wrist_follow := 0.0
+var bolt_wrist_follow := 1.0
+var bolt_wrist_lift := 0.0
+var main_bolt := 0.0
+var main_centre := Vector3.ZERO
+
+var support_wrist := 0.0
+var support_wrist_weight := 0.0
+var support_wrist_follow := 0.0
 var support_turn_degrees := Vector3.ZERO
 var support_reach := 0.0
 
 var ads_eye_distance := 0.22
 var elbow_flare_degrees := -60.0
+var bolt_flare_degrees := -60.0
 var support_flare_degrees := -60.0
 var hold_reach := 0.5
 var hold_reach_min := 0.15
@@ -143,6 +163,8 @@ var _clock := 0.0
 var _arm_flip := 0.0
 var _twist := 0.0
 var _yaw := 0.0
+var _fore_right := Vector3.ZERO
+var _fore_left := Vector3.ZERO
 
 var _muzzle_skel := Vector3.ZERO
 
@@ -393,22 +415,47 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	gun_pose = Transform3D(frame, pivot_world - frame * gun_anchor)
 	_muzzle_skel = gun_pose * gun_muzzle
 
-	var pole_right := _elbow_pole(body.y, -body.z, deg_to_rad(elbow_flare_degrees))
+	var main_flare := lerpf(elbow_flare_degrees, bolt_flare_degrees, main_bolt)
+	var pole_right := _elbow_pole(body.y, -body.z, deg_to_rad(main_flare))
 	var support_flare := lerpf(support_flare_degrees, reload.rack_elbow_degrees, reload.rack_amount)
 	var pole_left := _elbow_pole(body.y, body.z, deg_to_rad(support_flare))
 
-	_solve_arm(skel, _right, pole_right, gun_pose * hold_main.origin, frame * hold_main.basis)
+	var main_basis := frame * hold_main.basis
+	var main_pos := gun_pose * hold_main.origin + frame * main_shift
+	main_wrist = _follow_wrist(
+		main_wrist,
+		lerpf(main_wrist_follow, bolt_wrist_follow, main_bolt),
+		bolt_wrist_lift * main_bolt,
+		_fore_right,
+		frame,
+		dt,
+	)
+	main_wrist_weight = float(palm_follow)
+	if palm_pivots_at_wrist:
+		var heel := main_centre - hold_main.origin
+		main_pos += frame * (heel - Basis(Vector3.BACK, main_wrist) * heel)
+	if main_turn != 0.0:
+		var turned := frame * Basis(Vector3.BACK, main_turn) * hold_main.basis
+		var centre := hold_main.basis.inverse() * (main_centre - hold_main.origin)
+		main_pos += main_basis * centre - turned * centre
+		main_basis = turned
+
+	_fore_right = _solve_arm(skel, _right, pole_right, main_pos, main_basis)
 	var support_pos := gun_pose * hold_support.origin + frame * support_shift
 	var turn := Basis.from_euler(support_turn_degrees * deg_to_rad(1.0) * support_reach)
 	var support_basis := frame * turn * hold_support.basis
 	var cleared := support_reach
+	var palm_free := 1.0
 	if reload_hand:
 		var target := reload.support_pose(gun_pose, skel, s_left)
 		var w := reload.support_weight
 		support_pos = support_pos.lerp(target.origin, w)
 		support_basis = support_basis.orthonormalized().slerp(target.basis.orthonormalized(), w)
 		cleared = maxf(cleared, w)
+		palm_free = 1.0 - w
 
+	support_wrist = _follow_wrist(support_wrist, support_wrist_follow, 0.0, _fore_left, frame, dt)
+	support_wrist_weight = float(palm_follow) * palm_free
 	support_pos = clearance.resolve(
 		s_left,
 		support_pos,
@@ -419,7 +466,21 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 		dt,
 	)
 
-	_solve_arm(skel, _left, pole_left, support_pos, support_basis)
+	_fore_left = _solve_arm(skel, _left, pole_left, support_pos, support_basis)
+
+
+func _follow_wrist(
+	current: float,
+	follow: float,
+	lift: float,
+	fore: Vector3,
+	frame: Basis,
+	dt: float,
+) -> float:
+	var arm := frame.inverse() * fore
+	var limit := deg_to_rad(wrist_follow_limit_degrees)
+	var goal := clampf(atan2(arm.y, arm.x) * follow + lift, -limit, limit)
+	return current + (goal - current) * (1.0 - exp(-wrist_follow_speed * dt))
 
 
 func _stock_push(skel: Skeleton3D, pivot: Vector3, frame: Basis) -> Vector3:
@@ -493,7 +554,7 @@ func _solve_arm(
 	pole_hint: Vector3,
 	wrist: Vector3,
 	hand_basis: Basis,
-) -> void:
+) -> Vector3:
 	var upper_len: float = _upper_len[chain[0]]
 	var fore_len: float = _fore_len[chain[0]]
 	var shoulder := skel.get_bone_global_pose(chain[0]).origin
@@ -534,6 +595,7 @@ func _solve_arm(
 	_set_basis(skel, chain[0], upper_basis)
 	_set_basis(skel, chain[1], fore_basis)
 	_set_basis(skel, chain[2], hand_basis)
+	return fore_dir
 
 
 func _hinge_axis(skel: Skeleton3D, fore: int) -> Vector3:

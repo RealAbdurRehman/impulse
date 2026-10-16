@@ -12,9 +12,11 @@ class Grip:
 	var block := Transform3D.IDENTITY
 	var span := Vector2.ZERO
 	var cover := 1.0
+	var drop := 0.0
 	var side := 1.0
 	var yaw := 0.0
 	var wrist := Transform3D.IDENTITY
+	var height := 0.0
 
 
 @export var weapon: Weapon
@@ -58,6 +60,7 @@ class Grip:
 @export var finger_overreach := 0.006
 @export var trigger_travel := 0.005
 @export var trigger_curl_degrees := 12.0
+@export_range(0.0, 1.0) var finger_tuck := 0.7
 
 var gun: Node3D
 var muzzle: Node3D
@@ -89,9 +92,30 @@ var _thumb_at := Vector3.ZERO
 var _thumb_to_hand := Transform3D.IDENTITY
 var _finger: Node3D
 var _finger_rest := Transform3D.IDENTITY
+var _finger_pull := 0.0
+var _finger_away := 0.0
+
+var _main_palm: MeshInstance3D
+var _support_palm: MeshInstance3D
+var _main_palm_rest := Transform3D.IDENTITY
+var _support_palm_rest := Transform3D.IDENTITY
+var _main_long := Vector3.UP
+var _support_long := Vector3.UP
+var _main_wrist := Vector3.ZERO
+var _support_wrist := Vector3.ZERO
+var _hand_pivot: Node3D
+var _wrist_on := false
+
+var _gun_rest := Transform3D.IDENTITY
+var _support_rest := Transform3D.IDENTITY
+var _carry := 0.0
+var _carried := false
+var _carry_offset := Transform3D.IDENTITY
 
 
 func _ready() -> void:
+	set_physics_process(false)
+
 	main_hand = _find_hand(&"RightHand")
 	support_hand = _find_hand(&"LeftHand")
 
@@ -120,8 +144,7 @@ func _ready() -> void:
 
 func release() -> void:
 	gun.queue_free()
-	_thumb.queue_free()
-	_finger.queue_free()
+	_hand_pivot.queue_free()
 
 
 func muzzle_transform() -> Transform3D:
@@ -132,6 +155,35 @@ func muzzle_transform() -> Transform3D:
 
 func follow_pump(distance: float) -> void:
 	spine.support_shift = Vector3(-distance, 0.0, 0.0)
+
+
+func work_bolt(shift: Vector3, turn: float, away: float, carry: float) -> void:
+	spine.main_shift = shift
+	spine.main_turn = turn
+	spine.main_bolt = away
+	_finger_away = away
+	_carry = carry
+	pull_trigger(_finger_pull)
+	set_physics_process(_wrist_on or carry > 0.0 or _carried)
+
+
+func _physics_process(_delta: float) -> void:
+	if _wrist_on:
+		_tilt_palms()
+
+	if _carry <= 0.0:
+		gun.transform = _gun_rest
+		_carried = false
+		set_physics_process(_wrist_on)
+		return
+
+	var from_main := main_hand.global_transform * _gun_rest
+	var from_support := support_hand.global_transform * _support_rest
+	if not _carried:
+		_carry_offset = from_support.affine_inverse() * from_main
+
+	_carried = true
+	gun.global_transform = from_main.interpolate_with(from_support * _carry_offset, _carry)
 
 
 func operate_selector(contact: Vector3, amount: float) -> void:
@@ -166,6 +218,49 @@ func _fit_support_box(to_hand: Transform3D) -> void:
 	selector_by_support = selector_pad != null and _gun_space(selector_pad).origin.z < 0.0
 
 
+func _tilt_palms() -> void:
+	var frame := gun.global_transform.basis.orthonormalized()
+	_hand_pivot.transform = _tilt(
+		main_hand,
+		_main_palm,
+		_main_palm_rest,
+		_main_wrist,
+		_main_long,
+		spine.main_wrist,
+		spine.main_wrist_weight,
+		frame,
+	)
+	_tilt(
+		support_hand,
+		_support_palm,
+		_support_palm_rest,
+		_support_wrist,
+		_support_long,
+		spine.support_wrist,
+		spine.support_wrist_weight,
+		frame,
+	)
+
+
+func _tilt(
+	hand: PhysicalBone3D,
+	palm: MeshInstance3D,
+	rest: Transform3D,
+	wrist: Vector3,
+	long_axis: Vector3,
+	heading: float,
+	weight: float,
+	frame: Basis,
+) -> Transform3D:
+	var to_hand := hand.global_transform.basis.orthonormalized()
+	var along := frame.inverse() * (to_hand * rest.basis * long_axis)
+	var turn := wrapf(heading - atan2(along.y, along.x), -PI * 0.5, PI * 0.5) * weight
+	var spin := Basis((to_hand.inverse() * frame.z).normalized(), turn)
+	var pivot := Transform3D(spin, wrist - spin * wrist)
+	palm.transform = pivot * rest
+	return pivot
+
+
 func _flick_thumb(contact: Vector3, amount: float) -> void:
 	var half := thumb_size.x * 0.5
 	var reach := Vector3(contact.x, contact.y, _thumb_at.z)
@@ -177,8 +272,10 @@ func _flick_thumb(contact: Vector3, amount: float) -> void:
 
 
 func pull_trigger(amount: float) -> void:
+	_finger_pull = amount
+	var squash := Basis.from_scale(Vector3(1.0, 1.0 - finger_tuck * _finger_away, 1.0))
 	_finger.transform = _finger_rest * Transform3D(
-		Basis(Vector3.BACK, -deg_to_rad(trigger_curl_degrees) * amount),
+		Basis(Vector3.BACK, -deg_to_rad(trigger_curl_degrees) * amount) * squash,
 		Vector3(0.0, -trigger_travel * amount, 0.0),
 	)
 
@@ -208,25 +305,36 @@ func _assemble() -> void:
 	)
 
 	support_grip.cover = stats.support_grip_cover
+	support_grip.drop = stats.support_grip_drop
+
+	if stats.main_hand_length > 0.0:
+		_level_hand(main_grip, stats.main_hand_length, stats.main_hand_height)
 
 	var main_in_gun := _bone_frame(main_grip)
 	var support_in_gun := _bone_frame(support_grip)
 
 	var main_to_hand := _build_palm(main_hand, main_in_gun, main_grip)
+	_main_palm = main_hand.get_node(^"Hand") as MeshInstance3D
+	_main_palm_rest = _main_palm.transform
 	var support_to_hand := _build_palm(support_hand, support_in_gun, support_grip)
 	_fit_support_box(support_to_hand)
-	_build_thumb(main_hand, main_to_hand, main_grip)
-	_build_finger(main_hand, main_to_hand, main_grip)
+	_support_palm = support_hand.get_node(^"Hand") as MeshInstance3D
+	_support_palm_rest = _support_palm.transform
+	_hand_pivot = Node3D.new()
+	main_hand.add_child(_hand_pivot)
+	_build_thumb(main_to_hand, main_grip)
+	_build_finger(main_to_hand, main_grip)
 	pull_trigger(0.0)
 
+	var unit := Transform3D(Basis.from_scale(gun.scale), Vector3.ZERO)
 	main_hand.add_child(gun)
-	gun.transform = (
-		main_hand.body_offset.affine_inverse() * main_in_gun.affine_inverse()
-		* Transform3D(Basis.from_scale(gun.scale), Vector3.ZERO)
-	)
+	_gun_rest = main_hand.body_offset.affine_inverse() * main_in_gun.affine_inverse() * unit
+	_support_rest = support_hand.body_offset.affine_inverse() * support_in_gun.affine_inverse() * unit
+	gun.transform = _gun_rest
 
 	spine.ads_eye_distance = stats.ads_eye_distance
 	spine.elbow_flare_degrees = stats.hold_elbow_flare_degrees
+	spine.bolt_flare_degrees = stats.bolt_elbow_flare_degrees
 	spine.support_flare_degrees = stats.support_elbow_flare_degrees
 	spine.low_aim_raise = stats.low_aim_raise
 	spine.hold_reach = stats.hold_reach
@@ -248,6 +356,26 @@ func _assemble() -> void:
 	spine.support_turn_degrees = stats.selector_hand_turn_degrees
 	spine.support_shift = Vector3.ZERO
 	spine.support_reach = 0.0
+	spine.main_shift = Vector3.ZERO
+	spine.main_turn = 0.0
+	spine.main_wrist = 0.0
+	spine.support_wrist = 0.0
+	spine.main_wrist_follow = stats.wrist_follow_main
+	spine.support_wrist_follow = stats.wrist_follow_support
+	spine.bolt_wrist_follow = stats.wrist_follow_bolt
+	spine.bolt_wrist_lift = deg_to_rad(stats.wrist_bolt_lift_degrees)
+	_main_long = Vector3.UP if stats.main_hand_length > 0.0 else _long_axis(_main_palm)
+	_support_long = _long_axis(_support_palm)
+	_main_wrist = main_hand.body_offset.affine_inverse().origin
+	_support_wrist = support_hand.body_offset.affine_inverse().origin
+	spine.main_centre = main_grip.block.origin
+	_wrist_on = (
+		stats.wrist_follow_main > 0.0 or stats.wrist_follow_support > 0.0
+		or stats.main_hand_length > 0.0
+	)
+	spine.palm_follow = _wrist_on
+	spine.palm_pivots_at_wrist = stats.main_hand_length > 0.0
+	set_physics_process(_wrist_on)
 	var arms := spine.left_arm_bones.duplicate()
 	arms.append_array(spine.right_arm_bones)
 	spine.clearance = ArmClearance.new(ragdoll, spine.get_skeleton(), arms)
@@ -279,6 +407,7 @@ func _grip(
 	g.span = fit.span * gun.scale.x
 	g.side = side
 	g.yaw = deg_to_rad(yaw)
+	g.height = hand_width
 	g.wrist = _hand_frame(g)
 	return g
 
@@ -294,6 +423,16 @@ func _hand_frame(g: Grip) -> Transform3D:
 	return Transform3D(Basis(x_axis, y_axis, z_axis), wrist)
 
 
+func _level_hand(g: Grip, length: float, height: float) -> void:
+	var palm := -g.frame.z * g.side
+	g.frame = Basis(Vector3.RIGHT, g.side * Vector3.RIGHT.cross(palm), -g.side * palm)
+	g.block.basis = Basis(Vector3.UP, Vector3.RIGHT, g.block.basis.z)
+	g.span.x = length
+	g.depth = length
+	g.height = height
+	g.wrist = _hand_frame(g)
+
+
 func _bone_frame(g: Grip) -> Transform3D:
 	return Transform3D(g.wrist.basis * Basis(Vector3.BACK, g.yaw), g.wrist.origin)
 
@@ -306,32 +445,32 @@ func _build_palm(hand: PhysicalBone3D, hand_in_gun: Transform3D, g: Grip) -> Tra
 	var across := g.span.x * g.cover
 
 	var palm := hand.get_node(^"Hand") as MeshInstance3D
-	(palm.mesh as BoxMesh).size = Vector3(hand_width, across + skin * 2.0, g.span.y + skin * 2.0)
+	(palm.mesh as BoxMesh).size = Vector3(g.height, across + skin * 2.0, g.span.y + skin * 2.0)
 	palm.transform = to_hand * g.block * Transform3D(
 		Basis.IDENTITY,
-		Vector3(0.0, (g.span.x - across) * 0.5, 0.0),
+		Vector3(0.0, (g.span.x - across) * 0.5 + g.drop, 0.0),
 	)
 
 	return to_hand
 
 
-func _build_thumb(hand: PhysicalBone3D, to_hand: Transform3D, g: Grip) -> void:
-	var at := g.block.origin + g.block.basis.x * (hand_width * 0.5)
+func _build_thumb(to_hand: Transform3D, g: Grip) -> void:
+	var at := g.block.origin + g.block.basis.x * (g.height * 0.5)
 	at += Vector3(thumb_at.x, thumb_at.y, 0.0)
 	at.z = _near(g, thumb_size.z)
 
 	_thumb = Node3D.new()
-	hand.add_child(_thumb)
+	_hand_pivot.add_child(_thumb)
 	_thumb_at = at
 	_thumb_to_hand = to_hand
 	_block(_thumb, Transform3D.IDENTITY, thumb_size)
 	_flick_thumb(at, 0.0)
 
 
-func _build_finger(hand: PhysicalBone3D, to_hand: Transform3D, g: Grip) -> void:
+func _build_finger(to_hand: Transform3D, g: Grip) -> void:
 	var base := g.block.origin
 	base += g.block.basis.y * (g.span.x * 0.5 + hand_skin - finger_inset)
-	base += g.block.basis.x * (hand_width * 0.5 - finger_size.x * 0.5 - hand_skin * 0.5)
+	base += g.block.basis.x * (g.height * 0.5 - finger_size.x * 0.5 - hand_skin * 0.5)
 	base.z = _near(g, finger_size.y)
 
 	var pad := _gun_space(trigger_pad).origin
@@ -341,7 +480,7 @@ func _build_finger(hand: PhysicalBone3D, to_hand: Transform3D, g: Grip) -> void:
 	var length := base.distance_to(pad) + finger_overreach
 
 	_finger = Node3D.new()
-	hand.add_child(_finger)
+	_hand_pivot.add_child(_finger)
 	_finger_rest = to_hand * Transform3D(
 		Basis(along.cross(Vector3.BACK), along, Vector3.BACK),
 		base,
@@ -352,6 +491,11 @@ func _build_finger(hand: PhysicalBone3D, to_hand: Transform3D, g: Grip) -> void:
 		Transform3D(Basis.IDENTITY, Vector3(0.0, length * 0.5, 0.0)),
 		Vector3(finger_size.x, length, finger_size.y),
 	)
+
+
+func _long_axis(palm: MeshInstance3D) -> Vector3:
+	var size := (palm.mesh as BoxMesh).size
+	return Vector3.RIGHT if size.x >= size.y else Vector3.UP
 
 
 func _near(g: Grip, thickness: float) -> float:

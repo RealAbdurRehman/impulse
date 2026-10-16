@@ -201,6 +201,7 @@ func _process(_delta: float) -> void:
 	var hand := weapon.holder.support_hand
 	var hand_frame := hand.get_global_transform_interpolated() * hand.body_offset.affine_inverse()
 	var held := Transform3D(hand_frame.basis.orthonormalized(), hand_frame.origin) * _in_hand
+	held.origin.z += weapon.stats.mag_hold_proud
 
 	var gap := lerpf(_gap(k0), _gap(k1), e)
 	var aligned := gun_rigid * _seated * Transform3D(Basis.IDENTITY, Vector3(0.0, -gap, 0.0))
@@ -360,16 +361,22 @@ func _build() -> void:
 		var take := _add(Kind.POUCH, pouch_lift, 1.2, 1.0, 0.0)
 		_add(Kind.STAGE, stage_distance, 3.0, 1.0, 0.0, false, carry_bulge)
 		var seat := _add(Kind.STAGE, 0.0, 1.2, 1.0, 1.0, true)
-		var grab := _add(Kind.RACK, weapon.stats.rack_start, 1.6, 0.4, 0.0)
-		var back := _add(Kind.RACK, weapon.stats.rack_pull, 1.8, 0.4, 0.0)
-		_add(Kind.GRIP, 0.0, 3.0, 0.0, 0.0)
+		var racks := not weapon.stats.chamber_after_reload
+		var grab := -1
+		var back := -1
+		if racks:
+			grab = _add(Kind.RACK, weapon.stats.rack_start, 1.6, 0.4, 0.0)
+			back = _add(Kind.RACK, weapon.stats.rack_pull, 1.8, 0.4, 0.0)
+
+		_add(Kind.GRIP, 0.0, 3.0 if racks else 1.6, 0.0, 0.0)
 
 		_cue(Cue.DROP, first, 0.15)
 		_cue(Cue.GRAB, take, 0.0)
 		_cue(Cue.SEAT, seat, 1.0)
-		_cue(Cue.UNLOCK, seat, 1.0)
-		_cue(Cue.TAKE_SLIDE, grab, 1.0)
-		_cue(Cue.LET_GO, back, 1.0)
+		if racks:
+			_cue(Cue.UNLOCK, seat, 1.0)
+			_cue(Cue.TAKE_SLIDE, grab, 1.0)
+			_cue(Cue.LET_GO, back, 1.0)
 
 	var total := 0.0
 	for key in _keys:
@@ -566,7 +573,7 @@ func _resolve() -> void:
 	_mag = _gun.get_node(NodePath(stats.mag_part)) as Node3D
 	var spare := _gun.get_node(NodePath(stats.spare_mag_part)) as Node3D
 	_mag_shape = _shape_of(_mag)
-	_spare_shape = _shape_of(spare)
+	_spare_shape = _shape_of(spare, Vector2(_mag_shape.frame.basis.y.x, _mag_shape.frame.basis.y.y))
 
 	var seated := _mag.transform * _mag_shape.frame
 	_seated = Transform3D(seated.basis.orthonormalized(), seated.origin * _scale)
@@ -638,7 +645,7 @@ func _rack_frame() -> Transform3D:
 	return Transform3D(hand * _grip_rel.basis, _rack.origin - hand.y * _rack_inset)
 
 
-func _shape_of(node: Node3D) -> MagShape:
+func _shape_of(node: Node3D, like := Vector2.ZERO) -> MagShape:
 	var points := PackedVector3Array()
 	_gather(node, node, points)
 
@@ -659,7 +666,13 @@ func _shape_of(node: Node3D) -> MagShape:
 
 	var angle := 0.5 * atan2(2.0 * xy, xx - yy)
 	var axis := Vector2(cos(angle), sin(angle))
-	if axis.y < 0.0:
+	var up := Vector2(0.0, 1.0)
+	if like != Vector2.ZERO:
+		up = like
+		if absf(axis.dot(up)) < 0.7071:
+			axis = Vector2(-axis.y, axis.x)
+
+	if axis.dot(up) < 0.0:
 		axis = -axis
 
 	var across := Vector2(axis.y, -axis.x)
