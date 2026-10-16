@@ -31,16 +31,14 @@
 [ext_resource type="AudioStream" uid="uid://lt3m7bytjir0" path="res://assets/audio/weapons/casings/brass/casing_25.wav" id="29_jw5ai"]
 [ext_resource type="AudioStream" uid="uid://156c635wwyv4" path="res://assets/audio/weapons/g17/dry_fire.wav" id="30_3k0tf"]
 [ext_resource type="Script" uid="uid://bv15q7wn1smpd" path="res://scripts/weapons/audio/weapon_sounds.gd" id="40_b1sln"]
-[ext_resource type="AudioStream" uid="uid://bd58xb84jas4x" path="res://assets/audio/weapons/g17/slide_lock.wav" id="41_a1p16"]
-[ext_resource type="AudioStream" uid="uid://weck6455apo1" path="res://assets/audio/weapons/m4a1/slide_release.wav" id="bolt_up"]
-[ext_resource type="AudioStream" uid="uid://b6l4e54svqu6j" path="res://assets/audio/weapons/rem870/fire_1.wav" id="fire_1"]
-[ext_resource type="AudioStream" uid="uid://bk74b184yk320" path="res://assets/audio/weapons/rem870/fire_2.wav" id="fire_2"]
-[ext_resource type="AudioStream" uid="uid://dxev8pdbixkf7" path="res://assets/audio/weapons/rem870/fire_3.wav" id="fire_3"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/bolt_lower.wav" id="bolt_lower"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/bolt_lift.wav" id="bolt_lift"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/fire_1.wav" id="fire_1"]
 [ext_resource type="AudioStream" uid="uid://d0r21y0abkx3k" path="res://assets/audio/weapons/fire_mode/fire_mode.wav" id="fire_mode"]
 [ext_resource type="AudioStream" uid="uid://5dx65kghxoi" path="res://assets/audio/weapons/m4a1/mag_in.wav" id="mag_in"]
-[ext_resource type="AudioStream" uid="uid://nvyxgyv40swy" path="res://assets/audio/weapons/m4a1/mag_out.wav" id="mag_out"]
-[ext_resource type="AudioStream" uid="uid://c3wn2hdfqdh2k" path="res://assets/audio/weapons/m4a1/rack_back.wav" id="rack_back"]
-[ext_resource type="AudioStream" uid="uid://deaegqoy64jdq" path="res://assets/audio/weapons/m4a1/rack_forward.wav" id="rack_forward"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/mag_out.wav" id="mag_out"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/rack_back.wav" id="rack_back"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/l96a1/rack_forward.wav" id="rack_forward"]
 
 [sub_resource type="Resource" id="SoundSet_aim_in"]
 script = ExtResource("1_cosx0")
@@ -62,18 +60,17 @@ skip = 0.2
 
 [sub_resource type="Resource" id="SoundSet_bolt_lift"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("bolt_up")])
+streams = Array[AudioStream]([ExtResource("bolt_lift")])
 gains = null
-volume_db = -13.0
+volume_db = -9.0
 pitch_variation = 0.04
 
-[sub_resource type="Resource" id="SoundSet_slide_lock"]
+[sub_resource type="Resource" id="SoundSet_bolt_lower"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("41_a1p16")])
+streams = Array[AudioStream]([ExtResource("bolt_lower")])
 gains = null
-volume_db = -8.0
+volume_db = -9.0
 pitch_variation = 0.04
-skip = 0.05
 
 [sub_resource type="Resource" id="SoundSet_casing"]
 script = ExtResource("1_cosx0")
@@ -93,7 +90,7 @@ pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_fire"]
 script = ExtResource("1_cosx0")
-streams = Array[AudioStream]([ExtResource("fire_1"), ExtResource("fire_2"), ExtResource("fire_3")])
+streams = Array[AudioStream]([ExtResource("fire_1")])
 gains = null
 volume_db = -3.0
 
@@ -115,22 +112,21 @@ skip = 0.35
 script = ExtResource("1_cosx0")
 streams = Array[AudioStream]([ExtResource("mag_out")])
 gains = null
-volume_db = -12.0
+volume_db = -11.0
 pitch_variation = 0.04
-skip = 0.17
 
 [sub_resource type="Resource" id="SoundSet_rack_back"]
 script = ExtResource("1_cosx0")
 streams = Array[AudioStream]([ExtResource("rack_back")])
 gains = null
-volume_db = -13.0
+volume_db = -9.0
 pitch_variation = 0.04
 
 [sub_resource type="Resource" id="SoundSet_rack_forward"]
 script = ExtResource("1_cosx0")
 streams = Array[AudioStream]([ExtResource("rack_forward")])
 gains = null
-volume_db = -12.0
+volume_db = -9.0
 pitch_variation = 0.04
 
 [resource]
@@ -140,11 +136,10 @@ dry_fire = SubResource("SoundSet_dry_fire")
 rack_back = SubResource("SoundSet_rack_back")
 rack_forward = SubResource("SoundSet_rack_forward")
 bolt_lift = SubResource("SoundSet_bolt_lift")
-bolt_lower = SubResource("SoundSet_slide_lock")
+bolt_lower = SubResource("SoundSet_bolt_lower")
 mag_out = SubResource("SoundSet_mag_out")
 mag_in = SubResource("SoundSet_mag_in")
 fire_mode = SubResource("SoundSet_fire_mode")
 aim_in = SubResource("SoundSet_aim_in")
 aim_out = SubResource("SoundSet_aim_out")
 casing = SubResource("SoundSet_casing")
-fire_pitch = 0.75
