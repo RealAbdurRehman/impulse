@@ -8,7 +8,7 @@
 script = ExtResource("1_c63i7")
 scene = ExtResource("1_h5dv8")
 low_aim_raise = 0.0
-hold_reach = 0.9546
+hold_reach = 0.755
 hold_drop = 0.0148
 hold_side = 0.0319
 hold_twist_degrees = 20.0

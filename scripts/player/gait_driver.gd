@@ -35,6 +35,9 @@ class Foot:
 
 	var stance_facing := 1
 
+	var air_offset := Vector3.ZERO
+	var home_at_plant := INF
+
 
 const NO_GROUND := -1.0e20
 const PROBE_UP := 0.8
@@ -203,6 +206,10 @@ const PROBE_UP := 0.8
 
 @export_range(0.0, 1.0) var air_standing_stride := 0.4
 
+@export_range(0.5, 1.0) var air_long_fall_hang := 0.94
+@export var air_brace_start := 0.15
+@export var air_brace_time := 0.45
+
 @export_group("Landing")
 @export var landing_drop := 0.22
 @export var landing_dip_speed := 1.3
@@ -241,6 +248,7 @@ var _since_land := 1000.0
 
 var _hang := 0.97
 var _air_t := 0.0
+var _fall_time := 0.0
 var _air_split := 0.0
 var _clock := 0.0
 var _prev_vy := 0.0
@@ -360,7 +368,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		if _was_on_floor:
 			_hang = clampf(_current_straightness(side_vec), 0.5, 0.99)
-			_begin_air()
+			_begin_air(side_vec)
 
 		_update_air_state(_vel.y, delta)
 
@@ -473,8 +481,11 @@ func _update_stepping(
 				elif stretched:
 					thr = minf(thr, err - 0.001)
 		else:
-			err = absf(home_x - f.planted.x)
+			var anchor: float = f.planted.x if f.home_at_plant == INF else f.home_at_plant
+			err = absf(home_x - anchor)
 			thr = idle_trigger
+			if _hip_pull(f) > _pull_limit():
+				err = maxf(err, thr + 0.01)
 
 		if err > thr and err > best_err:
 			best_err = err
@@ -864,6 +875,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 			f.recovery = false
 			f.planted = f.end
 			f.planted_normal = f.end_normal
+			f.home_at_plant = player.global_position.x + _stagger(f, f.end_dir).x
 			f.current = f.end
 			f.current_normal = f.end_normal
 			f.fdir = f.end_dir
@@ -1032,6 +1044,7 @@ func _on_land() -> void:
 		f.recovery = false
 		f.fdir = _target_fwd()
 		f.stance_facing = int(_facing_sign())
+		f.home_at_plant = INF
 
 		var g := _sample_ground(f.current)
 		if g[0]:
@@ -1057,8 +1070,11 @@ func _current_straightness(side_vec: Vector3) -> float:
 	return sum / (2.0 * maxf(leg_length, 0.01))
 
 
-func _begin_air() -> void:
+func _begin_air(side_vec: Vector3) -> void:
 	_air_split = 0.0
+	_fall_time = 0.0
+	for f in _feet:
+		f.air_offset = f.current - _hip_joint(f, side_vec)
 
 	var d := signf(_vel.x) if absf(_vel.x) > 0.3 else _facing_sign()
 	var lead_is_first := (_feet[0].current.x - _feet[1].current.x) * d >= 0.0
@@ -1079,15 +1095,20 @@ func _update_air_state(vy: float, delta: float) -> void:
 		var tti := slack / maxf(fall_speed, 0.5)
 		ext = (1.0 - smoothstep(0.14, air_extend_lead, tti)) * smoothstep(0.5, 2.0, fall_speed)
 
+	if vy < -0.5:
+		_fall_time += delta
+
+	var brace := smoothstep(air_brace_start, air_brace_start + air_brace_time, _fall_time)
 	var fall_t := clampf(0.5 - vy / 4.0, 0.0, 1.0)
 	var bent := lerpf(air_hang_rising, air_hang_falling, fall_t)
+	bent = lerpf(bent, air_long_fall_hang, brace)
 	var want := lerpf(bent, 0.97, ext)
 
 	var time := air_extend_time if want > _hang else air_bend_time
 	_hang = lerpf(_hang, want, 1.0 - exp(-3.0 / maxf(time, 0.02) * delta))
 
 	var run := clampf(absf(_vel.x) / maxf(run_speed, 0.01), 0.0, 1.0)
-	var split := lerpf(air_standing_stride, 1.0, run) * (1.0 - 0.55 * ext)
+	var split := lerpf(air_standing_stride, 1.0, run) * (1.0 - 0.55 * ext) * (1.0 - 0.6 * brace)
 	_air_split = lerpf(_air_split, split, 1.0 - exp(-10.0 * delta))
 
 
@@ -1104,7 +1125,9 @@ func _update_air_foot(f: Foot, side_vec: Vector3, fwd: Vector3, delta: float) ->
 	var reach := (air_lead_reach if lead else -air_trail_reach) * _air_split
 	var lift := (air_lead_lift if lead else -air_trail_drop) * _air_split
 
-	var pos := hip + Vector3(dirx * reach, -leg_length * _hang + lift, 0.0)
+	var offset := Vector3(dirx * reach, -leg_length * _hang + lift, 0.0)
+	f.air_offset = f.air_offset.lerp(offset, 1.0 - exp(-air_follow_speed * delta))
+	var pos := hip + f.air_offset
 
 	var ground_n := Vector3.UP
 	var g := _sample_ground(Vector3(pos.x, hip.y, pos.z))
@@ -1114,7 +1137,7 @@ func _update_air_foot(f: Foot, side_vec: Vector3, fwd: Vector3, delta: float) ->
 		if gn.y > 0.6:
 			ground_n = gn
 
-	f.planted = f.planted.lerp(pos, 1.0 - exp(-air_follow_speed * delta))
+	f.planted = pos
 	f.current = f.planted
 
 	var want_n := _blend_normal(Vector3.UP, ground_n, smoothstep(0.9, 0.97, _hang))

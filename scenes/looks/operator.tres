@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LookStyle" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/look/look_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+uniform = Color(0.5, 0.52, 0.54, 1)
+vest = Color(0.62, 0.64, 0.62, 1)
+pouch = Color(0.46, 0.48, 0.46, 1)
+helmet = Color(0.17, 0.18, 0.2, 1)
+mask = Color(0.2, 0.21, 0.24, 1)
+skin = Color(0.8, 0.62, 0.5, 1)
+glove = Color(0.24, 0.24, 0.26, 1)
+boot = Color(0.24, 0.24, 0.26, 1)
+pad = Color(0.26, 0.27, 0.29, 1)
+tag = Color(0.88, 0.88, 0.84, 1)
+helmet_on = true
+vest_on = true
+backpack_on = true
+pads_on = true
+pockets_on = true
+bulk = 1.0
