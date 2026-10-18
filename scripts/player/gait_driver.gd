@@ -36,6 +36,8 @@ class Foot:
 	var stance_facing := 1
 
 	var air_offset := Vector3.ZERO
+	var clear_y := 0.0
+	var clear_vel := 0.0
 	var home_at_plant := INF
 
 
@@ -90,6 +92,9 @@ const PROBE_UP := 0.8
 @export var trail_hip_drop_stairs := 0.3
 
 @export var step_height := 0.22
+@export_range(1.0, 3.0) var swing_front_load := 1.5
+@export_range(1.0, 3.0) var swing_front_load_rise := 2.0
+@export_range(1.0, 3.0) var swing_arc_sharpness := 1.5
 @export var run_step_height_scale := 1.3
 
 @export var crouch_step_height := 0.17
@@ -101,6 +106,11 @@ const PROBE_UP := 0.8
 
 @export var edge_probe := 0.10
 @export var edge_snap_threshold := 0.05
+@export var toe_reach := 0.2
+@export var heel_reach := 0.07
+@export var swing_clearance := 0.02
+@export var clearance_spring := 16.0
+@export var toe_clear_height := 0.05
 
 @export var idle_speed_threshold := 0.08
 
@@ -169,6 +179,8 @@ const PROBE_UP := 0.8
 @export var crouch_heel_pitch_degrees := 42.0
 
 @export var crouch_hips_back := 0.07
+
+@export_range(0.0, 1.0) var stairs_heel_relief := 0.7
 
 @export var lean_speed := 5.0
 
@@ -799,6 +811,8 @@ func _begin_step(
 	f.stance_facing = 1 if fwd.x >= 0.0 else -1
 
 	f.start = f.planted
+	f.clear_y = f.planted.y
+	f.clear_vel = 0.0
 	f.start_normal = f.current_normal
 	f.end = end_pos
 	f.end_normal = fall[1]
@@ -844,10 +858,18 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 			lerpf(f.start.y, f.end.y, vk),
 			lerpf(f.start.z, f.end.z, hk),
 		)
-		var arc_k := k
+		var front := swing_front_load
 		if rise > 0.03 and not f.recovery:
-			arc_k = pow(k, 0.6)
-		pos.y += sin(pow(arc_k, 0.75) * PI) * f.lift
+			front = swing_front_load_rise
+
+		var arc_x := 1.0 - pow(1.0 - k, front)
+		pos.y += pow(sin(arc_x * PI), swing_arc_sharpness) * f.lift
+		var need := _foot_floor(pos, f.fdir) + ankle_height + swing_clearance
+		var w := clearance_spring
+		f.clear_vel += (w * w * (need - f.clear_y) - 2.0 * w * f.clear_vel) * delta
+		f.clear_y += f.clear_vel * delta
+		pos.y = maxf(pos.y, lerpf(f.clear_y, 0.0, smoothstep(0.8, 1.0, k)))
+
 		f.current = pos
 		f.fdir = _turn_dir(f.start_dir, f.end_dir, smoothstep(0.1, 0.9, k))
 
@@ -917,6 +939,19 @@ func _on_plant(was_recovery: bool) -> void:
 	_since_land = 0.0
 
 
+## Highest ground under the whole foot (heel to toe), so a swinging foot clears
+## the nosing of a step that only its toe is over.
+func _foot_floor(p: Vector3, dir: Vector3) -> float:
+	var d := signf(dir.x) if absf(dir.x) > 0.01 else _facing_sign()
+	var top := NO_GROUND
+	for off in [-heel_reach, 0.0, toe_reach * 0.5, toe_reach]:
+		var g := _sample_ground(Vector3(p.x + d * off, p.y, p.z))
+		if g[0]:
+			top = maxf(top, float(g[1]))
+
+	return top
+
+
 func _footfall(p: Vector3, d: float) -> Array:
 	var dv := Vector3(d, 0.0, 0.0)
 	var q := Vector3(p.x, player.global_position.y + 0.2, p.z)
@@ -928,6 +963,20 @@ func _footfall(p: Vector3, d: float) -> Array:
 		var dy: float = toe[1] - heel[1]
 		if absf(dy) > edge_snap_threshold:
 			q += dv * (edge_probe * 1.2 * (1.0 if dy > 0.0 else -1.0))
+
+	# the toe reaches further than the edge probe: if a riser sits inside that
+	# reach, slide back until it clears so the toe is never wedged into a step
+	var base := _sample_ground(q)
+	if base[0]:
+		for i in 5:
+			var reach := _sample_ground(q + dv * toe_reach)
+			if not reach[0] or float(reach[1]) - float(base[1]) < toe_clear_height:
+				break
+
+			q -= dv * 0.03
+			base = _sample_ground(q)
+			if not base[0]:
+				break
 
 	var g := _sample_ground(q)
 	var y: float = g[1] if g[0] else player.global_position.y
@@ -1190,7 +1239,7 @@ func _crouch_stance() -> float:
 
 
 func _rear_amount(f: Foot) -> float:
-	return 0.0 if _is_front_foot(f) else _crouch_stance()
+	return 0.0 if _is_front_foot(f) else _crouch_stance() * (1.0 - stairs_heel_relief * stairs_amount)
 
 
 func _stagger(f: Foot, fwd: Vector3) -> Vector3:

@@ -14,6 +14,9 @@ extends PhysicalBoneSimulator3D
 @export_range(0.0, 1.0) var foot_linear_assist: float = 1.0
 
 @export_group("Leg Strength")
+@export_range(0.05, 1.0) var upper_leg_mass_scale := 0.1
+@export_range(0.05, 1.0) var lower_leg_mass_scale := 0.2
+@export_range(0.05, 1.0) var foot_mass_scale := 0.5
 @export var legs_ignore_each_other := false
 
 @export var foot_angular_frequency_hz := 18.0
@@ -33,8 +36,12 @@ extends PhysicalBoneSimulator3D
 @export_group("Feedforward")
 @export var max_ff_angular_speed := 40.0
 @export var feedforward_smoothing_hz := 30.0
+@export var body_velocity_smoothing := 6.0
 
 @export_range(0.0, 1.0) var feedforward := 1.0
+@export_range(0.0, 1.0) var lower_body_feedforward := 0.0
+@export_range(0.0, 1.0) var foot_feedforward := 1.0
+@export_range(0.0, 1.0) var leg_feedforward := 0.0
 
 @export_group("Upper Body")
 @export var upper_body_stiffness_scale := 10.0
@@ -43,7 +50,7 @@ extends PhysicalBoneSimulator3D
 @export var arm_angular_damping_ratio := 1.0
 
 @export_range(0.0, 1.0) var arm_linear_assist := 1.0
-@export_range(0.0, 1.0) var torso_linear_assist := 0.6
+@export_range(0.0, 1.0) var torso_linear_assist := 1.0
 
 @export_group("Upright")
 @export var upright_torque: float = 2800.0
@@ -59,7 +66,7 @@ extends PhysicalBoneSimulator3D
 @export var shoulder_limits := Vector3(175.0, 150.0, 175.0)
 @export var wrist_limits := Vector3(170.0, 110.0, 170.0)
 @export var hip_limits := Vector3(135.0, 45.0, 135.0)
-@export var ankle_limits := Vector3(55.0, 25.0, 55.0)
+@export var ankle_limits := Vector3(115.0, 115.0, 115.0)
 
 @export var free_shoulders := true
 @export var mirror_left_elbow := true
@@ -123,6 +130,8 @@ var _ff_prev_o: Dictionary = { }
 var _ff_ang: Dictionary = { }
 var _ff_lin: Dictionary = { }
 
+var _body_v := Vector3.ZERO
+
 
 func _ready() -> void:
 	_recompute_constants()
@@ -151,6 +160,14 @@ func _ready() -> void:
 
 	for b in physical_bones:
 		b.gravity_scale = 1.0 - gravity_compensation
+
+		var bone_name := String(b.bone_name)
+		if bone_name.ends_with("UpLeg"):
+			b.mass *= upper_leg_mass_scale
+		elif bone_name.ends_with("Leg"):
+			b.mass *= lower_leg_mass_scale
+		elif bone_name.ends_with("Foot"):
+			b.mass *= foot_mass_scale
 
 	if override_joint_limits:
 		_apply_joint_limits()
@@ -348,10 +365,20 @@ func _bone_ang_c(bone: PhysicalBone3D) -> float:
 
 
 func _body_velocity() -> Vector3:
-	return player_body.velocity
+	return _body_v
+
+
+func _update_body_velocity(delta: float) -> void:
+	var v := player_body.velocity
+	if body_velocity_smoothing <= 0.0:
+		_body_v = v
+	else:
+		_body_v = _body_v.lerp(v, 1.0 - exp(-body_velocity_smoothing * delta))
 
 
 func _physics_process(delta: float) -> void:
+	_update_body_velocity(delta)
+
 	for bone in physical_bones:
 		var target := _target_body_transform(bone)
 
@@ -410,6 +437,21 @@ func _physics_process(delta: float) -> void:
 				)
 
 
+## Arms and head keep full feedforward so aiming stays snappy; hips, torso and
+## legs track without it, which stops each step jerking the whole body.
+func _feedforward_for(bone: PhysicalBone3D) -> float:
+	if bone in arm_bones or bone.bone_name.ends_with("Head"):
+		return feedforward
+
+	if bone in feet_bones:
+		return foot_feedforward
+
+	if bone in leg_bones:
+		return leg_feedforward
+
+	return lower_body_feedforward
+
+
 func _update_feedforward(bone: PhysicalBone3D, target: Transform3D, delta: float) -> void:
 	var dt := maxf(delta, 0.0001)
 	var blend := 1.0 - exp(-feedforward_smoothing_hz * delta)
@@ -443,7 +485,7 @@ func _update_feedforward(bone: PhysicalBone3D, target: Transform3D, delta: float
 func _apply_angular_track(bone: PhysicalBone3D, target: Transform3D, delta: float) -> void:
 	var k := _bone_ang_k(bone)
 	var c := _bone_ang_c(bone)
-	var ff: Vector3 = (_ff_ang[bone] as Vector3) * feedforward
+	var ff: Vector3 = (_ff_ang[bone] as Vector3) * _feedforward_for(bone)
 
 	var current_q := bone.global_transform.basis.get_rotation_quaternion()
 	var target_q := target.basis.get_rotation_quaternion()
@@ -471,7 +513,7 @@ func _track_linear(
 	var body_v := _body_velocity()
 	var ff_v: Vector3 = _ff_lin[bone]
 
-	var target_v := body_v.lerp(ff_v, feedforward)
+	var target_v := body_v.lerp(ff_v, _feedforward_for(bone))
 	var rel_v := bone.linear_velocity - target_v
 
 	var pos_error: Vector3 = target.origin - bone.global_position
