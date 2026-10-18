@@ -1,3 +1,4 @@
+@tool
 class_name LookStyle
 extends Resource
 ## What a character is wearing. Swap the resource to get another look.

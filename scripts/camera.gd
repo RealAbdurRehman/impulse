@@ -1,6 +1,6 @@
 extends Camera3D
 
-@export var target: PlayerMovement
+@export var target: CharacterMovement
 
 @export var follow_speed: float = 7.0
 @export var mouse_look_weight: float = 2.8
@@ -10,7 +10,7 @@ extends Camera3D
 @export var lookahead_max: float = 40
 @export var lookahead_speed: float = 4.0
 
-@export var z_distance: float = 9.0
+@export var z_distance: float = 10.0
 @export var field_of_view: float = 35.0
 
 var height_offset: float = 1.0
@@ -23,7 +23,13 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var target_pos: Vector3 = target.global_position
+	var target_pos: Vector3 = (
+		target.global_position
+		if target.focus == null
+		else target \
+				.focus \
+				.global_position
+	)
 
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()

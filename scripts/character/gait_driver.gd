@@ -44,7 +44,7 @@ class Foot:
 const NO_GROUND := -1.0e20
 const PROBE_UP := 0.8
 
-@export var player: PlayerMovement
+@export var character: CharacterMovement
 
 @export var left_foot_target: Node3D
 @export var right_foot_target: Node3D
@@ -285,9 +285,9 @@ func _ready() -> void:
 
 
 func _setup_feet() -> void:
-	run_speed = player.run_speed
+	run_speed = character.run_speed
 
-	_plane_z = player.global_position.z
+	_plane_z = character.global_position.z
 
 	_feet.append(_make_foot(left_foot_target, left_knee_pole, 1.0))
 	_feet.append(_make_foot(right_foot_target, right_knee_pole, -1.0))
@@ -313,9 +313,9 @@ func _make_foot(target: Node3D, pole: Node3D, side: float) -> Foot:
 	target.top_level = true
 	pole.top_level = true
 
-	var base := player.global_position + _side_vec() * foot_lateral * side
+	var base := character.global_position + _side_vec() * foot_lateral * side
 	var g := _sample_ground(base)
-	var y: float = g[1] if g[0] else player.global_position.y
+	var y: float = g[1] if g[0] else character.global_position.y
 
 	f.planted = Vector3(base.x, y + ankle_height, base.z)
 	f.planted_normal = g[2] if g[0] else Vector3.UP
@@ -329,19 +329,19 @@ func _physics_process(delta: float) -> void:
 	if _feet.size() < 2:
 		return
 
-	var on_floor := player.is_on_floor()
-	var move_speed := player.move_speed
-	var dirx := signf(player.move_dir)
+	var on_floor := character.is_on_floor()
+	var move_speed := character.move_speed
+	var dirx := signf(character.move_dir)
 
-	_vel = player.velocity
+	_vel = character.velocity
 
 	var fwd := _fwd()
 	var side_vec := _side_vec()
 	var tfwd := _target_fwd()
 	var tside := Vector3.UP.cross(tfwd).normalized()
-	var crouching := on_floor and Input.is_action_pressed("crouch")
+	var crouching := on_floor and character.input.crouch
 
-	var crouch_goal := 1.0 if crouching else player.aim_amount * aim_crouch
+	var crouch_goal := 1.0 if crouching else character.aim_amount * aim_crouch
 	_crouch_amt = move_toward(_crouch_amt, crouch_goal, crouch_blend_speed * delta)
 	_since_land += delta
 	_since_step_start += delta
@@ -403,7 +403,7 @@ func _physics_process(delta: float) -> void:
 		for f in _feet:
 			sy += _foot_support_y(f)
 
-		player.drive_root(Vector3(0.0, sy * 0.5 - ankle_height, 0.0), delta)
+		character.drive_root(Vector3(0.0, sy * 0.5 - ankle_height, 0.0), delta)
 
 	if on_floor:
 		_air_t = move_toward(_air_t, 0.0, delta / maxf(air_blend_out_time, 0.02))
@@ -446,7 +446,7 @@ func _update_stepping(
 	if overlap < 0.01 and _since_land < min_plant_time:
 		return
 
-	var root_x: float = player.global_position.x
+	var root_x: float = character.global_position.x
 
 	if move_speed < turn_step_max_speed and _update_turn(side_vec, fwd):
 		return
@@ -549,7 +549,7 @@ func _update_idle_stance(side_vec: Vector3, fwd: Vector3, delta: float) -> void:
 		return
 
 	var fs := _facing_sign()
-	var root_x: float = player.global_position.x
+	var root_x: float = character.global_position.x
 	_idle_cd = idle_step_cooldown
 	_begin_step(fix[0], side_vec, fwd, 0.0, 0.0, false, root_x + float(fix[1]) * fs)
 
@@ -560,7 +560,7 @@ func _slope_between_feet() -> float:
 
 func _idle_offsets() -> Array:
 	var fs := _facing_sign()
-	var root_x: float = player.global_position.x
+	var root_x: float = character.global_position.x
 
 	var o0 := (_feet[0].planted.x - root_x) * fs
 	var o1 := (_feet[1].planted.x - root_x) * fs
@@ -576,7 +576,7 @@ func _pull_limit() -> float:
 
 
 func _hip_pull(f: Foot) -> float:
-	var dx: float = player.global_position.x - f.planted.x
+	var dx: float = character.global_position.x - f.planted.x
 	var dz := maxf(foot_lateral - hip_half_width, 0.0)
 	var reach := leg_length * reach_ratio
 	var max_y := f.planted.y + sqrt(maxf(reach * reach - dx * dx - dz * dz, 0.0))
@@ -606,7 +606,7 @@ func _idle_broken(of: float, ob: float, slack: float) -> bool:
 
 func _idle_fits(idx: int, offset: float, slack: float) -> bool:
 	var fs := _facing_sign()
-	var root_x: float = player.global_position.x
+	var root_x: float = character.global_position.x
 	var f := _feet[idx]
 
 	var plan := _plan_landing(f, root_x + offset * fs, fs, Vector3.UP.cross(_target_fwd()), _target_fwd(), root_x)
@@ -678,16 +678,16 @@ func _retarget_landing(f: Foot, k: float, delta: float) -> void:
 	if f.recovery or stairs_amount > 0.1 or k > 0.85:
 		return
 
-	var dirx := signf(player.move_dir)
+	var dirx := signf(character.move_dir)
 	if dirx == 0.0:
 		return
 
 	var left := (1.0 - k) * f.duration
 	var pred := _predict(left)
-	if absf(pred.y - player.move_speed) < 0.05:
+	if absf(pred.y - character.move_speed) < 0.05:
 		return
 
-	var root_x: float = player.global_position.x
+	var root_x: float = character.global_position.x
 	var body_x := root_x + dirx * pred.x
 	var target_x := body_x + dirx * _lead_for(pred.y)
 
@@ -707,16 +707,16 @@ func _lead_for(speed: float) -> float:
 
 
 func _predict(t: float) -> Vector2:
-	var v := player.move_speed
-	var want := player.desired_speed
-	var rate := player.decel_ground
+	var v := character.move_speed
+	var want := character.desired_speed
+	var rate := character.decel_ground
 
-	var want_dir := signf(player.desired_dir)
-	if want_dir != 0.0 and want_dir != signf(player.move_dir) and v > 0.05:
+	var want_dir := signf(character.desired_dir)
+	if want_dir != 0.0 and want_dir != signf(character.move_dir) and v > 0.05:
 		want = 0.0
-		rate = player.turn_brake
+		rate = character.turn_brake
 	elif want > v:
-		rate = player.accel_ground
+		rate = character.accel_ground
 
 	if rate < 0.01 or absf(want - v) < 0.001:
 		return Vector2(v * t, v)
@@ -779,7 +779,7 @@ func _begin_step(
 	turning := false,
 ) -> void:
 	var f := _feet[idx]
-	var root: Vector3 = player.global_position
+	var root: Vector3 = character.global_position
 
 	var dur := idle_step_time
 	var travel := 0.0
@@ -897,7 +897,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 			f.recovery = false
 			f.planted = f.end
 			f.planted_normal = f.end_normal
-			f.home_at_plant = player.global_position.x + _stagger(f, f.end_dir).x
+			f.home_at_plant = character.global_position.x + _stagger(f, f.end_dir).x
 			f.current = f.end
 			f.current_normal = f.end_normal
 			f.fdir = f.end_dir
@@ -930,7 +930,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 
 
 func _on_plant(was_recovery: bool) -> void:
-	var impact := clampf(step_impact + absf(player.move_speed) * step_impact_per_speed, 0.0, 0.5)
+	var impact := clampf(step_impact + absf(character.move_speed) * step_impact_per_speed, 0.0, 0.5)
 	impact *= lerpf(1.0, crouch_impact_scale, _crouch_amt)
 	if was_recovery:
 		impact *= 0.35
@@ -954,7 +954,7 @@ func _foot_floor(p: Vector3, dir: Vector3) -> float:
 
 func _footfall(p: Vector3, d: float) -> Array:
 	var dv := Vector3(d, 0.0, 0.0)
-	var q := Vector3(p.x, player.global_position.y + 0.2, p.z)
+	var q := Vector3(p.x, character.global_position.y + 0.2, p.z)
 
 	var toe := _sample_ground(q + dv * edge_probe)
 	var heel := _sample_ground(q - dv * edge_probe)
@@ -979,7 +979,7 @@ func _footfall(p: Vector3, d: float) -> Array:
 				break
 
 	var g := _sample_ground(q)
-	var y: float = g[1] if g[0] else player.global_position.y
+	var y: float = g[1] if g[0] else character.global_position.y
 	var n: Vector3 = g[2] if g[0] else Vector3.UP
 
 	return [Vector3(q.x, y + ankle_height, q.z), n]
@@ -990,7 +990,7 @@ func _update_stairs(delta: float, on_floor: bool, dirx: float) -> void:
 
 	if on_floor:
 		var d := dirx if dirx != 0.0 else _facing_sign()
-		var root: Vector3 = player.global_position
+		var root: Vector3 = character.global_position
 
 		var here := _sample_ground(Vector3(root.x, root.y + 0.3, _plane_z))
 		var ahead := _sample_ground(Vector3(root.x + d * stairs_probe, root.y + 0.3, _plane_z))
@@ -1029,7 +1029,7 @@ func _update_lean(
 
 
 func _update_hips(delta: float, on_floor: bool) -> void:
-	var root: Vector3 = player.global_position
+	var root: Vector3 = character.global_position
 	var target: float
 
 	if on_floor:
@@ -1100,7 +1100,7 @@ func _on_land() -> void:
 			f.planted = Vector3(f.current.x, g[1] + ankle_height, f.current.z)
 			f.planted_normal = g[2]
 		else:
-			f.planted = Vector3(f.current.x, player.global_position.y + ankle_height, f.current.z)
+			f.planted = Vector3(f.current.x, character.global_position.y + ankle_height, f.current.z)
 			f.planted_normal = Vector3.UP
 
 
@@ -1133,7 +1133,7 @@ func _begin_air(side_vec: Vector3) -> void:
 
 
 func _update_air_state(vy: float, delta: float) -> void:
-	var root: Vector3 = player.global_position
+	var root: Vector3 = character.global_position
 	var hip_y := root.y + hip_rest_height
 	var floor_hit := _sample_ground(Vector3(root.x, hip_y, root.z), 4.0)
 
@@ -1206,7 +1206,7 @@ func _apply_foot(f: Foot, side_vec: Vector3, fwd: Vector3, delta: float) -> void
 
 
 func _hip_joint(f: Foot, side_vec: Vector3) -> Vector3:
-	var root: Vector3 = player.global_position
+	var root: Vector3 = character.global_position
 	var p := Vector3(root.x, _hip_y, _plane_z) + side_vec * foot_lateral * f.side
 	return p
 
@@ -1234,7 +1234,7 @@ func _is_front_foot(f: Foot) -> bool:
 
 
 func _crouch_stance() -> float:
-	var walking := clampf(player.move_speed / 0.45, 0.0, 1.0)
+	var walking := clampf(character.move_speed / 0.45, 0.0, 1.0)
 	return _crouch_amt * (1.0 - 0.85 * walking)
 
 
@@ -1266,15 +1266,15 @@ func _smoother(x: float) -> float:
 
 
 func _fwd() -> Vector3:
-	return (player.global_basis.orthonormalized() * character_forward_local).normalized()
+	return (character.global_basis.orthonormalized() * character_forward_local).normalized()
 
 
 func _target_fwd() -> Vector3:
-	return Vector3(float(player.facing), 0.0, 0.0)
+	return Vector3(float(character.facing), 0.0, 0.0)
 
 
 func _side_vec() -> Vector3:
-	return player.global_basis.orthonormalized().x.normalized()
+	return character.global_basis.orthonormalized().x.normalized()
 
 
 func _facing_sign() -> float:
@@ -1283,7 +1283,7 @@ func _facing_sign() -> float:
 
 
 func _sample_ground(p: Vector3, down := 1.5) -> Array:
-	var space := player.get_world_3d().direct_space_state
+	var space := character.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(
 		p + Vector3.UP * PROBE_UP,
 		p + Vector3.DOWN * down,

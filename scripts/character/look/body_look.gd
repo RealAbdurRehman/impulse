@@ -1,18 +1,39 @@
+@tool
 class_name BodyLook
 extends Node
 ## Dresses the ragdoll in a stylised operator: rounded primitives instead of
 ## the plain collision-sized boxes, mounted on the same physical bones.
+##
+## It runs in the editor too, so a character scene shows the body it really
+## wears; there it only adds the meshes (they are not saved) and leaves the
+## scene's own nodes alone, the boxes it replaces being hidden in the scene.
 ##
 ## Everything is authored for a person standing upright (design space:
 ## x = their left, y = up, z = forward) and mapped onto each bone's own axes
 ## from the rig's rest pose, so no axis is hard-coded per bone. Limbs hang
 ## along their bone, so joints line up exactly.
 
-@export var style: LookStyle
+@export var style: LookStyle:
+	set(value):
+		if Engine.is_editor_hint():
+			if style != null and style.changed.is_connected(_rebuild):
+				style.changed.disconnect(_rebuild)
+
+			if value != null:
+				value.changed.connect(_rebuild)
+
+		style = value
+		if Engine.is_editor_hint() and is_node_ready():
+			_rebuild()
+
 @export var ragdoll: PhysicalBoneSimulator3D
 
 ## The boxes the rig already had for these stay visible, untouched.
 const KEPT := [&"Hand", &"Neck"]
+
+## The meshes built for each style, shared by every body that wears it: making
+## them is slow, and so is the hit volume made from them (see Hitboxes).
+static var _shared := { }
 
 var _bones := { }
 var _bases := { }
@@ -32,6 +53,31 @@ var _flesh: StandardMaterial3D
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint() and (ragdoll == null or style == null):
+		return
+
+	_build()
+
+
+## Editor only: dresses the body again after the style was swapped or edited.
+func _rebuild() -> void:
+	if not is_node_ready():
+		return
+
+	for bone: PhysicalBone3D in _bones.values():
+		var old := bone.get_node_or_null(^"Look")
+		if old != null:
+			bone.remove_child(old)
+			old.free()
+
+	_bones.clear()
+	_bases.clear()
+	_kits.clear()
+	if ragdoll != null and style != null:
+		_build()
+
+
+func _build() -> void:
 	_skeleton = ragdoll.get_parent() as Skeleton3D
 	_make_materials()
 
@@ -49,11 +95,29 @@ func _ready() -> void:
 		_bases[part] = _design_basis(part, rest.basis.orthonormalized().inverse())
 		_kits[part] = MeshKit.new()
 
-		for mesh in bone.find_children("*", "MeshInstance3D", true, false):
-			if not KEPT.has(mesh.name):
-				(mesh as MeshInstance3D).visible = false
+		if not Engine.is_editor_hint():
+			for mesh in bone.find_children("*", "MeshInstance3D", true, false):
+				if not KEPT.has(mesh.name):
+					(mesh as MeshInstance3D).visible = false
 
-	_paint_kept()
+	if not Engine.is_editor_hint():
+		_paint_kept()
+
+	var meshes := _meshes()
+	for part in meshes:
+		var look := MeshInstance3D.new()
+		look.name = &"Look"
+		look.mesh = meshes[part]
+		look.transform = Transform3D(_bases[part], Vector3.ZERO)
+		(_bones[part] as PhysicalBone3D).add_child(look)
+
+
+## The mesh for each bone, from the shared ones if this style has been built
+## before (in the editor it is always built again: the style is being edited).
+func _meshes() -> Dictionary:
+	if not Engine.is_editor_hint() and _shared.has(style):
+		return _shared[style]
+
 	_build_pelvis()
 	_build_torso()
 	_build_head()
@@ -62,16 +126,16 @@ func _ready() -> void:
 		_build_leg(side)
 		_build_foot(side)
 
+	var meshes := { }
 	for part in _kits:
 		var kit: MeshKit = _kits[part]
-		if kit.is_empty():
-			continue
+		if not kit.is_empty():
+			meshes[part] = kit.build()
 
-		var look := MeshInstance3D.new()
-		look.name = &"Look"
-		look.mesh = kit.build()
-		look.transform = Transform3D(_bases[part], Vector3.ZERO)
-		(_bones[part] as PhysicalBone3D).add_child(look)
+	if not Engine.is_editor_hint():
+		_shared[style] = meshes
+
+	return meshes
 
 
 ## Recolours the kept boxes. The grip code copies the palm's material onto the

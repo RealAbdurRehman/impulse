@@ -55,7 +55,7 @@ func _measure(skel: Skeleton3D) -> void:
 	var c := xf * skel.get_bone_global_rest(foot).origin
 
 	var leg := (a - b).length() + (b - c).length()
-	var root_y := gait.player.global_position.y
+	var root_y := gait.character.global_position.y
 
 	gait.leg_length = leg
 	gait.hip_rest_height = a.y - root_y

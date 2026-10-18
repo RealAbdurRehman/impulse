@@ -12,13 +12,16 @@ signal aim_changed(aiming: bool)
 
 @export var stats: WeaponStats
 @export var holder: GunHolder
-@export var player: PlayerMovement
+@export var character: CharacterMovement
 
-@export_group("Input")
-@export var fire_action: StringName = &"shoot"
-@export var reload_action: StringName = &"reload"
-@export var aim_action: StringName = &"aim"
-@export var fire_mode_action: StringName = &"fire_mode"
+## Added to every sound this weapon makes (quieter for guns that aren't yours).
+@export var volume_db := 0.0
+
+## Multiplies each weapon's impact_impulse on characters. Lower it for a more sober feel.
+@export var bullet_force := 18.0
+
+## Bullets go through characters on the shooter's own side unless this is on.
+@export var friendly_fire := false
 
 var animator: GunAnimator
 var reloader: WeaponReload
@@ -137,22 +140,23 @@ func _physics_process(delta: float) -> void:
 			if stats.chamber_after_reload and stats.auto_cycle and not chambered and ammo > 0:
 				cycle()
 
-	if Input.is_action_just_pressed(reload_action):
+	var input := character.input
+	if input.reload_pressed:
 		reload()
 
 	_select_left = maxf(_select_left - delta, 0.0)
-	if Input.is_action_just_pressed(fire_mode_action):
+	if input.fire_mode_pressed:
 		switch_fire_mode()
 
 	_update_aim(delta)
 
-	if Input.is_action_just_pressed(fire_action):
+	if input.fire_pressed:
 		_press_buffer = stats.trigger_buffer
 	else:
 		_press_buffer = maxf(_press_buffer - delta, 0.0)
 
 	var pressed := _press_buffer > 0.0
-	var held := automatic and not stats.manual_cycle and Input.is_action_pressed(fire_action)
+	var held := automatic and not stats.manual_cycle and input.fire
 
 	_bloom = maxf(_bloom - stats.bloom_recovery * delta, 0.0)
 
@@ -224,7 +228,7 @@ func _on_reload_cue(cue: WeaponReload.Cue) -> void:
 
 
 func _update_aim(delta: float) -> void:
-	var want := Input.is_action_pressed(aim_action) and _reload_left <= 0.0
+	var want := character.input.aim and _reload_left <= 0.0
 	want = want and not (stats.ads_breaks_on_cycle and _cycling)
 	if want != _aiming:
 		_aiming = want
@@ -232,9 +236,9 @@ func _update_aim(delta: float) -> void:
 
 	_aim = move_toward(_aim, 1.0 if want else 0.0, delta / maxf(stats.ads_time, 0.01))
 
-	player.aim_amount = smoothstep(0.0, 1.0, _aim)
-	player.aim_speed_scale = lerpf(1.0, stats.ads_move_scale, player.aim_amount)
-	player.aim_zoom = lerpf(1.0, stats.ads_zoom, player.aim_amount)
+	character.aim_amount = smoothstep(0.0, 1.0, _aim)
+	character.aim_speed_scale = lerpf(1.0, stats.ads_move_scale, character.aim_amount)
+	character.aim_zoom = lerpf(1.0, stats.ads_zoom, character.aim_amount)
 
 
 func _gun_ready() -> bool:
@@ -246,8 +250,31 @@ func _gun_ready() -> bool:
 		for c in holder.ragdoll.get_children():
 			if c is PhysicalBone3D:
 				_exclude.append(c.get_rid())
+				for k in c.get_children():
+					if k is Area3D:
+						_exclude.append(k.get_rid())
 
 	return true
+
+
+## Where a bullet fired right now starts and which way it goes (before spread):
+## the muzzle and the way it points, eased toward the aim point while the gun is
+## being held up out of a wall or body.
+func bullet_ray() -> Array[Vector3]:
+	var muzzle := holder.muzzle_transform()
+	var origin := muzzle.origin
+	origin.z = character.plane_z
+
+	var forward := Vector3(muzzle.basis.x.x, muzzle.basis.x.y, 0.0).normalized()
+	forward = forward.rotated(Vector3.BACK, recoil.aim_correction())
+
+	var lift := holder.spine.barrel.lift
+	if lift > 0.0 and character.input.has_aim:
+		var to_aim := character.aim_point - origin
+		var toward := Vector3(to_aim.x, to_aim.y, 0.0).normalized()
+		forward = forward.slerp(toward, smoothstep(0.0, 0.2, lift))
+
+	return [origin, forward]
 
 
 func _shoot() -> void:
@@ -259,11 +286,9 @@ func _shoot() -> void:
 	_bloom = minf(_bloom + stats.bloom_per_shot, stats.bloom_max)
 
 	var muzzle := holder.muzzle_transform()
-	var origin := muzzle.origin
-	origin.z = player.plane_z
-
-	var forward := Vector3(muzzle.basis.x.x, muzzle.basis.x.y, 0.0).normalized()
-	forward = forward.rotated(Vector3.BACK, recoil.aim_correction())
+	var ray := bullet_ray()
+	var origin := ray[0]
+	var forward := ray[1]
 
 	fired.emit(muzzle)
 	for i in stats.pellets:
@@ -274,7 +299,7 @@ func _shoot() -> void:
 
 func _pellet_direction(dir: Vector3, index: int) -> Vector3:
 	var base := stats.spread_degrees + _bloom
-	var cone := deg_to_rad(base * lerpf(1.0, stats.ads_spread_scale, player.aim_amount))
+	var cone := deg_to_rad(base * lerpf(1.0, stats.ads_spread_scale, character.aim_amount))
 	if stats.pellets == 1:
 		return dir.rotated(Vector3.BACK, cone * (randf() + randf() - 1.0))
 
@@ -282,10 +307,55 @@ func _pellet_direction(dir: Vector3, index: int) -> Vector3:
 	return dir.rotated(Vector3.BACK, cone * (slot * 2.0 - 1.0))
 
 
+## From the side a body is as deep as the play plane, so a bullet is a fan of
+## rays across it and the nearest hit wins: legs and arms sit a few centimetres
+## off the centre line and would otherwise be missed.
+const FAN: Array[float] = [0.0, 0.05, -0.05, 0.1, -0.1, 0.15, -0.15]
+
+
+func _cast(origin: Vector3, end: Vector3) -> Dictionary:
+	var space := holder.gun.get_world_3d().direct_space_state
+	var best := { }
+	var nearest := INF
+	for z in FAN:
+		var query := PhysicsRayQueryParameters3D.create(
+			origin + Vector3(0.0, 0.0, z),
+			end + Vector3(0.0, 0.0, z),
+			stats.hit_mask | Hitboxes.LAYER,
+			_exclude,
+		)
+		query.collide_with_areas = true
+
+		var hit := space.intersect_ray(query)
+		var skipped := _exclude
+		while not hit.is_empty() and _is_friend(hit.collider):
+			if skipped.size() == _exclude.size():
+				skipped = _exclude.duplicate()
+
+			skipped.append(hit.rid)
+			query.exclude = skipped
+			hit = space.intersect_ray(query)
+
+		if hit.is_empty():
+			continue
+
+		var d := origin.distance_squared_to(hit.position)
+		if d < nearest:
+			nearest = d
+			best = hit
+
+	return best
+
+
+## A teammate of the shooter, which the bullet passes through.
+func _is_friend(collider: Object) -> bool:
+	var other := Health.of(collider)
+	return not friendly_fire and other != null and other.team != &"" and other.team == character.health.team
+
+
 func _trace(origin: Vector3, dir: Vector3) -> void:
 	var end := origin + dir * stats.max_range
-	var query := PhysicsRayQueryParameters3D.create(origin, end, stats.hit_mask, _exclude)
-	var hit := holder.gun.get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := _cast(origin, end)
 
 	if hit.is_empty():
 		bullet_traced.emit(origin, end, hit)
@@ -296,13 +366,27 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 
 
 func _apply_hit(hit: Dictionary, dir: Vector3, distance: float) -> void:
-	var body := hit.collider as Node3D
-	var point: Vector3 = hit.position
-	if body.has_method(&"take_damage"):
-		body.call(&"take_damage", _damage_at(distance), point, dir)
+	var collider := hit.collider as Node3D
+	var body: Node3D = Hitboxes.bone_of(collider)
+	if body == null:
+		body = collider
 
-	if body.has_method(&"apply_impulse"):
-		body.call(&"apply_impulse", dir * stats.impact_impulse, point - body.global_position)
+	var point: Vector3 = hit.position
+	var health := Health.of(collider)
+
+	var force := 1.0
+	if health != null:
+		force = bullet_force * health.impulse_scale()
+
+	var impulse := dir * stats.impact_impulse * force
+	if health != null:
+		health.hit(_damage_at(distance), point, dir, body as PhysicalBone3D, impulse.length())
+
+	var ragdoll := body.get_parent() as ActiveRagdoll
+	if ragdoll != null:
+		ragdoll.kick(body as PhysicalBone3D, impulse, point - body.global_position)
+	elif body.has_method(&"apply_impulse"):
+		body.call(&"apply_impulse", impulse, point - body.global_position)
 
 
 func _damage_at(distance: float) -> float:

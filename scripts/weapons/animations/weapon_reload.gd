@@ -271,7 +271,7 @@ func _anchor_point(anchor: Anchor, skel: Skeleton3D) -> Vector3:
 
 
 func _anchor_of(marker_name: StringName) -> Anchor:
-	var marker := weapon.player.find_child(String(marker_name), true, false) as Node3D
+	var marker := weapon.character.find_child(String(marker_name), true, false) as Node3D
 	var attachment := marker.get_parent() as BoneAttachment3D
 
 	var anchor := Anchor.new()
@@ -533,7 +533,7 @@ func _drop() -> void:
 	body.global_transform = frame
 	body.reset_physics_interpolation()
 
-	var velocity := weapon.player.velocity
+	var velocity := weapon.character.velocity
 	var inherited := Vector3(velocity.x, velocity.y, 0.0)
 	body.linear_velocity = -frame.basis.y * drop_speed + inherited
 	body.angular_velocity = Vector3(0.0, 0.0, randf_range(-3.0, 3.0))

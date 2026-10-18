@@ -1,5 +1,10 @@
-class_name PlayerMovement
+class_name CharacterMovement
 extends Node3D
+
+@export var input: ActorInput
+@export var health: Health
+## Solid capsule that stops other characters walking through this one.
+@export var blocker: StaticBody3D
 
 @export_group("Speeds")
 @export var walk_speed := 0.95
@@ -20,6 +25,7 @@ extends Node3D
 
 @export_group("World Probes")
 @export_flags_3d_physics var ground_mask: int = 1
+@export_flags_3d_physics var character_mask: int = 8
 
 @export var max_step_up := 0.6
 @export var wall_check_distance := 0.45
@@ -45,7 +51,7 @@ extends Node3D
 @export_range(0.2, 1.0) var jump_cut := 0.5
 
 @export_group("Aiming")
-@export var face_mouse := true
+@export var face_aim := true
 
 @export var flip_speed := 4.5
 @export var air_flip_scale := 1.0
@@ -53,10 +59,11 @@ extends Node3D
 @export var aim_deadzone := 0.35
 @export var aim_origin_height := 1.35
 
-@export var hide_system_cursor := false
-
 @export_group("Push")
 @export var push_decay := 1.5
+
+## How long a shoved character keeps stepping back once the contact ends.
+@export var shove_time := 0.3
 
 var desired_speed := 0.0
 var desired_dir := 0.0
@@ -74,6 +81,9 @@ var plane_z := 0.0
 
 var push := 0.0
 
+## What the camera looks at instead of this character, once it has fallen (its pelvis).
+var focus: Node3D
+
 var aim_point := Vector3.ZERO
 var aim_pitch := 0.0
 
@@ -86,6 +96,9 @@ var _target_yaw := 0.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
 var _vy := 0.0
+var _own: Array[RID] = []
+var _shove_dir := 0
+var _shove_left := 0.0
 
 
 func _ready() -> void:
@@ -93,9 +106,13 @@ func _ready() -> void:
 	facing = 1 if sin(rotation.y) >= 0.0 else -1
 	_target_yaw = PI * 0.5 * float(facing)
 	rotation.y = _target_yaw
+	_own = [blocker.get_rid()]
 
-	if hide_system_cursor:
-		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
+
+## Whether another character is on this one's side: such characters walk
+## through each other instead of blocking and shoving.
+func is_friend(other: CharacterMovement) -> bool:
+	return health.team != &"" and health.team == other.health.team
 
 
 func is_on_floor() -> bool:
@@ -114,22 +131,31 @@ func _physics_process(delta: float) -> void:
 	else:
 		_coyote = maxf(0.0, _coyote - delta)
 
-	if Input.is_action_just_pressed("jump"):
+	if input.jump_pressed:
 		_jump_buffer = jump_buffer_time
 	else:
 		_jump_buffer = maxf(0.0, _jump_buffer - delta)
 
-	var dir := Input.get_axis("move_left", "move_right")
+	var dir := input.move
 
-	var pushed := absf(dir) < 0.1 and absf(push) > 0.1
+	_shove_left = maxf(_shove_left - delta, 0.0)
+
+	var pushed := absf(dir) < 0.1 and (absf(push) > 0.1 or _shove_left > 0.0)
 	if pushed:
-		dir = clampf(push, -1.0, 1.0)
+		dir = float(_shove_dir) if _shove_left > 0.0 else clampf(push, -1.0, 1.0)
 
-	var crouching := grounded and Input.is_action_pressed("crouch")
+		# Recoil and shoves never push anyone off a ledge or into a gap.
+		if grounded and _edge_ahead(int(signf(dir))):
+			push = 0.0
+			_shove_left = 0.0
+			pushed = false
+			dir = 0.0
 
-	var aimed := false
-	if face_mouse:
-		aimed = _update_aim()
+	var crouching := grounded and input.crouch
+
+	var aimed := face_aim and input.has_aim
+	if aimed:
+		_update_aim()
 
 	if not aimed and not pushed and absf(dir) > 0.1:
 		facing = 1 if dir > 0.0 else -1
@@ -141,13 +167,22 @@ func _physics_process(delta: float) -> void:
 		speed = crouch_speed
 	elif moving_backward:
 		speed = walk_speed * backpedal_speed_mult
-	elif Input.is_action_pressed("sprint") and aim_amount < 0.1:
+	elif input.sprint and aim_amount < 0.1:
 		speed = run_speed
 
 	speed *= aim_speed_scale
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
-	var blocked := want_dir != 0 and _is_blocked(want_dir)
+	var blocked := want_dir != 0 and _world_blocked(want_dir)
+
+	if want_dir != 0 and not blocked:
+		var ahead := _character_ahead(want_dir)
+		if ahead != null:
+			if ahead.gives_way(want_dir):
+				speed = minf(speed, walk_speed * backpedal_speed_mult)
+				ahead.shove(want_dir)
+			else:
+				blocked = true
 
 	_update_stairs(want_dir, delta)
 	speed = lerpf(speed, minf(speed, stairs_speed), _stairs_amt)
@@ -168,7 +203,7 @@ func _physics_process(delta: float) -> void:
 		_jump_buffer = 0.0
 		_coyote = 0.0
 
-	if jump_cut < 1.0 and Input.is_action_just_released("jump") and not grounded and _vy > 0.0:
+	if jump_cut < 1.0 and input.jump_released and not grounded and _vy > 0.0:
 		_vy *= jump_cut
 
 	_target_yaw = PI * 0.5 * float(facing)
@@ -277,7 +312,36 @@ func _update_air(delta: float) -> void:
 	velocity = Vector3(move_dir * move_speed, _vy, 0.0)
 
 
+## Makes this character step back from someone walking into it.
+func shove(dir: int) -> void:
+	_shove_dir = dir
+	_shove_left = shove_time
+
+
+## Whether this character can be pushed along dir: it is not pushing back, and
+## nothing solid (or immovable) is behind it.
+func gives_way(dir: int, depth := 0) -> bool:
+	if int(signf(input.move)) == -dir and absf(input.move) > 0.1:
+		return false
+
+	if _world_blocked(dir) or _edge_ahead(dir):
+		return false
+
+	var next := _character_ahead(dir)
+	return next == null or (depth < 3 and next.gives_way(dir, depth + 1))
+
+
+## Whether there is no floor a stride ahead in this direction: a ledge or a gap.
+func _edge_ahead(dir: int) -> bool:
+	var at := global_position + Vector3.RIGHT * float(dir) * 0.35
+	return _ray(at + Vector3.UP * 0.5, at + Vector3.DOWN * 0.7).is_empty()
+
+
 func _is_blocked(dir: int) -> bool:
+	return dir != 0 and (_world_blocked(dir) or _character_ahead(dir) != null)
+
+
+func _world_blocked(dir: int) -> bool:
 	if dir == 0:
 		return false
 
@@ -293,25 +357,31 @@ func _is_blocked(dir: int) -> bool:
 	return false
 
 
-func _ray(from: Vector3, to: Vector3) -> Dictionary:
+func _character_ahead(dir: int) -> CharacterMovement:
+	var o := global_position
+	var d := Vector3.RIGHT * float(dir) * wall_check_distance
+
+	var heights: Array[float] = [max_step_up + 0.1, head_check_height]
+	for h in heights:
+		var from: Vector3 = o + Vector3.UP * h
+		var hit := _ray(from, from + d, character_mask, _own)
+		if not hit.is_empty():
+			var other := (hit.collider as Node).get_parent() as CharacterMovement
+			if not is_friend(other):
+				return other
+
+	return null
+
+
+func _ray(from: Vector3, to: Vector3, mask := ground_mask, exclude: Array[RID] = []) -> Dictionary:
 	var space := get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(from, to, ground_mask)
+	var query := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 
 	return space.intersect_ray(query)
 
 
-func _update_aim() -> bool:
-	var cam := get_viewport().get_camera_3d()
-	var mouse := get_viewport().get_mouse_position()
-	var ray_from := cam.project_ray_origin(mouse)
-	var ray_dir := cam.project_ray_normal(mouse)
-
-	var plane := Plane(Vector3.BACK, global_position.z)
-	var hit: Variant = plane.intersects_ray(ray_from, ray_dir)
-	if hit == null:
-		return false
-
-	aim_point = hit
+func _update_aim() -> void:
+	aim_point = input.aim_point
 
 	var dx := aim_point.x - global_position.x
 	if absf(dx) > aim_deadzone:
@@ -321,5 +391,3 @@ func _update_aim() -> bool:
 	var to_aim := aim_point - shoulder
 	if to_aim.length_squared() > 0.0001:
 		aim_pitch = atan2(to_aim.y, maxf(absf(to_aim.x), 0.001))
-
-	return true

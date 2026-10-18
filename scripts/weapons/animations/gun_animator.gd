@@ -536,7 +536,7 @@ func _step_controls(delta: float) -> void:
 	_hold = maxf(_hold - delta, 0.0)
 	var pulled := _hold > 0.0
 	if not weapon.stats.manual_cycle:
-		pulled = pulled or Input.is_action_pressed(weapon.fire_action)
+		pulled = pulled or weapon.character.input.fire
 
 	var speed := trigger_pull_speed if pulled else trigger_release_speed
 	_pull = lerpf(_pull, 1.0 if pulled else 0.0, 1.0 - exp(-speed * delta))
@@ -655,7 +655,7 @@ func _settled() -> bool:
 	if _cover_t >= 0.0 and _cover_t < cover_time:
 		return false
 
-	var squeezed := Input.is_action_pressed(weapon.fire_action)
+	var squeezed := weapon.character.input.fire
 	if _hold > 0.0 or (squeezed and not weapon.stats.manual_cycle):
 		return false
 

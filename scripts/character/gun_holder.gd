@@ -119,6 +119,10 @@ func _ready() -> void:
 	main_hand = _find_hand(&"RightHand")
 	support_hand = _find_hand(&"LeftHand")
 
+	for hand in [main_hand, support_hand]:
+		var palm := hand.get_node(^"Hand") as MeshInstance3D
+		palm.mesh = palm.mesh.duplicate()
+
 	var stats := weapon.stats
 	gun = stats.scene.instantiate() as Node3D
 
@@ -379,6 +383,7 @@ func _assemble() -> void:
 	var arms := spine.left_arm_bones.duplicate()
 	arms.append_array(spine.right_arm_bones)
 	spine.clearance = ArmClearance.new(ragdoll, spine.get_skeleton(), arms)
+	spine.barrel = GunClearance.new(ragdoll)
 	spine.gun_equipped = true
 	assembled.emit()
 

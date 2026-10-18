@@ -1,3 +1,4 @@
+@tool
 class_name MeshKit
 extends RefCounted
 ## Builds the player's stylised body from a few rounded primitives.

@@ -1,7 +1,7 @@
 class_name SpineModifier
 extends SkeletonModifier3D
 
-@export var player: PlayerMovement
+@export var character: CharacterMovement
 @export var gait: GaitDriver
 
 @export_group("Spine")
@@ -103,9 +103,24 @@ extends SkeletonModifier3D
 @export_range(0.0, 1.0) var recoil_arm_share := 0.2
 @export_range(0.0, 1.0) var recoil_head_share := 0.45
 
+@export_group("Hit")
+## How the torso rocks when shot: a spring (radians), and a jolt builds up over
+## hit_ramp seconds instead of arriving at once.
+@export var hit_stiffness := 55.0
+@export var hit_damping := 12.0
+@export var hit_ramp := 0.15
+## The torso never rocks back further than this, however many bullets land (degrees).
+@export_range(0.0, 90.0) var hit_max_degrees := 35.0
+
 var recoil: WeaponRecoil
 var reload: WeaponReload
 var clearance: ArmClearance
+
+## A shot rocks the torso back (radians, positive = backwards) on a spring.
+var hit_lean := 0.0
+var hit_lean_speed := 0.0
+var _hit_jolts: Array[Vector2] = []
+var barrel: GunClearance
 
 var support_shift := Vector3.ZERO
 var main_shift := Vector3.ZERO
@@ -237,11 +252,11 @@ func _process_modification() -> void:
 
 
 func _target_pitch(skel: Skeleton3D) -> float:
-	var pitch := player.aim_pitch
+	var pitch := character.aim_pitch
 	if aim_from_muzzle and gun_equipped:
 		var muzzle := skel.global_transform * _muzzle_skel
-		var to := player.aim_point - muzzle
-		var ahead := to.x * float(player.facing)
+		var to := character.aim_point - muzzle
+		var ahead := to.x * float(character.facing)
 
 		pitch = lerp_angle(pitch, atan2(to.y, maxf(ahead, 0.001)), smoothstep(0.3, 1.0, ahead))
 
@@ -259,7 +274,7 @@ func _posture_lean() -> float:
 	deg = lerpf(deg, walk_lean, clampf(speed * 3.0, 0.0, 1.0))
 	deg = lerpf(deg, run_lean, smoothstep(0.45, 1.0, speed))
 
-	if player.moving_backward:
+	if character.moving_backward:
 		deg = lerpf(deg, backpedal_lean, clampf(speed * 3.0, 0.0, 1.0))
 
 	deg = lerpf(deg, crouch_lean, crouch)
@@ -272,14 +287,19 @@ func _posture_lean() -> float:
 	return deg_to_rad(deg)
 
 
+## Rocks the torso: a swing speed (rad/s, positive = backwards) that builds up over hit_ramp.
+func jolt(speed: float) -> void:
+	_hit_jolts.append(Vector2(speed, 0.0))
+
+
 func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 	var chest_share := chest_aim_share if _aim > 0.0 else chest_aim_share_down
 	var chest_target := _posture_lean() - _aim * chest_share
-	chest_target += deg_to_rad(ads_chest_lean_degrees) * player.aim_amount
+	chest_target += deg_to_rad(ads_chest_lean_degrees) * character.aim_amount
 	var head_target := (
 		chest_target * (1.0 - head_level) - _aim * head_aim_share + deg_to_rad(head_forward_tilt)
 	)
-	head_target += deg_to_rad(ads_head_tilt_degrees) * player.aim_amount
+	head_target += deg_to_rad(ads_head_tilt_degrees) * character.aim_amount
 
 	var max_rel := deg_to_rad(head_max_relative_degrees)
 	head_target = chest_target + clampf(head_target - chest_target, -max_rel, max_rel)
@@ -289,7 +309,31 @@ func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 	_head_off = lerpf(_head_off, head_target, k)
 	_twist = lerpf(_twist, deg_to_rad(hold_twist_degrees) if gun_equipped else 0.0, k)
 
-	var back := recoil.torso
+	var ramp := maxf(hit_ramp, 0.001)
+	var slot := _hit_jolts.size() - 1
+	while slot >= 0:
+		var pending := _hit_jolts[slot]
+		var before := smoothstep(0.0, ramp, pending.y)
+		pending.y += dt
+		hit_lean_speed += pending.x * (smoothstep(0.0, ramp, pending.y) - before)
+
+		if pending.y >= ramp:
+			_hit_jolts.remove_at(slot)
+		else:
+			_hit_jolts[slot] = pending
+
+		slot -= 1
+
+	hit_lean_speed += (-hit_stiffness * hit_lean - hit_damping * hit_lean_speed) * dt
+	hit_lean += hit_lean_speed * dt
+
+	var hit_max := deg_to_rad(hit_max_degrees)
+	if absf(hit_lean) > hit_max:
+		hit_lean = signf(hit_lean) * hit_max
+		if hit_lean_speed * hit_lean > 0.0:
+			hit_lean_speed = 0.0
+
+	var back := recoil.torso + hit_lean
 	var chest := _chest_off - back
 	var head := _head_off - back * recoil_head_share
 
@@ -341,10 +385,11 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	var reload_pull := reload.pull
 	var reload_hand := reload.active and reload.support_weight > 0.0
 
-	_yaw = deg_to_rad(hold_yaw_degrees + ads_yaw_degrees * player.aim_amount)
+	_yaw = deg_to_rad(hold_yaw_degrees + ads_yaw_degrees * character.aim_amount)
 
-	var frame := _gun_frame(_aim + tilt + flip)
-	var level_frame := _gun_frame(_aim + tilt)
+	var frame_pitch := _aim + tilt + flip
+	var frame := _gun_frame(frame_pitch + barrel.lift)
+	var level_frame := _gun_frame(_aim + tilt + barrel.lift)
 
 	_arm_flip = lerpf(_arm_flip, flip, 1.0 - exp(-recoil_arm_follow * dt))
 	var held := _held_pitch() + tilt + _arm_flip * recoil_arm_share
@@ -382,7 +427,7 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 		reach = maxf(reach - over, hold_reach_min)
 
 	var raise := maxf(
-		player.aim_amount,
+		character.aim_amount,
 		low_aim_raise * smoothstep(low_aim_start_degrees, low_aim_full_degrees, -rad_to_deg(_aim)),
 	)
 	var pivot_world := anchor
@@ -390,7 +435,7 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 		var sight_at := Vector3(ads_eye_distance, 0.0, 0.0) - gun_sight + gun_anchor
 		pivot_world = anchor.lerp(_eye(skel) + level_frame * sight_at, raise)
 
-	pivot_world += _stock_push(skel, pivot_world, frame) * (1.0 - player.aim_amount)
+	pivot_world += _stock_push(skel, pivot_world, frame) * (1.0 - character.aim_amount)
 
 	for i in 6:
 		var support_grip := pivot_world + frame * support_rel
@@ -411,6 +456,24 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 			pivot_world += (s_left - support_grip).normalized() * over_support
 		else:
 			pivot_world += (s_right - main_grip).normalized() * over_main
+
+	var barrel_axis := gun_muzzle - gun_anchor
+	var raised: Array[Basis] = []
+	for a in GunClearance.LIFTS:
+		raised.append(_gun_frame(frame_pitch + a))
+
+	var stock := pivot_world
+	pivot_world -= raised[0] * barrel_axis.normalized() * barrel.pull
+
+	barrel.solve(
+		skel.get_world_3d().direct_space_state,
+		skel.global_transform,
+		character.plane_z,
+		stock,
+		raised,
+		barrel_axis,
+		dt,
+	)
 
 	gun_pose = Transform3D(frame, pivot_world - frame * gun_anchor)
 	_muzzle_skel = gun_pose * gun_muzzle

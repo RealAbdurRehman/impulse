@@ -321,7 +321,7 @@ func _on_fired(muzzle: Transform3D) -> void:
 	_puff(muzzle)
 
 	if not _wisp_open:
-		_wisp_rel = muzzle.origin - weapon.player.get_global_transform_interpolated().origin
+		_wisp_rel = muzzle.origin - weapon.character.get_global_transform_interpolated().origin
 
 	_heat = minf(_heat + weapon.stats.barrel_heat_per_shot, 1.0)
 	_since_shot = 0.0
@@ -659,7 +659,7 @@ func _update_wisps(delta: float) -> bool:
 
 func _emit_wisps(delta: float) -> void:
 	var xf := _anchor.get_global_transform_interpolated()
-	var body := weapon.player.get_global_transform_interpolated().origin
+	var body := weapon.character.get_global_transform_interpolated().origin
 
 	if not _wisp_open:
 		_wisp_open = true
@@ -1083,7 +1083,7 @@ func _eject() -> void:
 		randf_range(1.0 - j, 1.0 + j),
 	)
 
-	var pv := weapon.player.velocity
+	var pv := weapon.character.velocity
 	var inherited := Vector3(pv.x, pv.y, 0.0)
 
 	var spin := Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))

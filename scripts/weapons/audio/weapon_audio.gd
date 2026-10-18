@@ -157,7 +157,7 @@ func _play(sound: SoundSet, extra_db := 0.0, pitch := 1.0, bus := BUS) -> Voice:
 	voice.start(
 		source,
 		pitch * (1.0 + randf_range(-v, v)),
-		sound.volume_db + sound.gain_db + extra_db + randf_range(-db, db),
+		sound.volume_db + sound.gain_db + weapon.volume_db + extra_db + randf_range(-db, db),
 		sound.skip,
 	)
 

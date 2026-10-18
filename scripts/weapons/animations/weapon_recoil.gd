@@ -77,7 +77,7 @@ func _ready() -> void:
 
 
 func aim_correction() -> float:
-	return -float(weapon.player.facing) * _seen * (1.0 - weapon.stats.recoil_aim_influence)
+	return -float(weapon.character.facing) * _seen * (1.0 - weapon.stats.recoil_aim_influence)
 
 
 func _link() -> void:
@@ -92,10 +92,10 @@ func _link() -> void:
 func _on_fired(_muzzle: Transform3D) -> void:
 	var s := weapon.stats
 	var strength := 1.0 + s.recoil_variation * randf_range(-1.0, 1.0)
-	strength *= lerpf(1.0, s.ads_recoil_scale, weapon.player.aim_amount)
+	strength *= lerpf(1.0, s.ads_recoil_scale, weapon.character.aim_amount)
 
 	var flip_peak := maxf(deg_to_rad(s.recoil_flip_degrees), 0.0001)
-	var pitch := clampf(weapon.player.aim_pitch, -PI * 0.5, deg_to_rad(s.aim_up_limit_degrees))
+	var pitch := clampf(weapon.character.aim_pitch, -PI * 0.5, deg_to_rad(s.aim_up_limit_degrees))
 	strength = minf(
 		strength,
 		maxf(deg_to_rad(s.recoil_flip_ceiling_degrees) - pitch, 0.0) / flip_peak,
@@ -106,7 +106,7 @@ func _on_fired(_muzzle: Transform3D) -> void:
 	_slide.kick(s.recoil_slide * strength)
 	_body.kick(lerpf(1.0, strength, 0.5))
 
-	weapon.player.push_back(s.recoil_push * strength)
+	weapon.character.push_back(s.recoil_push * strength)
 
 	set_physics_process(true)
 
