@@ -1,8 +1,5 @@
 class_name ActorInput
 extends Node
-## What a character wants to do this physics tick. PlayerInput fills it from
-## the keyboard and mouse, an enemy brain fills it from its own decisions;
-## movement, gait and weapon scripts only ever read these fields.
 
 var move := 0.0
 var crouch := false
@@ -14,7 +11,6 @@ var reload := false
 var fire_mode := false
 var interact := false
 
-## World point the character looks and shoots at, on its own plane.
 var aim_point := Vector3.ZERO
 var has_aim := false
 
@@ -53,8 +49,5 @@ func _physics_process(_delta: float) -> void:
 	_was_interact = interact
 
 
-## Sets the fields above for this tick. The press and release edges are
-## worked out from them afterwards. A brain that lives in another node can set
-## them from its own _physics_process instead; the edges arrive a tick later.
 func poll() -> void:
 	pass

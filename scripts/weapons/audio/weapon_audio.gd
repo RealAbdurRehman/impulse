@@ -5,7 +5,6 @@ extends Node
 class Voice extends AudioStreamPlayer:
 	var fade: Tween
 
-
 	func start(source: AudioStream, pitch: float, db: float, from: float) -> void:
 		if fade != null:
 			fade.kill()
@@ -14,7 +13,6 @@ class Voice extends AudioStreamPlayer:
 		pitch_scale = pitch
 		volume_db = db
 		play(from)
-
 
 	func fade_out(time: float) -> void:
 		if not playing:

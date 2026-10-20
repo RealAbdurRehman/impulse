@@ -30,6 +30,9 @@ extends Node3D
 @export var max_step_up := 0.6
 @export var wall_check_distance := 0.45
 @export var head_check_height := 1.5
+@export var stand_height := 1.8
+@export var crouch_height := 1.35
+@export var crouch_head_check := 1.3
 
 @export var fall_off_height := 0.9
 @export var blocked_brake := 12.0
@@ -73,6 +76,7 @@ var move_dir := 0.0
 
 var facing := 1
 var moving_backward := false
+var crouching := false
 
 var grounded := true
 var velocity := Vector3.ZERO
@@ -81,7 +85,6 @@ var plane_z := 0.0
 
 var push := 0.0
 
-## What the camera looks at instead of this character, once it has fallen (its pelvis).
 var focus: Node3D
 
 var aim_point := Vector3.ZERO
@@ -109,8 +112,6 @@ func _ready() -> void:
 	_own = [blocker.get_rid()]
 
 
-## Whether another character is on this one's side: such characters walk
-## through each other instead of blocking and shoving.
 func is_friend(other: CharacterMovement) -> bool:
 	return health.team != &"" and health.team == other.health.team
 
@@ -144,14 +145,13 @@ func _physics_process(delta: float) -> void:
 	if pushed:
 		dir = float(_shove_dir) if _shove_left > 0.0 else clampf(push, -1.0, 1.0)
 
-		# Recoil and shoves never push anyone off a ledge or into a gap.
 		if grounded and _edge_ahead(int(signf(dir))):
 			push = 0.0
 			_shove_left = 0.0
 			pushed = false
 			dir = 0.0
 
-	var crouching := grounded and input.crouch
+	crouching = grounded and (input.crouch or _ceiling_low(int(signf(dir))))
 
 	var aimed := face_aim and input.has_aim
 	if aimed:
@@ -307,19 +307,21 @@ func _update_air(delta: float) -> void:
 			p.y = (hit.position as Vector3).y
 			_vy = 0.0
 			grounded = true
+	else:
+		var bump := _ray(Vector3(p.x, old.y + stand_height - 0.1, p.z), Vector3(p.x, p.y + stand_height + 0.05, p.z))
+		if not bump.is_empty():
+			p.y = maxf((bump.position as Vector3).y - stand_height - 0.05, old.y)
+			_vy = 0.0
 
 	global_position = p
 	velocity = Vector3(move_dir * move_speed, _vy, 0.0)
 
 
-## Makes this character step back from someone walking into it.
 func shove(dir: int) -> void:
 	_shove_dir = dir
 	_shove_left = shove_time
 
 
-## Whether this character can be pushed along dir: it is not pushing back, and
-## nothing solid (or immovable) is behind it.
 func gives_way(dir: int, depth := 0) -> bool:
 	if int(signf(input.move)) == -dir and absf(input.move) > 0.1:
 		return false
@@ -331,7 +333,6 @@ func gives_way(dir: int, depth := 0) -> bool:
 	return next == null or (depth < 3 and next.gives_way(dir, depth + 1))
 
 
-## Whether there is no floor a stride ahead in this direction: a ledge or a gap.
 func _edge_ahead(dir: int) -> bool:
 	var at := global_position + Vector3.RIGHT * float(dir) * 0.35
 	return _ray(at + Vector3.UP * 0.5, at + Vector3.DOWN * 0.7).is_empty()
@@ -341,6 +342,21 @@ func _is_blocked(dir: int) -> bool:
 	return dir != 0 and (_world_blocked(dir) or _character_ahead(dir) != null)
 
 
+func _ceiling_low(dir: int) -> bool:
+	var feet := global_position
+	var reach := Vector3.UP * (stand_height - max_step_up + 0.05)
+	for x in [0.0, float(dir) * (wall_check_distance + 0.1)]:
+		var from := Vector3(feet.x + x, feet.y + max_step_up, plane_z)
+		if not _ray(from, from + reach).is_empty():
+			return true
+
+	return false
+
+
+func _head_height() -> float:
+	return crouch_head_check if crouching else head_check_height
+
+
 func _world_blocked(dir: int) -> bool:
 	if dir == 0:
 		return false
@@ -348,7 +364,7 @@ func _world_blocked(dir: int) -> bool:
 	var o := global_position
 	var d := Vector3.RIGHT * float(dir) * wall_check_distance
 
-	var heights: Array[float] = [max_step_up + 0.1, head_check_height]
+	var heights: Array[float] = [max_step_up + 0.1, _head_height()]
 	for h in heights:
 		var from: Vector3 = o + Vector3.UP * h
 		if not _ray(from, from + d).is_empty():
@@ -361,7 +377,7 @@ func _character_ahead(dir: int) -> CharacterMovement:
 	var o := global_position
 	var d := Vector3.RIGHT * float(dir) * wall_check_distance
 
-	var heights: Array[float] = [max_step_up + 0.1, head_check_height]
+	var heights: Array[float] = [max_step_up + 0.1, _head_height()]
 	for h in heights:
 		var from: Vector3 = o + Vector3.UP * h
 		var hit := _ray(from, from + d, character_mask, _own)

@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://c46li2osifcqh" path="res://scripts/environment/weapon_rack.gd" id="rack_script"]
 [ext_resource type="Script" uid="uid://c5ej635bxwbg1" path="res://scripts/environment/test_range.gd" id="range_script"]
 [ext_resource type="Script" uid="uid://dqiddgx1tgcul" path="res://scripts/environment/enemy_spawn.gd" id="spawn_script"]
+[ext_resource type="Script" path="res://scripts/environment/stealth_zone.gd" id="zone_script"]
 [ext_resource type="Resource" uid="uid://bbaeow0swd2rf" path="res://scenes/weapons/g17_stats.tres" id="stats_g17"]
 [ext_resource type="Resource" uid="uid://b8obfstpskff5" path="res://scenes/weapons/l96a1_stats.tres" id="stats_l96a1"]
 [ext_resource type="Resource" uid="uid://c1cimbvnu8wjs" path="res://scenes/weapons/m4a1_stats.tres" id="stats_m4a1"]
@@ -728,6 +729,24 @@ size = Vector3(1.2, 1.1, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_113"]
 size = Vector3(20, 3.4, 0.2)
 
+[sub_resource type="BoxMesh" id="sy_m1"]
+size = Vector3(86, 1, 4)
+
+[sub_resource type="BoxShape3D" id="sy_s2"]
+size = Vector3(86, 1, 4)
+
+[sub_resource type="BoxMesh" id="sy_m3"]
+size = Vector3(90, 30, 1)
+
+[sub_resource type="BoxShape3D" id="sy_s4"]
+size = Vector3(90, 30, 1)
+
+[sub_resource type="BoxMesh" id="sy_m5"]
+size = Vector3(18.4, 0.3, 3.8)
+
+[sub_resource type="BoxMesh" id="sy_m6"]
+size = Vector3(18, 3.2, 0.2)
+
 [node name="TestRange" type="Node3D" unique_id=1212374667 node_paths=PackedStringArray("player", "camera")]
 script = ExtResource("range_script")
 enemy_scene = ExtResource("enemy")
@@ -914,7 +933,7 @@ surface_material_override/0 = SubResource("Mat_wall")
 shape = SubResource("BoxShape3D_1")
 
 [node name="Left" type="StaticBody3D" parent="Environment/Walls" unique_id=1949835685]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50.5, 9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -136.5, 9, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Left" unique_id=839940427]
 mesh = SubResource("BoxMesh_2")
@@ -2237,7 +2256,7 @@ text = "BACKYARD"
 font_size = 96
 
 [node name="WeaponRack" type="Node3D" parent="Environment" unique_id=1361205882]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -49.5, 1.2, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.483955, 1.2, -1)
 script = ExtResource("rack_script")
 weapons = Array[ExtResource("stats_script")]([ExtResource("stats_m4a1"), ExtResource("stats_rem870"), ExtResource("stats_l96a1")])
 cell = Vector2(1.5, 0.4)
@@ -2251,6 +2270,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 1
 weapon = ExtResource("stats_g17")
+patrol_length = 3.0
 random_seed = 200
 
 [node name="Courtyard_rusher_shotgun" type="Marker3D" parent="Spawns" unique_id=1428545432 node_paths=PackedStringArray("target")]
@@ -2269,6 +2289,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 4
 weapon = ExtResource("stats_m4a1")
+patrol_length = 1.8
 random_seed = 202
 
 [node name="Basement_suppressor" type="Marker3D" parent="Spawns" unique_id=1736272246 node_paths=PackedStringArray("target")]
@@ -2278,6 +2299,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 3
 weapon = ExtResource("stats_m4a1")
+patrol_length = 1.5
 random_seed = 203
 
 [node name="Hall_grunt_rifle" type="Marker3D" parent="Spawns" unique_id=1090219252 node_paths=PackedStringArray("target")]
@@ -2287,6 +2309,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 1
 weapon = ExtResource("stats_m4a1")
+patrol_length = -2.5
 random_seed = 204
 
 [node name="Hall_flanker" type="Marker3D" parent="Spawns" unique_id=1112547079 node_paths=PackedStringArray("target")]
@@ -2296,6 +2319,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 6
 weapon = ExtResource("stats_m4a1")
+patrol_length = 2.0
 random_seed = 205
 
 [node name="Gallery_suppressor" type="Marker3D" parent="Spawns" unique_id=213718957 node_paths=PackedStringArray("target")]
@@ -2305,6 +2329,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 3
 weapon = ExtResource("stats_m4a1")
+patrol_length = 3.0
 random_seed = 206
 
 [node name="Gallery_rusher_shotgun" type="Marker3D" parent="Spawns" unique_id=223447541 node_paths=PackedStringArray("target")]
@@ -2323,6 +2348,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 4
 weapon = ExtResource("stats_m4a1")
+patrol_length = 1.2
 random_seed = 208
 
 [node name="Third_marksman_sniper" type="Marker3D" parent="Spawns" unique_id=381512327 node_paths=PackedStringArray("target")]
@@ -2350,6 +2376,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 6
 weapon = ExtResource("stats_m4a1")
+patrol_length = 3.0
 random_seed = 211
 
 [node name="Roof_marksman_sniper" type="Marker3D" parent="Spawns" unique_id=319612208 node_paths=PackedStringArray("target")]
@@ -2368,6 +2395,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 1
 weapon = ExtResource("stats_g17")
+patrol_length = 2.0
 random_seed = 213
 
 [node name="Terrace_rusher_shotgun" type="Marker3D" parent="Spawns" unique_id=1353201043 node_paths=PackedStringArray("target")]
@@ -2386,6 +2414,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 7
 weapon = ExtResource("stats_m4a1")
+patrol_length = -4.0
 random_seed = 215
 
 [node name="Backyard_grunt_rifle" type="Marker3D" parent="Spawns" unique_id=1779376165 node_paths=PackedStringArray("target")]
@@ -2395,6 +2424,7 @@ enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 1
 weapon = ExtResource("stats_m4a1")
+patrol_length = 3.0
 random_seed = 216
 
 [node name="Backyard_hunter_2" type="Marker3D" parent="Spawns" unique_id=795152832 node_paths=PackedStringArray("target")]
@@ -2422,3 +2452,160 @@ target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=152713374 instance=ExtResource("player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 0, 0)
+
+[node name="Yard_w" type="StaticBody3D" parent="Environment/Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_w"]
+mesh = SubResource("sy_m1")
+surface_material_override/0 = SubResource("Mat_yard")
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Ground/Yard_w"]
+shape = SubResource("sy_s2")
+
+[node name="Back_w" type="StaticBody3D" parent="Environment/Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, 7, -2.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Back_w"]
+mesh = SubResource("sy_m3")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Walls/Back_w"]
+shape = SubResource("sy_s4")
+
+[node name="Zones" type="Node3D" parent="Environment"]
+
+[node name="Sign_Stealth" type="Label3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 6, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "STEALTH YARD"
+font_size = 96
+
+[node name="Hedge_1" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Hedge_2" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Hedge_3" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Sign_Hedges" type="Label3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "HEDGES"
+font_size = 96
+
+[node name="Yard_hedge_guard" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -89, 0.05, 0)
+script = ExtResource("spawn_script")
+enemy_scene = ExtResource("enemy")
+target = NodePath("../../Player")
+archetype = 1
+weapon = ExtResource("stats_m4a1")
+patrol_length = 4
+random_seed = 301
+
+[node name="Shadow_hall" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, 0)
+script = ExtResource("zone_script")
+size = Vector3(18, 3.2, 3)
+visibility = 0.3
+color = Color(0, 0, 0.06, 0.45)
+
+[node name="Hall_roof" type="MeshInstance3D" parent="Environment/Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 3.3, 0)
+mesh = SubResource("sy_m5")
+surface_material_override/0 = SubResource("Mat_hall")
+
+[node name="Hall_back" type="MeshInstance3D" parent="Environment/Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, -2.1)
+mesh = SubResource("sy_m6")
+surface_material_override/0 = SubResource("Mat_facade")
+
+[node name="Sign_Shadow" type="Label3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "SHADOW HALL"
+font_size = 96
+
+[node name="Yard_hall_guard_a" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -110.5, 0.05, 0)
+script = ExtResource("spawn_script")
+enemy_scene = ExtResource("enemy")
+target = NodePath("../../Player")
+archetype = 4
+weapon = ExtResource("stats_m4a1")
+random_seed = 302
+
+[node name="Yard_hall_guard_b" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -95.5, 0.05, 0)
+script = ExtResource("spawn_script")
+enemy_scene = ExtResource("enemy")
+target = NodePath("../../Player")
+archetype = 1
+weapon = ExtResource("stats_g17")
+random_seed = 303
+
+[node name="Alley_crate_1" parent="Environment/Props" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -118, 0, 0)
+
+[node name="Alley_crate_2" parent="Environment/Props" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 0, 0)
+
+[node name="Alley_crate_3" parent="Environment/Props" instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, 0)
+
+[node name="Sign_Alley" type="Label3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "SNIPER ALLEY"
+font_size = 96
+
+[node name="Yard_sniper" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -134.5, 0.05, 0)
+script = ExtResource("spawn_script")
+enemy_scene = ExtResource("enemy")
+target = NodePath("../../Player")
+archetype = 5
+weapon = ExtResource("stats_l96a1")
+random_seed = 304
+
+[node name="Yard_spotter" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -128, 0.05, 0)
+script = ExtResource("spawn_script")
+enemy_scene = ExtResource("enemy")
+target = NodePath("../../Player")
+archetype = 6
+weapon = ExtResource("stats_m4a1")
+random_seed = 305
+
+[node name="Basement_dark" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -1.2, 0)
+script = ExtResource("zone_script")
+size = Vector3(14, 2.4, 3)
+visibility = 0.45
+color = Color(0, 0, 0.05, 0.28)
+
+[node name="Lobby_curtain" type="Node3D" parent="Environment/Zones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 1, 0)
+script = ExtResource("zone_script")
+size = Vector3(1.6, 2, 3)
+visibility = 0.12
+color = Color(0.45, 0.2, 0.2, 0.6)

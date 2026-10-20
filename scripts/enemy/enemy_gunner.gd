@@ -1,24 +1,14 @@
 class_name EnemyGunner
 extends RefCounted
-## How one enemy aims and pulls the trigger. Nothing here is the same twice:
-## the aim point wanders around the body (head, chest, belly, legs, picked afresh
-## every few seconds) with an error that grows with distance and shrinks as the
-## enemy settles on its target, bursts come in random lengths with random gaps,
-## and each enemy rolls its own skill so a group doesn't shoot alike.
 
 var rng := RandomNumberGenerator.new()
 
-## 0 = slow and wide, 1 = quick and tight (EnemyTraits.skill).
 var skill := 0.5
-## 0 = sprays long loose bursts, 1 = short even ones.
 var discipline := 0.5
-## Longer pauses between bursts.
 var patience := 0.5
-## 0 = flinches hard when hit, 1 = barely.
 var composure := 0.5
 
 var aim_point := Vector3.ZERO
-## Seconds the gaze has stayed close to where it should be.
 var settled := 0.0
 
 var _gaze := Vector3.ZERO
@@ -36,14 +26,11 @@ var _last_ammo := -1
 var _reload_at := -1
 
 
-## Points the gaze straight ahead (what the enemy was looking at before it noticed).
 func look_ahead(from: Vector3, facing: int) -> void:
 	_gaze = from + Vector3(float(facing) * 8.0, 0.0, 0.0)
 	settled = 0.0
 
 
-## Moves the aim point toward `at` (the target's feet) the way a person would:
-## it lags, drifts, and aims at a different part of the body from time to time.
 func aim(delta: float, from: Vector3, at: Vector3, crouching: bool, moving: bool, scoped: bool, braced := false) -> Vector3:
 	_height_left -= delta
 	if _height_left <= 0.0:
@@ -78,7 +65,6 @@ func aim(delta: float, from: Vector3, at: Vector3, crouching: bool, moving: bool
 	return aim_point
 
 
-## A bullet hit this enemy: its aim jumps.
 func flinch(distance: float) -> void:
 	var shake := lerpf(1.4, 0.5, composure)
 	_kick += Vector2(rng.randfn(0.0, 0.08), rng.randfn(0.0, 0.08)) * distance * shake
@@ -86,11 +72,9 @@ func flinch(distance: float) -> void:
 	_pause_left = maxf(_pause_left, rng.randf_range(0.2, 0.5) * shake)
 
 
-## Rounds fired so far; a brain reads it to tell whether a burst has gone off.
 var rounds := 0
 
 
-## No more shooting is planned in the current burst (what is left, if anything, is a pause).
 func firing_done() -> bool:
 	for step in _plan:
 		if step.y > 0.5:
@@ -99,8 +83,6 @@ func firing_done() -> bool:
 	return true
 
 
-## What the trigger does this tick. Bursts are planned in pieces (shoot, wait,
-## shoot...) with random lengths and gaps; losing the shot ends the burst.
 func trigger(delta: float, may_fire: bool, weapon: Weapon) -> bool:
 	var shots := 0
 	if _last_ammo >= 0:
@@ -140,9 +122,6 @@ func trigger(delta: float, may_fire: bool, weapon: Weapon) -> bool:
 	return step.y > 0.5
 
 
-## True when it is time to put a fresh magazine in: empty; or, with no target
-## in sight, anything short of full; or, in a lull between bursts, low (each
-## magazine gets its own "low", so it is never predictable).
 func wants_reload(weapon: Weapon, quiet: bool, lull: bool) -> bool:
 	if weapon.is_reloading() or weapon.ammo >= weapon.stats.magazine_size:
 		return false
@@ -175,7 +154,6 @@ func _pick_height() -> float:
 	return 0.6
 
 
-## Queues a burst as (seconds, trigger level) pieces, then the pause after it.
 func _plan_burst(weapon: Weapon) -> void:
 	var stats := weapon.stats
 	var span := 60.0 / stats.rounds_per_minute
@@ -188,12 +166,12 @@ func _plan_burst(weapon: Weapon) -> void:
 		return
 
 	if stats.automatic:
-		var rounds := clampi(roundi(rng.randfn(lerpf(5.5, 3.0, discipline), lerpf(2.2, 0.8, discipline))), 1, 9)
+		var count := clampi(roundi(rng.randfn(lerpf(5.5, 3.0, discipline), lerpf(2.2, 0.8, discipline))), 1, 9)
 		if rng.randf() < 0.08:
-			rounds += rng.randi_range(3, 6)
+			count += rng.randi_range(3, 6)
 
-		rounds = mini(rounds, weapon.ammo)
-		_plan.append(Vector2(float(rounds) * span, 1.0))
+		count = mini(count, weapon.ammo)
+		_plan.append(Vector2(float(count) * span, 1.0))
 		_plan.append(Vector2(pause, 0.0))
 		return
 
@@ -204,7 +182,6 @@ func _plan_burst(weapon: Weapon) -> void:
 	_plan.append(Vector2(pause, 0.0))
 
 
-## Pump and bolt guns: shoot, work the action after a human pause, wait it out.
 func _plan_manual(weapon: Weapon, pause: float) -> void:
 	var stats := weapon.stats
 	var cycle := stats.cycle_back_time + stats.cycle_forward_time + stats.cycle_settle_time + 0.15

@@ -1,8 +1,5 @@
 class_name PlayerDeath
 extends CharacterDeath
-## The player's death: everything CharacterDeath does, plus the camera stays on
-## the body, picking up weapons stops, and after restart_delay seconds the scene
-## reloads (0 = never).
 
 @export var pickup: PlayerPickup
 @export var restart_delay := 3.0

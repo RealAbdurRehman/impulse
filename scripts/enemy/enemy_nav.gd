@@ -1,11 +1,5 @@
 class_name EnemyNav
 extends RefCounted
-## A map of everywhere an enemy can stand and how it gets from one spot to the
-## next, built once from the level's collision by sampling the ground every
-## quarter metre. A spot is a point on a surface with room to stand; links are a
-## walk (stairs and small steps included), a jump (up onto something, or across
-## a gap) or a drop. It lets enemies plan routes across several floors and pick
-## spots (cover, flanking positions) that they can actually get to.
 
 enum Kind { WALK, JUMP, DROP }
 
@@ -17,14 +11,12 @@ const EPS := 0.01
 const JUMP_UP := 0.9
 const JUMP_GAP := 1.7
 const MAX_DROP := 4.0
-## A surface this far above a gap is a wall in its way, not a gap.
 const WALL_TOP := 1.4
 
 static var _maps := { }
 
 var xs := PackedFloat32Array()
 var ys := PackedFloat32Array()
-## Per spot: an array of [to, kind, cost].
 var links: Array = []
 
 var _first := 0.0
@@ -34,7 +26,6 @@ var _mask := 1
 var _z := 0.0
 
 
-## The map for this node's world, built the first time it is asked for.
 static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	var key := node.get_world_3d().get_rid()
 	if not _maps.has(key):
@@ -45,12 +36,6 @@ static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	return _maps[key]
 
 
-## Forgets the maps; the next request builds a fresh one (after the level changes).
-static func forget() -> void:
-	_maps.clear()
-
-
-## The spot closest to a point, within `reach` of it vertically, or -1.
 func nearest(x: float, y: float, reach := 1.2) -> int:
 	var column := roundi((x - _first) / STEP)
 	for spread in [0, 1, 2]:
@@ -72,7 +57,6 @@ func nearest(x: float, y: float, reach := 1.2) -> int:
 	return -1
 
 
-## Spots whose x lies in [from_x, to_x].
 func spots_between(from_x: float, to_x: float) -> PackedInt32Array:
 	var found := PackedInt32Array()
 	var a := maxi(roundi((minf(from_x, to_x) - _first) / STEP), 0)
@@ -83,10 +67,6 @@ func spots_between(from_x: float, to_x: float) -> PackedInt32Array:
 	return found
 
 
-## Cheapest route from one spot to another as (x, y, kind) points, kind being
-## how the point is reached; empty when there is none. `avoid_x` (with
-## `avoid_radius`) keeps the route out of a stretch of floor, such as the
-## position of the player, who can't be walked through.
 func route(from_id: int, to_id: int, avoid_x := 0.0, avoid_radius := 0.0, avoid_y := 0.0) -> PackedVector3Array:
 	var path := PackedVector3Array()
 	if from_id < 0 or to_id < 0:
@@ -126,7 +106,6 @@ func route(from_id: int, to_id: int, avoid_x := 0.0, avoid_radius := 0.0, avoid_
 	return path
 
 
-## Length of a route (metres, with small penalties for jumps and drops).
 func length(path: PackedVector3Array, from_x: float) -> float:
 	var total := 0.0
 	var x := from_x
@@ -145,7 +124,7 @@ func _push(heap: Array, item: Array) -> void:
 	heap.append(item)
 	var i := heap.size() - 1
 	while i > 0:
-		var parent := (i - 1) / 2
+		var parent := (i - 1) >> 1
 		if (heap[parent] as Array)[0] <= item[0]:
 			break
 
@@ -183,7 +162,6 @@ func _build(space: PhysicsDirectSpaceState3D, mask: int, centre: Vector3, extent
 	_space = space
 	_mask = mask
 	_z = centre.z
-	# Off the usual 0.25 and 0.5 m grid, so no sample lands exactly on the side of a box.
 	_first = snappedf(centre.x - extent, STEP) + 0.07
 
 	var count := int(extent * 2.0 / STEP) + 1
@@ -233,7 +211,6 @@ func _link(id: int) -> void:
 			elif dy < -MAX_STEP and dy >= -MAX_DROP and (landing < 0 or ys[other] > ys[landing]):
 				landing = other
 
-		# Stepping off an edge only drops when nothing in the next column is there to step onto.
 		if ground_beside:
 			landing = -1
 
@@ -269,8 +246,6 @@ func _link(id: int) -> void:
 					_add(id, other, Kind.JUMP, STEP * float(reach) + 2.0)
 
 
-## Every column strictly between the two is open air: nothing to stand on near
-## height y, and no wall (a surface well above it) to be jumped through.
 func _gap_between(a: int, b: int, y: float) -> bool:
 	for c in range(mini(a, b) + 1, maxi(a, b)):
 		for other: int in _columns[c]:
@@ -289,8 +264,6 @@ func _down(x: float, y: float) -> Dictionary:
 	return _space.intersect_ray(query)
 
 
-## Standing room: nothing solid where the body would be (thin ledges and
-## steps above the floor count, so the floor under a staircase isn't a spot).
 func _room(x: float, y: float) -> bool:
 	var body_shape := BoxShape3D.new()
 	body_shape.size = Vector3(0.06, 1.45, 0.3)

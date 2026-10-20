@@ -1,6 +1,5 @@
 class_name WeaponCarrier
 extends Node
-## Changes, throws and drops the gun a character holds.
 
 @export var weapon: Weapon
 
@@ -12,13 +11,11 @@ extends Node
 @export var drop_velocity := Vector2(0.2, 0.0)
 
 
-## Throws the held gun away and leaves the hands empty.
 func drop() -> void:
 	_throw(weapon, weapon.holder, drop_velocity)
 	_retire(weapon.holder, weapon)
 
 
-## Throws the held gun away and holds this one instead.
 func swap(stats: WeaponStats, ammo: int) -> void:
 	var old_weapon := weapon
 	var old_holder := weapon.holder

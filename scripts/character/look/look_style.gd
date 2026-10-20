@@ -1,7 +1,6 @@
 @tool
 class_name LookStyle
 extends Resource
-## What a character is wearing. Swap the resource to get another look.
 
 @export_group("Colours")
 @export var uniform := Color(0.5, 0.52, 0.54)

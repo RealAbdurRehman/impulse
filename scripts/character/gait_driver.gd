@@ -13,6 +13,7 @@ class Foot:
 
 	var current := Vector3.ZERO
 	var current_normal := Vector3.UP
+	var shown_y := INF
 
 	var start := Vector3.ZERO
 	var start_normal := Vector3.UP
@@ -192,6 +193,8 @@ const PROBE_UP := 0.8
 
 @export var hips_spring := 160.0
 @export var hips_damping := 22.0
+@export var hip_clamp_speed := 4.0
+@export var foot_speed_limit := 6.0
 
 @export var step_impact := 0.18
 @export var step_impact_per_speed := 0.04
@@ -339,7 +342,7 @@ func _physics_process(delta: float) -> void:
 	var side_vec := _side_vec()
 	var tfwd := _target_fwd()
 	var tside := Vector3.UP.cross(tfwd).normalized()
-	var crouching := on_floor and character.input.crouch
+	var crouching := on_floor and character.crouching
 
 	var crouch_goal := 1.0 if crouching else character.aim_amount * aim_crouch
 	_crouch_amt = move_toward(_crouch_amt, crouch_goal, crouch_blend_speed * delta)
@@ -385,6 +388,7 @@ func _physics_process(delta: float) -> void:
 		_update_air_state(_vel.y, delta)
 
 		for f in _feet:
+			f.shown_y = INF
 			_update_air_foot(f, side_vec, fwd, delta)
 
 	_update_hips(delta, on_floor)
@@ -696,7 +700,10 @@ func _retarget_landing(f: Foot, k: float, delta: float) -> void:
 	var dx_max := maxf(sqrt(maxf(reach * reach - dy * dy, 0.0)), 0.05)
 	target_x = clampf(target_x, body_x - dx_max, body_x + dx_max)
 
-	f.end.x = lerpf(f.end.x, target_x, 1.0 - exp(-12.0 * delta))
+	var x := lerpf(f.end.x, target_x, 1.0 - exp(-12.0 * delta))
+	var ground := _sample_ground(Vector3(x, f.end.y, _plane_z))
+	if ground[0] and absf(float(ground[1]) + ankle_height - f.end.y) < 0.03:
+		f.end.x = x
 
 
 func _lead_for(speed: float) -> float:
@@ -763,7 +770,16 @@ func _plan_landing(
 	var dy := _hip_y - end_pos.y
 	var reach := leg_length * reach_ratio
 	var dx_max := maxf(sqrt(maxf(reach * reach - dy * dy, 0.0)), 0.05)
-	end_pos.x = clampf(end_pos.x, hip_x - dx_max, hip_x + dx_max)
+	var x := clampf(end_pos.x, hip_x - dx_max, hip_x + dx_max)
+	if x != end_pos.x:
+		want.x = x
+		var held := _footfall(want, d)
+		var rise: float = held[0].y - f.planted.y
+		if absf(held[0].y - end_pos.y) > 0.03 and rise <= max_step_rise and rise >= -max_step_drop:
+			fall = held
+			end_pos = held[0]
+		else:
+			end_pos.x = x
 
 	return [end_pos, fall]
 
@@ -939,8 +955,6 @@ func _on_plant(was_recovery: bool) -> void:
 	_since_land = 0.0
 
 
-## Highest ground under the whole foot (heel to toe), so a swinging foot clears
-## the nosing of a step that only its toe is over.
 func _foot_floor(p: Vector3, dir: Vector3) -> float:
 	var d := signf(dir.x) if absf(dir.x) > 0.01 else _facing_sign()
 	var top := NO_GROUND
@@ -964,8 +978,6 @@ func _footfall(p: Vector3, d: float) -> Array:
 		if absf(dy) > edge_snap_threshold:
 			q += dv * (edge_probe * 1.2 * (1.0 if dy > 0.0 else -1.0))
 
-	# the toe reaches further than the edge probe: if a riser sits inside that
-	# reach, slide back until it clears so the toe is never wedged into a step
 	var base := _sample_ground(q)
 	if base[0]:
 		for i in 5:
@@ -1071,7 +1083,7 @@ func _update_hips(delta: float, on_floor: bool) -> void:
 		_hip_y = ny
 
 	if on_floor and _hip_y > max_y:
-		_hip_y = max_y
+		_hip_y = maxf(max_y, _hip_y - hip_clamp_speed * delta)
 		_hip_vel = minf(_hip_vel, 0.0)
 
 	hips_offset_y = _hip_y - (root.y + hip_rest_height)
@@ -1089,6 +1101,7 @@ func _on_land() -> void:
 	_since_land = 0.0
 
 	for f in _feet:
+		f.shown_y = INF
 		f.swinging = false
 		f.recovery = false
 		f.fdir = _target_fwd()
@@ -1199,7 +1212,12 @@ func _apply_foot(f: Foot, side_vec: Vector3, fwd: Vector3, delta: float) -> void
 	var cur := f.target.global_basis.orthonormalized()
 	var b := cur.slerp(want, 1.0 - exp(-foot_turn_speed * delta))
 
-	f.target.global_transform = Transform3D(b.orthonormalized(), f.current)
+	var at := f.current
+	if f.shown_y != INF:
+		at.y = clampf(at.y, f.shown_y - foot_speed_limit * delta, f.shown_y + foot_speed_limit * delta)
+
+	f.shown_y = at.y
+	f.target.global_transform = Transform3D(b.orthonormalized(), at)
 
 	if f.pole:
 		f.pole.global_position = _hip_joint(f, side_vec) + Vector3.UP * 0.5 + fwd * 0.8

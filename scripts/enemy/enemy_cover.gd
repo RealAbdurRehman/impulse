@@ -1,12 +1,6 @@
 class_name EnemyCover
 extends RefCounted
-## Finds spots for an enemy to fight from, out of the spots EnemyNav knows:
-## cover to hide behind (a crouched enemy can't be hit there, but standing up it
-## can shoot over it) and flanking positions (a clear view of the target from
-## its other side or from higher up, reached by a route that doesn't go through
-## the target). Spots already taken by another enemy are skipped.
 
-## Standing and crouched heights of the eye, chest and hips, and of a muzzle.
 const EYE := 1.5
 const CROUCH_EYE := 1.1
 const CHEST := 1.2
@@ -14,10 +8,8 @@ const CROUCH_CHEST := 0.85
 const CROUCH_HIPS := 0.6
 const MUZZLE := 1.45
 
-## Cover only counts when what hides the enemy is this close to it (metres).
 const MAX_COVER_GAP := 2.0
 
-## Spots claimed so far: owner instance id -> position.
 static var claims := { }
 
 var nav: EnemyNav
@@ -33,9 +25,6 @@ static func release(owner_id: int) -> void:
 	claims.erase(owner_id)
 
 
-## How far the cover is from `at` (metres from the spot to the nearest thing
-## that blocks the view of the threat) when a crouched enemy there can't be hit from where the threat stands;
-## INF when it can be.
 func cover_distance(at: Vector2, threat: Vector3) -> float:
 	var worst := 0.0
 	var eyes: Array[float] = [EYE, CROUCH_EYE]
@@ -52,18 +41,14 @@ func cover_distance(at: Vector2, threat: Vector3) -> float:
 	return worst
 
 
-## A crouched enemy at `at` can't be hit from where the threat stands.
 func hides(at: Vector2, threat: Vector3) -> bool:
 	return cover_distance(at, threat) < INF
 
 
-## Standing at `at` the enemy has a clear shot at the threat's chest.
 func shoots(at: Vector2, threat: Vector3) -> bool:
 	return senses.sees(Vector3(at.x, at.y + MUZZLE, 0.0), Vector3(threat.x, threat.y + CHEST, 0.0))
 
 
-## The best cover within `search` metres by route, or Vector2(NAN, NAN). The
-## search is for a spot where it hides and can still shoot over the top.
 func find_cover(me: Vector3, threat: Vector3, owner_id: int, search: float, band: Vector2) -> Vector2:
 	var best := Vector2(NAN, NAN)
 	var best_score := INF
@@ -107,8 +92,6 @@ func find_cover(me: Vector3, threat: Vector3, owner_id: int, search: float, band
 	return best
 
 
-## A position with a clear view of the threat from its other side, or from at
-## least a floor higher, by a route that keeps well clear of it.
 func find_flank(me: Vector3, threat: Vector3, owner_id: int, search: float, limit: float) -> Vector2:
 	var best := Vector2(NAN, NAN)
 	var best_score := INF

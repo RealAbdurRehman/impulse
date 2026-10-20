@@ -116,7 +116,6 @@ var recoil: WeaponRecoil
 var reload: WeaponReload
 var clearance: ArmClearance
 
-## A shot rocks the torso back (radians, positive = backwards) on a spring.
 var hit_lean := 0.0
 var hit_lean_speed := 0.0
 var _hit_jolts: Array[Vector2] = []
@@ -287,7 +286,6 @@ func _posture_lean() -> float:
 	return deg_to_rad(deg)
 
 
-## Rocks the torso: a swing speed (rad/s, positive = backwards) that builds up over hit_ramp.
 func jolt(speed: float) -> void:
 	_hit_jolts.append(Vector2(speed, 0.0))
 

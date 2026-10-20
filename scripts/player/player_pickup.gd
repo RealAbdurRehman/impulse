@@ -1,6 +1,5 @@
 class_name PlayerPickup
 extends Node
-## Highlights the weapon within reach and swaps to it when interact is pressed.
 
 @export var carrier: WeaponCarrier
 

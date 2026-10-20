@@ -1,34 +1,23 @@
 class_name GunClearance
 extends RefCounted
-## Keeps a gun out of bodies and walls. When the barrel would end up inside
-## something it is pulled back toward the shoulder first (along the aim line it
-## would have had), then raised (like a "high ready") until it clears. Both
-## amounts ease in and out.
 
 const PULLS: Array[float] = [0.0, 0.07, 0.14, 0.21, 0.28]
 const LIFTS: Array[float] = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.45]
 
-## Raising the gun costs this much per radian, pulling it back per metre.
 const LIFT_COST := 4.0
 const PULL_COST := 6.0
 
 var mask := 3
 var half_height := 0.04
 
-## The probe is a slab around the play plane, not the gun's own depth: from the
-## side, a gun that touches a body in the plane should react even if it is held
-## a few centimetres nearer the camera.
 var half_depth := 0.2
 var margin := 0.015
 
 var attack := 18.0
 var release := 5.0
 
-## Once the gun has been moved out of the way it stays there at least this long,
-## so a bobbing obstacle doesn't make the gun flutter.
 var hold_time := 0.3
 
-## What the hold solver applies: metres back along the barrel, radians of extra pitch.
 var pull := 0.0
 var lift := 0.0
 
@@ -56,8 +45,6 @@ func _init(ragdoll: PhysicalBoneSimulator3D) -> void:
 	_order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return _cost(a) < _cost(b))
 
 
-## stock: the gun's rear anchor in skeleton space with no pull applied. frames:
-## the gun's orientation for each entry of LIFTS. barrel: stock to muzzle in gun axes.
 func solve(
 	space: PhysicsDirectSpaceState3D,
 	to_world: Transform3D,

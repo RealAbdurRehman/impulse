@@ -1,7 +1,5 @@
 class_name Health
 extends Node
-## Hit points for one character. It tags every ragdoll bone with itself, so a
-## bullet that hits any bone can find whose body it hit (see Weapon).
 
 signal damaged(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D)
 signal died
@@ -27,17 +25,14 @@ signal died
 var current := 0.0
 var alive := true
 
-## The most recent hit (damage after the hit-zone multiplier), for whatever reacts to it.
 var last_bone: PhysicalBone3D
 var last_direction := Vector3.ZERO
 var last_amount := 0.0
 
-## Momentum (N s) of the blow that is landing now, added up over blow_window.
 var blow := 0.0
 var _blow_tick := -1000
 
 
-## The Health of the character that owns this collider, or null.
 static func of(collider: Object) -> Health:
 	if collider.has_meta(&"health"):
 		return collider.get_meta(&"health") as Health

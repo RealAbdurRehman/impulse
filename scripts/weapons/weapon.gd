@@ -257,9 +257,6 @@ func _gun_ready() -> bool:
 	return true
 
 
-## Where a bullet fired right now starts and which way it goes (before spread):
-## the muzzle and the way it points, eased toward the aim point while the gun is
-## being held up out of a wall or body.
 func bullet_ray() -> Array[Vector3]:
 	var muzzle := holder.muzzle_transform()
 	var origin := muzzle.origin
@@ -307,9 +304,6 @@ func _pellet_direction(dir: Vector3, index: int) -> Vector3:
 	return dir.rotated(Vector3.BACK, cone * (slot * 2.0 - 1.0))
 
 
-## From the side a body is as deep as the play plane, so a bullet is a fan of
-## rays across it and the nearest hit wins: legs and arms sit a few centimetres
-## off the centre line and would otherwise be missed.
 const FAN: Array[float] = [0.0, 0.05, -0.05, 0.1, -0.1, 0.15, -0.15]
 
 
@@ -347,7 +341,6 @@ func _cast(origin: Vector3, end: Vector3) -> Dictionary:
 	return best
 
 
-## A teammate of the shooter, which the bullet passes through.
 func _is_friend(collider: Object) -> bool:
 	var other := Health.of(collider)
 	return not friendly_fire and other != null and other.team != &"" and other.team == character.health.team

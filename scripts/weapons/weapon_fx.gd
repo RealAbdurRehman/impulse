@@ -12,7 +12,6 @@ class Casing extends RigidBody3D:
 
 	var pivot := Node3D.new()
 
-
 	func _init() -> void:
 		contact_monitor = true
 		max_contacts_reported = 1
@@ -20,7 +19,6 @@ class Casing extends RigidBody3D:
 
 		add_child(pivot)
 		retire()
-
 
 	func launch(at: Transform3D, linear: Vector3, angular: Vector3, lifetime: float) -> void:
 		age = 0.0
@@ -38,12 +36,10 @@ class Casing extends RigidBody3D:
 		reset_physics_interpolation()
 		set_physics_process(true)
 
-
 	func retire() -> void:
 		freeze = true
 		visible = false
 		set_physics_process(false)
-
 
 	func _physics_process(delta: float) -> void:
 		impact_speed = linear_velocity.length()
@@ -54,7 +50,6 @@ class Casing extends RigidBody3D:
 			retire()
 		elif left < 0.5:
 			pivot.scale = Vector3.ONE * (left / 0.5)
-
 
 	func _on_body_entered(_body: Node) -> void:
 		if struck:

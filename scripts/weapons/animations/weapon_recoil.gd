@@ -9,7 +9,6 @@ class Spring:
 	var zeta := 0.5
 	var gain := 1.0
 
-
 	func setup(angular_frequency: float, ratio: float) -> void:
 		omega = angular_frequency
 		zeta = clampf(ratio, 0.05, 0.98)
@@ -19,10 +18,8 @@ class Spring:
 		var peak_time := atan2(damped, decay) / damped
 		gain = exp(-decay * peak_time) * sin(damped * peak_time) / damped
 
-
 	func kick(peak: float) -> void:
 		v += peak / gain
-
 
 	func step(delta: float) -> void:
 		var damped := omega * sqrt(1.0 - zeta * zeta)
@@ -35,7 +32,6 @@ class Spring:
 		var next_v := fall * (v * c - (decay * v + omega * omega * x) / damped * s)
 		x = next_x
 		v = next_v
-
 
 	func resting() -> bool:
 		return absf(x) < 0.00001 and absf(v) < 0.0001

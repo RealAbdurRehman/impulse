@@ -1,11 +1,6 @@
 @tool
 class_name MeshKit
 extends RefCounted
-## Builds the player's stylised body from a few rounded primitives.
-##
-## Every primitive is a "part" ({ verts, normals, indices }) centred on the
-## origin; add() places it with a transform and files it under a material.
-## build() returns one ArrayMesh with a surface per material.
 
 var _surfaces := { }
 
@@ -58,8 +53,6 @@ func build() -> ArrayMesh:
 	return mesh
 
 
-## Box with rounded edges. top / bottom scale the width and depth at the two
-## ends (x = width, y = depth), so a box can taper like a torso or a pelvis.
 static func box(
 		size: Vector3,
 		radius: float,
@@ -118,9 +111,6 @@ static func box(
 	return _finish(verts, indices)
 
 
-## Smooth solid of revolution about Y with elliptical rings. rings are
-## Vector4(y, radius_x, radius_z, centre_z), listed from top to bottom.
-## cap_top / cap_bottom add a rounded dome of that height at either end.
 static func limb(rings: Array, sides := 14, cap_top := 0.0, cap_bottom := 0.0, cap_steps := 3) -> Dictionary:
 	var all: Array[Vector4] = []
 
@@ -132,8 +122,8 @@ static func limb(rings: Array, sides := 14, cap_top := 0.0, cap_bottom := 0.0, c
 
 		all.push_front(Vector4(first.x + cap_top, 0.0, 0.0, first.w))
 
-	for ring in rings:
-		all.append(ring)
+	for stop in rings:
+		all.append(stop)
 
 	if cap_bottom > 0.0:
 		var last: Vector4 = rings[rings.size() - 1]
@@ -150,8 +140,8 @@ static func ellipsoid(radii: Vector3, rings := 9, sides := 16) -> Dictionary:
 	var stops: Array[Vector4] = []
 	for k in rings + 1:
 		var angle := PI * float(k) / rings
-		var ring := sin(angle)
-		stops.append(Vector4(radii.y * cos(angle), radii.x * ring, radii.z * ring, 0.0))
+		var wave := sin(angle)
+		stops.append(Vector4(radii.y * cos(angle), radii.x * wave, radii.z * wave, 0.0))
 
 	return _revolve(stops, sides)
 
@@ -217,8 +207,6 @@ static func _revolve(stops: Array[Vector4], sides: int) -> Dictionary:
 	return _finish(verts, indices)
 
 
-## Orients every triangle outwards (parts are convex), drops zero-area ones
-## and shades smoothly: normals are averaged over vertices sharing a spot.
 static func _finish(verts: PackedVector3Array, indices: PackedInt32Array) -> Dictionary:
 	var centre := Vector3.ZERO
 	for v in verts:

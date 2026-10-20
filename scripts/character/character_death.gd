@@ -1,9 +1,5 @@
 class_name CharacterDeath
 extends Node
-## Switches a character off when its Health runs out: the gun drops as a pickup,
-## the body stops being driven and the ragdoll collapses. Where the last bullet
-## landed decides how: a headshot is lights out, a leg shot drops the legs
-## first, anything else sags and folds.
 
 @export var health: Health
 @export var movement: CharacterMovement
@@ -52,7 +48,6 @@ func _on_died() -> void:
 	_after_death()
 
 
-## For whoever extends this: runs once the body has collapsed.
 func _after_death() -> void:
 	pass
 

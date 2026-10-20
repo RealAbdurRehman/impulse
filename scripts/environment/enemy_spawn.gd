@@ -1,15 +1,14 @@
 class_name EnemySpawn
 extends Marker3D
-## A place an enemy appears. Set what it is (archetype, gun) and who it hunts,
-## turn the marker to face the way the enemy should look (a marker's -Z is
-## ignored; rotate it about Y: 90 faces right, -90 faces left). spawn() makes
-## the enemy again (removing the one it made before); clear() removes it.
 
 @export var enemy_scene: PackedScene
 @export var target: CharacterMovement
 @export var archetype := EnemyTraits.Archetype.AUTO
 ## Empty keeps the gun the enemy scene comes with.
 @export var weapon: WeaponStats
+## Metres it walks to and fro from here, along the floor (negative goes left);
+## 0 wanders round the spot.
+@export var patrol_length := 0.0
 ## 0 = different every time.
 @export var random_seed := 0
 @export var spawn_on_ready := true
@@ -34,6 +33,8 @@ func spawn() -> CharacterMovement:
 	brain.target = target
 	brain.archetype = archetype
 	brain.random_seed = random_seed
+	if patrol_length != 0.0:
+		brain.patrol = PackedVector3Array([global_position, global_position + Vector3(patrol_length, 0.0, 0.0)])
 
 	enemy.position = position
 	enemy.rotation.y = rotation.y

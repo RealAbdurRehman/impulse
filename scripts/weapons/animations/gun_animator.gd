@@ -233,10 +233,6 @@ func slide_position() -> float:
 	return _s
 
 
-func rack_position() -> float:
-	return _s if _handle == null else _h
-
-
 func rack_node() -> Node3D:
 	_resolve()
 	return (_slide[0] if _handle == null else _handle).node

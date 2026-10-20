@@ -1,47 +1,34 @@
 class_name EnemyInput
 extends ActorInput
-## The enemy brain. It notices the target (sight cone, a clear view, gunfire,
-## being shot), patrols when it knows nothing, searches where it last saw the
-## target, and fights. In a fight it picks a plan: engage in the open at a range
-## that suits its gun, fight from cover (hide crouched, stand up to shoot over
-## it, drop back), or flank (go round by a route the level offers, to shoot from
-## the other side or from above). Movement goes through EnemyPilot and EnemyNav,
-## shooting through EnemyGunner, cover and flanking spots through EnemyCover.
-## Every enemy rolls its own traits (EnemyTraits), so no two decide alike.
-##
-## Enemies of one team (Health.team) walk through each other and their bullets
-## pass through each other, so a group never blocks itself. Each keeps to its own
-## lane of its fighting range, steps away from a friend standing too close and
-## follows one walking ahead at a distance, so they spread out along the floor
-## and all of them get a shot.
-##
-## Fair play: the camera only shows a few metres either side of the player, so a
-## rifle that likes to fight from 10 m would shoot from outside the picture. An
-## enemy that the camera does not show (and that has not been shot) therefore
-## holds fire and walks in until it is on screen, where its reaction time then
-## starts. Snipers may shoot from off screen, but only after their laser has been
-## painting you for a moment (EnemyLaser).
 
-enum Mode { PATROL, SEARCH, COMBAT }
+enum Mode { PATROL, SEARCH, COMBAT, CLEARED }
 enum Plan { ENGAGE, COVER, FLANK }
 enum Phase { GO, HIDE, PEEK }
 enum Tactic { HOLD, ADVANCE, RETREAT, STRAFE }
 
-## Seconds it has to stand still before the gun comes up to its eye.
+const SUSPECT := 0.3
+const HUNCH_HOLD := 1.5
+const HUNCH_FADE := 0.2
+const ALARM_TIME := 1.2
+const OFFSCREEN_SIGHT := 0.15
+const SHOUT_RANGE := 22.0
+const WARY_TIME := 40.0
+const WARY_SIGHT := 1.6
+const BODY_STANDOFF := 1.0
+const CONCEALED := 0.2
+const CONCEALED_REACH := 2.5
+const FADE_TIME := 1.2
 const SETTLE := 0.25
-## Seconds a sniper's laser has to paint the target before it may shoot from off screen.
 const PAINT_TIME := 1.4
-## An enemy that is not on screen stops walking in once it is this close (metres).
 const CLOSE_ENOUGH := 1.5
-## Most enemies in the picture at once on one side of the player; the rest wait
-## their turn just outside it.
 const SIDE_LIMIT := 3
-## It never keeps to less than this (metres) of the picture's width.
-const MIN_REACH := 3.0
-## Friends closer than this (metres, along the plane) get stepped away from.
+const MIN_VIEW_REACH := 3.0
 const SPACING := 1.3
-## It picks which way to strafe by the friends within this many metres.
-const ROOM := 3.0
+const ROOM_RADIUS := 3.0
+const SEARCH_AHEAD := 4.0
+const SEARCH_BEHIND := 3.0
+const CORPSE_STANDOFF := 1.8
+const CLEARED_RANGE := 15.0
 
 @export var target: CharacterMovement
 @export var carrier: WeaponCarrier
@@ -55,15 +42,18 @@ const ROOM := 3.0
 @export var random_seed := 0
 
 @export_group("Senses")
-@export var sight_range := 28.0
+@export var sight_range := 20.0
+## Half the angle (degrees) of the cone it sees in, up and down from the way it faces.
+@export var view_angle := 55.0
 ## Sees anything this close even with its back turned.
-@export var rear_awareness := 2.5
-@export var hearing_range := 30.0
+@export var rear_awareness := 1.5
 ## Seconds it keeps heading for where it last saw the target before it searches.
 @export var memory_time := 5.0
 @export var search_time := 5.0
 ## Seconds between noticing the target and the first shot (varies with skill).
 @export var reaction_time := 0.6
+## Shows a "?" while it is suspicious and a "!" when it spots you.
+@export var show_mark := true
 
 @export_group("Patrol")
 @export var roam_radius := 5.0
@@ -97,14 +87,15 @@ const ROOM := 3.0
 
 var traits: EnemyTraits
 
-## In a fight and has the target in view (other enemies read this).
 var engaged := false
 
-## False makes it ignore the target (patrol only), for testing.
 var hostile := true
 
-## Knows where the target is at all times and comes for it, for testing.
 var hunt := false
+
+var awareness := 0.0
+
+var patrol := PackedVector3Array()
 
 var _mode := Mode.PATROL
 var _plan := Plan.ENGAGE
@@ -123,6 +114,31 @@ var _nav: EnemyNav
 var _target_health: Health
 
 var _visible := false
+var _view_gain := 0.0
+var _screen_gain := 1.0
+var _hear := 0.0
+var _view_slope := 1.0
+var _quiet_for := 0.0
+var _alerted := false
+var _alarm_left := 0.0
+var _pause_left := 0.0
+var _call_left := 0.0
+var _call_at := Vector3.ZERO
+var _call_dir := 0.0
+var _call_body := 0
+var _body_target := 0
+var _search_body := 0
+var _inspected: EnemyInput
+var _inspect_left := 0.0
+var _cleaning := false
+var _concealment := 1.0
+var _wary_left := 0.0
+var _bodies_seen := { }
+
+static var _claimed := { }
+var _post := 1
+var _noise: NoiseSource
+var _mark: EnemyMark
 var _look_left := 0.0
 var _known := false
 var _last_seen := Vector3.ZERO
@@ -140,6 +156,15 @@ var _wait_left := 0.0
 var _glance := 0.0
 var _glance_left := 0.0
 var _search_left := 0.0
+var _search_origin := Vector3.ZERO
+var _search_at := Vector3.ZERO
+var _search_stage := 0
+var _last_dir := 0.0
+var _hit_ms := -100000
+var _killer := false
+var _approaching := false
+var _cleared_left := 0.0
+var _corpse: Node3D
 var _stalled := 0.0
 
 var _route_goal := Vector2(NAN, NAN)
@@ -187,8 +212,14 @@ func _ready() -> void:
 		_rng.randomize()
 
 	_body = get_parent() as CharacterMovement
-	if target != null:
-		_target_health = target.get_node("Health") as Health
+	_view_slope = tan(deg_to_rad(view_angle))
+	_target_health = target.get_node("Health") as Health
+	_noise = NoiseSource.of(target)
+	_noise.bang.connect(_on_bang)
+
+	if show_mark:
+		_mark = EnemyMark.new()
+		_body.add_child.call_deferred(_mark)
 
 	traits = EnemyTraits.roll(_rng, archetype, carrier.weapon.stats, skill_range)
 
@@ -220,6 +251,7 @@ func _ready() -> void:
 	_wait_left = _rng.randf_range(idle_time.x, idle_time.y)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
+	carrier.weapon.bullet_traced.connect(_on_traced)
 
 
 func poll() -> void:
@@ -254,6 +286,8 @@ func poll() -> void:
 			_search(delta)
 		Mode.COMBAT:
 			_combat(delta)
+		Mode.CLEARED:
+			_cleared(delta)
 
 	_reload(delta)
 
@@ -267,12 +301,13 @@ func poll() -> void:
 	_crouching = crouch
 
 
-## One line of what it is and what it is doing, for debug labels.
 func describe() -> String:
 	var weapon := carrier.weapon
 	var line := "%s  skill %.2f" % [EnemyTraits.Archetype.keys()[traits.archetype], traits.skill]
 	var doing: String = Mode.keys()[_mode]
-	if _mode == Mode.COMBAT:
+	if _mode == Mode.PATROL or _mode == Mode.SEARCH:
+		doing += " %d%%%s" % [roundi(awareness * 100.0), " wary" if _wary_left > 0.0 else ""]
+	else:
 		doing = Plan.keys()[_plan] + (" (unseen)" if _hidden else "")
 		if _plan == Plan.COVER:
 			doing += " " + Phase.keys()[_phase]
@@ -286,18 +321,33 @@ func _exit_tree() -> void:
 	EnemyCover.release(get_instance_id())
 
 
+func _on_traced(_from: Vector3, _to: Vector3, hit: Dictionary) -> void:
+	if not hit.is_empty() and Health.of(hit.collider) == _target_health:
+		_hit_ms = Time.get_ticks_msec()
+
+
 func _on_died() -> void:
 	EnemyCover.release(get_instance_id())
+	if _mark != null:
+		_mark.hide()
+
 	if _laser != null:
 		_laser.hide()
 
 
-## Who it can see, hear or remember. The view is checked ten times a second.
 func _sense(delta: float) -> void:
-	if target == null or not hostile or not _target_health.alive:
+	if not hostile or not _target_health.alive:
 		_known = false
 		_visible = false
-		if _mode != Mode.PATROL:
+		_alerted = false
+		awareness = 0.0
+		_hear = 0.0
+		if _mark != null:
+			_mark.show_state(0.0, false)
+
+		if hostile and _mode == Mode.COMBAT:
+			_stand_down()
+		elif _mode != Mode.PATROL and _mode != Mode.CLEARED:
 			_leave_combat()
 			_mode = Mode.PATROL
 			_goal = _body.global_position
@@ -311,51 +361,231 @@ func _sense(delta: float) -> void:
 	var there := target.global_position
 	var distance := absf(there.x - me.x)
 
+	_alarm_left = maxf(_alarm_left - delta, 0.0)
+	_wary_left = maxf(_wary_left - delta, 0.0)
 	_look_left -= delta
 	if _look_left <= 0.0:
 		_look_left = _rng.randf_range(0.08, 0.14)
 		_look_screen()
+		_screen_gain = 1.0 if _on_screen or _laser != null else OFFSCREEN_SIGHT
+		_concealment = StealthZone.at(there + Vector3.UP * 0.9)
+		_view_gain = _glimpse(me, there)
+		_visible = _view_gain > 0.0
+		_hear = _loudness(there, _noise.radius) if _noise.radius > 0.0 else 0.0
+		if _mode == Mode.PATROL or _mode == Mode.SEARCH:
+			_look_for_bodies(me)
 
-		var front := (there.x - me.x) * float(_body.facing) > 0.0
-		var noticed := distance < sight_range and (front or distance < rear_awareness or _mode == Mode.COMBAT)
-		var eye := me + Vector3.UP * (EnemyCover.CROUCH_EYE if _crouching else EnemyCover.EYE)
-		_visible = noticed and (
-			_senses.sees(eye, there + Vector3.UP * 1.2) or _senses.sees(eye, there + Vector3.UP * 1.6)
-		)
+		if _mark != null:
+			_mark.show_state(awareness if _mode != Mode.COMBAT else 0.0, _alarm_left > 0.0)
 
-	if _visible:
-		if _unseen_for > 1.5:
-			_notice()
-
-		_unseen_for = 0.0
-		_known = true
-		_last_seen = there
-		_since_seen = 0.0
-	else:
-		_unseen_for += delta
-
-	if hunt or distance < traits.tracking:
-		_known = true
-		_last_seen = there
-		_since_seen = 0.0
-
-	if target.input.fire and distance < hearing_range and not _known:
-		_known = true
-		_last_seen = there + Vector3(_rng.randfn(0.0, 2.0), 0.0, 0.0)
-		_since_seen = 0.0
+	if _visible and _unseen_for > 1.5 and _known:
 		_notice()
 
-	if _known and _mode != Mode.COMBAT:
-		_mode = Mode.COMBAT
-		_plan = Plan.ENGAGE
-		_tactic_left = 0.0
-		_decide_left = 0.0
+	_unseen_for = 0.0 if _visible else _unseen_for + delta
+	if _visible:
+		_last_seen = there
+		_since_seen = 0.0
+		if absf(target.velocity.x) > NoiseSource.MOVE_SPEED:
+			_last_dir = signf(target.velocity.x)
+
+	if _call_left > 0.0:
+		_call_left -= delta
+		if _call_left <= 0.0 and _mode != Mode.COMBAT:
+			awareness = maxf(awareness, SUSPECT * 2.0)
+			_last_seen = _call_at + Vector3(_rng.randfn(0.0, 1.5) if _call_body == 0 else 0.0, 0.0, 0.0)
+			_last_dir = _call_dir
+			_body_target = _call_body
+			_wary_left = WARY_TIME
+			_since_seen = 0.0
+
+	var gain := 0.0
+	if _visible:
+		gain = _sight_rate(distance) * _view_gain * _screen_gain
+	elif _hear > 0.0:
+		gain = _hear * 0.8 * traits.alertness
+		var heard := there + Vector3(_rng.randfn(0.0, (1.0 - _hear) * 1.5), 0.0, 0.0)
+		if _mode == Mode.PATROL or _last_seen.distance_to(heard) > 2.0:
+			_last_seen = heard
+			_since_seen = 0.0
+
+	if _mode == Mode.COMBAT:
+		awareness = 1.0
+	elif gain > 0.0:
+		awareness = minf(awareness + gain * delta, 1.0)
+		_quiet_for = 0.0
+	else:
+		_quiet_for += delta
+		if _quiet_for > HUNCH_HOLD:
+			awareness = maxf(awareness - HUNCH_FADE * delta, 0.45 if _mode == Mode.SEARCH else 0.0)
+
+	if hunt or (_alerted and distance < traits.tracking):
+		_last_seen = there
+		_since_seen = 0.0
+		if not _known:
+			_alarm(there)
+	elif awareness >= 1.0 and not _known:
+		_alarm(_last_seen)
+	elif awareness >= SUSPECT and _mode == Mode.PATROL:
+		_start_search()
+		_pause_left = _rng.randf_range(0.5, 1.1)
+		_pilot.stop()
 
 
-## What the player's camera shows of this enemy, and how wide its picture is.
+func _glimpse(me: Vector3, there: Vector3) -> float:
+	var reach := there.x - me.x
+	if absf(reach) >= sight_range:
+		return 0.0
+
+	var eye := me + Vector3.UP * (EnemyCover.CROUCH_EYE if _crouching else EnemyCover.EYE)
+	var crouched := target.crouching
+	var chest := there + Vector3.UP * (0.6 if crouched else 1.2)
+	var head := there + Vector3.UP * (1.0 if crouched else 1.6)
+	var ahead := reach * float(_body.facing)
+	if _concealment < CONCEALED and absf(reach) > CONCEALED_REACH:
+		return 0.0
+
+	var gain := 0.0
+	if _mode == Mode.COMBAT or (ahead > 0.0 and absf(chest.y - eye.y) <= ahead * _view_slope):
+		gain = 1.0
+	elif absf(reach) < rear_awareness:
+		gain = 0.5
+
+	if gain > 0.0 and not (_senses.sees(eye, chest) or _senses.sees(eye, head)):
+		return 0.0
+
+	return gain
+
+
+func _sight_rate(distance: float) -> float:
+	var near := 1.0 - clampf(distance / sight_range, 0.0, 1.0)
+	var rate := 0.12 + 2.9 * pow(near, 2.5)
+	var speed := absf(target.velocity.x)
+	if target.crouching:
+		rate *= 0.6
+
+	if speed > NoiseSource.RUN_SPEED:
+		rate *= 1.4
+	elif speed < NoiseSource.MOVE_SPEED:
+		rate *= 0.7
+
+	if _mode == Mode.SEARCH:
+		rate *= 2.5
+	elif awareness >= SUSPECT:
+		rate *= 1.5
+
+	if _wary_left > 0.0:
+		rate *= WARY_SIGHT
+
+	rate *= _concealment
+
+	return rate * traits.alertness
+
+
+func _loudness(at: Vector3, radius: float) -> float:
+	var me := _body.global_position
+	var far := absf(at.x - me.x) + absf(at.y - me.y) * 1.5
+	if far >= radius:
+		return 0.0
+
+	if not _senses.sees(me + Vector3.UP * EnemyCover.EYE, at + Vector3.UP * 1.2):
+		far *= 1.5
+
+	return clampf(1.0 - far / radius, 0.0, 1.0)
+
+
+func _on_bang(at: Vector3, radius: float) -> void:
+	if not hostile or not health.alive or _age < spawn_grace or not _target_health.alive:
+		return
+
+	var loud := _loudness(at, radius)
+	if loud <= 0.0:
+		return
+
+	var heard := at + Vector3(_rng.randfn(0.0, (1.0 - loud) * 3.0), 0.0, 0.0)
+	if _mode == Mode.COMBAT:
+		if not _visible and _since_seen > 1.0:
+			_last_seen = heard
+			_since_seen = 0.0
+
+		return
+
+	awareness = minf(awareness + (0.3 + loud * 1.2) * traits.alertness, 1.0)
+	_quiet_for = 0.0
+	_last_seen = heard
+	_since_seen = 0.0
+	if awareness >= 1.0:
+		_alarm(heard)
+
+
+func _alarm(at: Vector3) -> void:
+	awareness = 1.0
+	_known = true
+	_alerted = true
+	_last_seen = at
+	_since_seen = 0.0
+	_alarm_left = ALARM_TIME
+	_pause_left = 0.0
+	_notice(0.6)
+	_mode = Mode.COMBAT
+	_plan = Plan.ENGAGE
+	_tactic_left = 0.0
+	_decide_left = 0.0
+	_shout(at)
+
+
+func _look_for_bodies(me: Vector3) -> void:
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var other := node as EnemyInput
+		var id := other.get_instance_id()
+		if other.health.alive or other.health.team != health.team or _bodies_seen.has(id):
+			continue
+
+		var spot := (other.health.ragdoll.get_child(0) as Node3D).global_position
+		var reach := spot.x - me.x
+		var eye := me + Vector3.UP * (EnemyCover.CROUCH_EYE if _crouching else EnemyCover.EYE)
+		var ahead := reach * float(_body.facing)
+		var in_cone := ahead > 0.0 and absf(spot.y - eye.y) <= ahead * _view_slope
+		if absf(reach) < sight_range and (in_cone or absf(reach) < rear_awareness) and _senses.sees(eye, spot + Vector3.UP * 0.3):
+			_find_body(id, spot)
+			return
+
+
+func _find_body(id: int, spot: Vector3) -> void:
+	_bodies_seen[id] = true
+	_wary_left = WARY_TIME
+	awareness = maxf(awareness, SUSPECT * 2.0)
+	_quiet_for = 0.0
+	_last_seen = spot
+	_since_seen = 0.0
+	_last_dir = signf(spot.x - _body.global_position.x)
+	_body_target = id
+	_start_search()
+	_pause_left = _rng.randf_range(0.6, 1.2)
+	_pilot.stop()
+	_shout(spot, id)
+
+
+func _shout(at: Vector3, body := 0) -> void:
+	var me := _body.global_position
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var other := node as EnemyInput
+		if other == self or not other.health.alive or other.health.team != health.team:
+			continue
+
+		var there := other._body.global_position
+		var far := absf(there.x - me.x) + absf(there.y - me.y) * 1.5
+		if far < SHOUT_RANGE and other._mode != Mode.COMBAT:
+			other._call_left = 0.4 + far * 0.04 + _rng.randf_range(0.0, 0.4)
+			other._call_at = at
+			other._call_dir = signf(at.x - there.x)
+			other._call_body = body
+			if body != 0:
+				other._bodies_seen[body] = true
+
+
 func _look_screen() -> void:
 	var cam := get_viewport().get_camera_3d()
-	_fair_on = fair_play and cam != null and target.health.team == &"player"
+	_fair_on = fair_play and target.health.team == &"player"
 	if not _fair_on:
 		_on_screen = true
 		_view_reach = INF
@@ -375,16 +605,13 @@ func _look_screen() -> void:
 
 	var size := get_viewport().get_visible_rect().size
 	var depth := absf(cam.global_position.z - _body.global_position.z)
-	_view_reach = maxf(depth * tan(deg_to_rad(cam.fov) * 0.5) * size.x / size.y * 0.9, MIN_REACH)
+	_view_reach = maxf(depth * tan(deg_to_rad(cam.fov) * 0.5) * size.x / size.y * 0.9, MIN_VIEW_REACH)
 
 
 func _reaction() -> float:
 	return reaction_time * lerpf(1.5, 0.5, traits.skill) * _rng.randf_range(0.7, 1.3)
 
 
-## Not on screen and not shot at, so it must come into the picture before it fights
-## (a sniper stays where it is and paints its target instead), unless the picture
-## already holds as many of its side as it should: then it waits its turn.
 func _walks_in() -> bool:
 	return _hidden and _laser == null
 
@@ -394,16 +621,21 @@ func _is_sniper() -> bool:
 	return stats.manual_cycle and stats.pellets <= 1
 
 
-func _notice() -> void:
-	_react_left = _reaction()
+func _notice(scale := 1.0) -> void:
+	_react_left = _reaction() * scale
 	_first_contact = true
 	_gunner.look_ahead(_body.global_position + Vector3.UP * 1.35, _body.facing)
 
 
 func _on_damaged(amount: float, _point: Vector3, _direction: Vector3, _bone: PhysicalBone3D) -> void:
-	if target == null or not hostile or not _target_health.alive:
+	if not hostile or not _target_health.alive:
 		return
 
+	if _mode != Mode.COMBAT:
+		_alarm_left = ALARM_TIME
+
+	awareness = 1.0
+	_alerted = true
 	_known = true
 	_last_seen = target.global_position
 	_since_seen = 0.0
@@ -425,8 +657,6 @@ func _leave_combat() -> void:
 	_pilot.set_route(PackedVector3Array())
 
 
-## Goes to a spot by the route EnemyNav offers, across floors if need be. True
-## once it is there; `_travel_failed` is set when there is no way.
 func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -> bool:
 	var me := _body.global_position
 	_route_left -= delta
@@ -437,7 +667,7 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 		var from := _nav.nearest(me.x, me.y)
 		var to := _nav.nearest(goal.x, goal.y)
 		var path := PackedVector3Array()
-		if keep_off_target and target != null:
+		if keep_off_target:
 			path = _nav.route(from, to, target.global_position.x, 1.6, target.global_position.y)
 		else:
 			path = _nav.route(from, to)
@@ -457,10 +687,10 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 func _patrol(delta: float) -> void:
 	if _wait_left > 0.0:
 		_wait_left -= delta
-		_idle_look(delta)
+		_idle_look(delta, Vector2(2.5, 6.0))
 		_stand(delta)
 		if _wait_left <= 0.0:
-			_goal = _roam_spot()
+			_goal = _next_post()
 
 		return
 
@@ -470,7 +700,15 @@ func _patrol(delta: float) -> void:
 		_goal = _body.global_position
 
 
-## Somewhere to wander to near home: any spot the level has, on any floor.
+func _next_post() -> Vector3:
+	if patrol.size() < 2:
+		return _roam_spot()
+
+	var spot := patrol[_post]
+	_post = (_post + 1) % patrol.size()
+	return spot
+
+
 func _roam_spot() -> Vector3:
 	var spots := _nav.spots_between(_home.x - roam_radius, _home.x + roam_radius)
 	if spots.is_empty():
@@ -480,33 +718,187 @@ func _roam_spot() -> Vector3:
 	return Vector3(_nav.xs[id], _nav.ys[id], 0.0)
 
 
-## Standing around, it glances left and right now and then.
-func _idle_look(delta: float) -> void:
+func _idle_look(delta: float, pause := Vector2(1.0, 3.0)) -> void:
 	_glance_left -= delta
 	if _glance_left <= 0.0:
-		_glance_left = _rng.randf_range(1.0, 3.0)
+		_glance_left = _rng.randf_range(pause.x, pause.y)
 		_glance = 0.0 if _rng.randf() < 0.3 else (1.0 if _rng.randf() < 0.5 else -1.0)
 
 	if _glance != 0.0:
+		_look_toward(_glance)
+
+
+func _look_toward(side: float) -> void:
+	if absf(_body.velocity.x) < 0.5:
 		has_aim = true
-		aim_point = _body.global_position + Vector3(_glance * 10.0, 1.4, 0.0)
+		aim_point = _body.global_position + Vector3(side * 10.0, 1.4, 0.0)
+
+
+func _start_search() -> void:
+	_mode = Mode.SEARCH
+	_search_origin = _last_seen
+	_search_at = _last_seen
+	_search_stage = 0
+	_search_left = 0.0
+	_inspect_left = 0.0
+	_search_body = _body_target
+	if _search_body != 0:
+		_search_at.x = _last_seen.x - signf(_last_seen.x - _body.global_position.x) * BODY_STANDOFF
+
+	_body_target = 0
 
 
 func _search(delta: float) -> void:
-	if _search_left > 0.0:
-		_search_left -= delta
-		_idle_look(delta)
+	if _since_seen < 0.5 and _last_seen.distance_to(_search_origin) > 3.0:
+		_start_search()
+
+	if _pause_left > 0.0:
+		_pause_left -= delta
 		_stand(delta)
-		if _search_left <= 0.0:
-			_mode = Mode.PATROL
-			_goal = _body.global_position
-			_wait_left = _rng.randf_range(idle_time.x, idle_time.y)
+		if not _look_at_body():
+			_look_toward(signf(_search_at.x - _body.global_position.x))
 
 		return
 
-	var arrived := _travel(Vector2(_last_seen.x, _last_seen.y), false, delta)
+	if _inspect_left > 0.0:
+		_inspect_left -= delta
+		_stand(delta)
+		_look_at_body()
+		crouch = _cleaning
+		if _inspect_left <= 0.0:
+			if _cleaning and is_instance_valid(_inspected):
+				_inspected.vanish()
+
+			_search_left = search_time * 0.4 * _rng.randf_range(0.7, 1.3)
+
+		return
+
+	if _search_left > 0.0:
+		_search_left -= delta
+		_idle_look(delta, Vector2(0.5, 1.2))
+		_stand(delta)
+		if _search_left <= 0.0:
+			_search_on()
+
+		return
+
+	var arrived := _travel(Vector2(_search_at.x, _search_at.y), false, delta)
+	if _search_stage == 0 and not arrived:
+		_look_at_body()
+
 	if arrived or _travel_failed or _pilot.blocked:
-		_search_left = search_time * _rng.randf_range(0.7, 1.3)
+		if _search_stage == 0 and _begin_inspect():
+			return
+
+		_search_left = search_time * 0.4 * _rng.randf_range(0.7, 1.3)
+
+
+func _begin_inspect() -> bool:
+	var dead := instance_from_id(_search_body) as EnemyInput
+	_search_body = 0
+	if dead == null or absf(dead._body.global_position.x - _body.global_position.x) > BODY_STANDOFF + 2.0:
+		return false
+
+	var id := dead.get_instance_id()
+	_inspected = dead
+	_cleaning = not _claimed.has(id)
+	_claimed[id] = true
+	_inspect_left = 1.5 + (2.0 if _cleaning else 0.0)
+	return true
+
+
+func _look_at_body() -> bool:
+	var dead := instance_from_id(_search_body) as EnemyInput
+	if dead == null and _inspect_left > 0.0:
+		dead = _inspected
+
+	if dead == null or not is_instance_valid(dead):
+		return false
+
+	has_aim = true
+	aim_point = (dead.health.ragdoll.get_child(0) as Node3D).global_position + Vector3(0.0, -0.2, 0.0)
+	return true
+
+
+func vanish() -> void:
+	var fades: Array[StandardMaterial3D] = []
+	for node in _body.find_children("*", "MeshInstance3D", true, false):
+		var mesh := node as MeshInstance3D
+		if mesh.mesh == null:
+			continue
+
+		var override := mesh.material_override as StandardMaterial3D
+		if override != null:
+			mesh.material_override = _fading(override, fades)
+			continue
+
+		for i in mesh.mesh.get_surface_count():
+			var material := mesh.get_active_material(i) as StandardMaterial3D
+			if material != null:
+				mesh.set_surface_override_material(i, _fading(material, fades))
+
+	var tween := create_tween()
+	tween.tween_method(func(amount: float) -> void:
+		for material in fades:
+			material.albedo_color.a = 1.0 - amount
+	, 0.0, 1.0, FADE_TIME)
+	tween.tween_callback(_body.queue_free)
+
+
+func _fading(material: StandardMaterial3D, fades: Array[StandardMaterial3D]) -> StandardMaterial3D:
+	var copy := material.duplicate() as StandardMaterial3D
+	copy.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fades.append(copy)
+	return copy
+
+
+func _search_on() -> void:
+	while _last_dir != 0.0 and _search_stage < 2:
+		_search_stage += 1
+		var ahead := _search_stage == 1
+		var spot := _search_origin + Vector3((_last_dir if ahead else -_last_dir) * (SEARCH_AHEAD if ahead else SEARCH_BEHIND), 0.0, 0.0)
+		if _nav.nearest(spot.x, spot.y, 1.5) >= 0:
+			_search_at = spot
+			return
+
+	_mode = Mode.PATROL
+	awareness = minf(awareness, SUSPECT * 0.5)
+	_goal = _body.global_position
+	_wait_left = _rng.randf_range(idle_time.x, idle_time.y)
+
+
+func _stand_down() -> void:
+	_leave_combat()
+	_corpse = _target_health.ragdoll.get_child(0) as Node3D
+	if absf(_corpse.global_position.x - _body.global_position.x) > CLEARED_RANGE:
+		_mode = Mode.PATROL
+		_goal = _body.global_position
+		return
+
+	_mode = Mode.CLEARED
+	_killer = Time.get_ticks_msec() - _hit_ms < 500
+	_approaching = _killer
+	_cleared_left = _rng.randf_range(2.0, 4.0) * lerpf(0.8, 1.4, traits.caution) + (2.0 if _killer else 0.0)
+
+
+func _cleared(delta: float) -> void:
+	var at := _corpse.global_position
+	var dx := at.x - _body.global_position.x
+	has_aim = true
+	aim_point = at + Vector3(0.0, 0.3, 0.0)
+
+	if _approaching and absf(dx) > CORPSE_STANDOFF + 0.4:
+		_travel(Vector2(at.x - signf(dx) * CORPSE_STANDOFF, at.y), false, delta)
+		_approaching = not (_travel_failed or _pilot.blocked)
+		return
+
+	_approaching = false
+	_stand(delta)
+	_cleared_left -= delta
+	if _cleared_left <= 0.0:
+		_mode = Mode.PATROL
+		_goal = _body.global_position
+		_wait_left = _rng.randf_range(idle_time.x, idle_time.y)
 
 
 func _combat(delta: float) -> void:
@@ -521,9 +913,9 @@ func _combat(delta: float) -> void:
 
 	if not _visible and _since_seen > memory_time:
 		_known = false
+		awareness = 0.6
 		_leave_combat()
-		_mode = Mode.SEARCH
-		_search_left = 0.0
+		_start_search()
 		return
 
 	engaged = _visible
@@ -537,8 +929,6 @@ func _combat(delta: float) -> void:
 		Plan.FLANK:
 			_flank(delta)
 
-	# The gun only comes up to its eye once it stands still: running, backing
-	# off or taking a jump, it shoots from the hip.
 	var moving := absf(move) > 0.1 or _pilot.committed
 	_still_for = 0.0 if moving else _still_for + delta
 
@@ -554,13 +944,11 @@ func _combat(delta: float) -> void:
 		var at := target.global_position if _visible or _plan == Plan.COVER else _last_seen
 		var unsteady := moving or absf(target.velocity.x) > 0.3
 		var braced := _crouching and not moving
-		aim_point = _gunner.aim(delta, me + Vector3.UP * 1.35, at, target.input.crouch, unsteady, scoped, braced)
+		aim_point = _gunner.aim(delta, me + Vector3.UP * 1.35, at, target.crouching, unsteady, scoped, braced)
 
 	_fire(delta, weapon, me, scoped)
 
 
-## Picks the plan: take cover when hurt, low on ammo, or by nature; go round
-## when the target is dug in or a friend is already keeping it busy.
 func _decide(delta: float, weapon: Weapon, distance: float) -> void:
 	_decide_left -= delta
 	if _decide_left > 0.0:
@@ -657,11 +1045,8 @@ func _leave_plan() -> void:
 	_pilot.set_route(PackedVector3Array())
 
 
-## Fighting from cover: go there, hide crouched (reloading if need be), stand up
-## to shoot a burst over it, drop back.
 func _in_cover(delta: float, weapon: Weapon) -> void:
 	var me := _body.global_position
-	var there := target.global_position
 
 	if _phase == Phase.GO:
 		var run := absf(_spot.x - me.x) > 3.0 and not _visible
@@ -688,8 +1073,8 @@ func _in_cover(delta: float, weapon: Weapon) -> void:
 	if _phase == Phase.HIDE:
 		crouch = true
 		_hide_left -= delta
-		var ready := weapon.ammo > 0 and not weapon.is_reloading()
-		if _hide_left <= 0.0 and ready:
+		var loaded := weapon.ammo > 0 and not weapon.is_reloading()
+		if _hide_left <= 0.0 and loaded:
 			_phase = Phase.PEEK
 			_peek_left = _rng.randf_range(1.2, 2.6)
 			_peek_rounds = _gunner.rounds
@@ -711,7 +1096,6 @@ func _hide_time() -> float:
 	return lerpf(0.7, 2.8, traits.patience) * _rng.randf_range(0.7, 1.4) * lerpf(1.2, 0.7, traits.aggression)
 
 
-## Going round: sprint along the route, then settle in and fight from there.
 func _flank(delta: float) -> void:
 	var run := absf(_spot.x - _body.global_position.x) > 4.0
 	var arrived := _travel(_spot, run, delta, true)
@@ -727,8 +1111,6 @@ func _flank(delta: float) -> void:
 		_leave_plan()
 
 
-## Fighting in the open: advance when too far, back off when too close,
-## otherwise hold or shuffle, each for a while, by nature.
 func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 	var band := _band(weapon.stats)
 	var toward := signf(_last_seen.x - _body.global_position.x)
@@ -778,28 +1160,22 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 		if _stalled > 2.5:
 			_stalled = 0.0
 			_known = false
-			_mode = Mode.SEARCH
-			_search_left = 0.0
+			awareness = 0.6
+			_start_search()
 	else:
 		_stalled = 0.0
 
 
-## Crouch to steady the aim when holding a long shot with nothing to hide behind.
 func _holds_low(weapon: Weapon, distance: float, band: Vector2) -> bool:
 	return _visible and traits.patience > 0.6 and distance > band.x * 1.5 and weapon.stats.manual_cycle
 
 
-## Chasing a target it can't see: by the route to where it was, across floors.
 func _chase(delta: float, run: bool) -> void:
 	_travel(Vector2(_last_seen.x, _last_seen.y), run, delta)
 	if _travel_failed:
 		_pilot.walk(signf(_last_seen.x - _body.global_position.x), run, delta)
 
 
-## Stands still, but steps away from a friend that is too close, so a group
-## spreads along the floor instead of piling up in one spot. Friends walk through
-## each other, so nothing else keeps them apart. `not_toward` is a direction it
-## may not step in (toward a target it is already close enough to).
 func _stand(delta: float, not_toward := 0.0) -> void:
 	if _spread == 0.0 or _spread == not_toward or absf(_body.velocity.x) > 0.5:
 		_pilot.stop()
@@ -810,11 +1186,6 @@ func _stand(delta: float, not_toward := 0.0) -> void:
 		move *= 0.5
 
 
-## Looks at the friends near it on this floor a few times a second: which way
-## to step to get clear of any closer than SPACING (`_spread`, 0 for none), which
-## way there is more room (`_room`), and how far off the nearest friend is who
-## walks ahead of it in the same direction (`_follow`, index 0 for walking left,
-## 1 for right), so a group on the move strings out instead of bunching up.
 func _look_around(delta: float) -> void:
 	_around_left -= delta
 	if _around_left > 0.0:
@@ -832,7 +1203,7 @@ func _look_around(delta: float) -> void:
 		if other == self or not other.health.alive:
 			continue
 
-		if target != null and other._on_screen and other._laser == null and signf(other._body.global_position.x - target.global_position.x) == signf(me.x - target.global_position.x):
+		if other._on_screen and other._laser == null and signf(other._body.global_position.x - target.global_position.x) == signf(me.x - target.global_position.x):
 			on_side += 1
 
 		var there := other._body.global_position
@@ -846,8 +1217,8 @@ func _look_around(delta: float) -> void:
 		if absf(gap) < SPACING:
 			push -= signf(gap)
 
-		if absf(gap) < ROOM:
-			room -= signf(gap) * (ROOM - absf(gap))
+		if absf(gap) < ROOM_RADIUS:
+			room -= signf(gap) * (ROOM_RADIUS - absf(gap))
 
 		var walking := other._body.velocity.x
 		if absf(walking) > 0.2 and signf(walking) == signf(gap):
@@ -914,8 +1285,6 @@ func _pick_tactic(distance: float, band: Vector2, weapon: Weapon) -> void:
 			_tactic_left = _rng.randf_range(0.8, 2.0)
 
 
-## How far from the target it likes to stand: a point of its fighting range
-## picked by its lane.
 func _lane(band: Vector2) -> float:
 	return lerpf(band.x * 1.1, band.y * 0.95, traits.lane)
 
@@ -937,10 +1306,6 @@ func _band(stats: WeaponStats) -> Vector2:
 	return band
 
 
-## Pulls the trigger only with a clear shot: it has seen the target, finished
-## reacting, the gun is up, the aim is on it, and nothing but the target is in
-## the way. A friend in the line makes it hold fire and shuffle sideways. From
-## cover it only shoots standing up, and on the run it doesn't shoot.
 func _fire(delta: float, weapon: Weapon, me: Vector3, scoped: bool) -> void:
 	if not _hidden or _laser != null:
 		_react_left = maxf(_react_left - delta, 0.0)
@@ -972,7 +1337,6 @@ func _fire(delta: float, weapon: Weapon, me: Vector3, scoped: bool) -> void:
 	fire = _gunner.trigger(delta, may_fire, weapon)
 
 
-## A sniper aiming at its target draws the laser, brighter the longer it paints.
 func _paint(delta: float, weapon: Weapon, scoped: bool) -> void:
 	_painting = _visible and scoped and not weapon.is_reloading() and weapon.holder.gun.is_inside_tree()
 	if not _painting:
@@ -995,7 +1359,7 @@ func _reload(delta: float) -> void:
 	var lull := _mode == Mode.COMBAT and not fire
 	if hiding and weapon.ammo < weapon.stats.magazine_size:
 		lull = true
-		quiet = _rng.randf() < 0.6 or weapon.ammo <= weapon.stats.magazine_size / 2
+		quiet = _rng.randf() < 0.6 or weapon.ammo * 2 <= weapon.stats.magazine_size
 
 	if _gunner.wants_reload(weapon, quiet, lull):
 		reload = true

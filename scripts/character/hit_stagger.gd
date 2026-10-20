@@ -1,8 +1,5 @@
 class_name HitStagger
 extends Node
-## What being shot looks like on a living enemy: it turns to the shooter and
-## steps back, the torso rocks on a spring, and the limb that was hit goes slack
-## and gets a kick, so arms swing and a shot leg buckles.
 
 @export var health: Health
 @export var movement: CharacterMovement
@@ -69,8 +66,6 @@ func _on_damaged(amount: float, point: Vector3, direction: Vector3, bone: Physic
 				ragdoll.flinch(other, buckle_time, 0.35)
 
 
-## Whether a bone goes slack with the one that was hit: the rest of the same limb,
-## the neck for the head, nothing extra for the torso.
 func _linked(other: String, part: String) -> bool:
 	if other == part:
 		return true

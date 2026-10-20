@@ -1,21 +1,13 @@
 class_name Hitboxes
 extends Node
-## Gives every ragdoll bone a hit volume shaped like what you see (the hull of
-## its visible meshes: vest, pack, helmet and all). The physics shapes the ragdoll
-## stands on are much smaller than the body, so bullets aimed at the legs or the
-## gaps between them would otherwise pass straight through.
 
 const LAYER := 16
 
-## The hull points of every mesh seen so far. Working one out takes a good part
-## of a second, and every body of a kind wears the very same meshes (see
-## BodyLook), so only the first one pays.
 static var _hulls := { }
 
 @export var ragdoll: PhysicalBoneSimulator3D
 
 
-## The bone a bullet hit, whether it struck the bone itself or its hit volume.
 static func bone_of(collider: Object) -> PhysicalBone3D:
 	if collider is PhysicalBone3D:
 		return collider

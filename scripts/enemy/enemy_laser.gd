@@ -1,8 +1,5 @@
 class_name EnemyLaser
 extends RefCounted
-## The red line a sniper paints on its target before it shoots. A shot from far
-## outside the picture is only fair if the player can see it coming: the line
-## crosses the screen, and gets brighter, well before the bullet does.
 
 const THICKNESS := 0.012
 
@@ -22,8 +19,6 @@ func _init(parent: Node3D) -> void:
 	parent.add_child.call_deferred(_mesh)
 
 
-## Draws the line from `from` along `dir` for `length` metres; `strength` 0 to 1
-## is how long it has been painting.
 func show_beam(from: Vector3, dir: Vector3, length: float, strength: float) -> void:
 	var up := Vector3(-dir.y, dir.x, 0.0)
 	_mesh.global_transform = Transform3D(

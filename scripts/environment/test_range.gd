@@ -1,22 +1,15 @@
 class_name TestRange
 extends Node3D
-## A level for trying out enemies: zones for open ground, cover, stairs and a
-## catwalk, an obstacle course and a ledge, enemies standing at stations, and
-## keys to put more of any kind where the mouse is. A heads-up list of the keys
-## is on screen (F1 hides it).
-##
-## 1 to 6   spawn a grunt, rusher, suppressor, cautious, marksman or flanker
-## 7        spawn a squad of three        8   spawn a hunter (tracks you once it has found you)
-## Z / X    gun for what you spawn: auto (suits the type), pistol, rifle, shotgun, sniper
-## K        kill all enemies        Delete   remove all enemies     Backspace   respawn the stations
-## H        heal                    Y        god mode               T           enemies ignore you
-## V        labels over enemies     N        map of where enemies can go and how (white walk, yellow jump, red drop)
-## J        enemies always know where you are and come for you (over gaps and boxes too)
-## G        fair play on/off: on, enemies only shoot once the camera shows them (snipers: after their laser)
+
+const CONE_RAYS := 14
+const CONE_TICK := 0.1
+const RING_POINTS := 40
+const SAFE := Color(0.3, 1.0, 0.4, 0.09)
+const WARY := Color(1.0, 0.85, 0.2, 0.13)
+const SPOTTED := Color(1.0, 0.2, 0.15, 0.17)
 
 const WEAPONS := ["auto", "g17", "m4a1", "rem870", "l96a1"]
 
-## What "auto" gives each type, picked at random from the list.
 const AUTO_GUNS := {
 	EnemyTraits.Archetype.GRUNT: ["g17", "m4a1"],
 	EnemyTraits.Archetype.RUSHER: ["rem870", "m4a1"],
@@ -43,7 +36,7 @@ const SPAWN_KEYS := {
 ## Falling below this height kills whoever it is.
 @export var void_height := -8.0
 ## Seconds before the level restarts after the player dies.
-@export var restart_delay := 2.0
+@export var restart_delay := 6.0
 
 var _gun := 0
 var _god := false
@@ -55,7 +48,11 @@ var _hud_on := true
 
 var _hud: Label
 var _labels := { }
+var _cones := { }
+var _rings: Array = []
+var _ring_mesh: ImmediateMesh
 var _tick := 0.0
+var _cone_tick := 0.0
 var _nav_lines: MeshInstance3D
 
 
@@ -71,6 +68,14 @@ func _ready() -> void:
 	var layer := CanvasLayer.new()
 	layer.add_child(_hud)
 	add_child(layer)
+
+	_ring_mesh = ImmediateMesh.new()
+	var rings := MeshInstance3D.new()
+	rings.mesh = _ring_mesh
+	rings.material_override = _overlay_material()
+	rings.top_level = true
+	add_child(rings)
+	NoiseSource.of(player).bang.connect(_on_bang)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -123,6 +128,12 @@ func _physics_process(_delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_draw_rings(delta)
+	_cone_tick -= delta
+	if _cone_tick <= 0.0:
+		_cone_tick = CONE_TICK
+		_update_cones()
+
 	_tick -= delta
 	if _tick > 0.0:
 		return
@@ -133,7 +144,6 @@ func _process(delta: float) -> void:
 	_hud.text = _hud_text()
 
 
-## Where the mouse points on the ground (or a platform) in the play plane.
 func _cursor_spot() -> Vector3:
 	var mouse := get_viewport().get_mouse_position()
 	var plane := Plane(Vector3.BACK, 0.0)
@@ -258,13 +268,101 @@ func _update_labels() -> void:
 			label.pixel_size = 0.0045
 			label.font_size = 28
 			label.outline_size = 8
-			label.position = Vector3(0.0, 2.35, 0.0)
+			label.position = Vector3(0.0, 2.75, 0.0)
 			body.add_child(label)
 			_labels[id] = label
 
 		label.visible = _labels_on and brain.health.alive
 		if label.visible:
 			label.text = brain.describe()
+
+
+func _overlay_material() -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.vertex_color_use_as_albedo = true
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return material
+
+
+func _update_cones() -> void:
+	var space := get_world_3d().direct_space_state
+	for brain in _enemies():
+		var body := brain.get_parent() as CharacterMovement
+		var id := body.get_instance_id()
+		var cone: MeshInstance3D = _cones.get(id)
+		if cone == null:
+			cone = MeshInstance3D.new()
+			cone.mesh = ImmediateMesh.new()
+			cone.material_override = _overlay_material()
+			cone.top_level = true
+			add_child(cone)
+			body.tree_exiting.connect(cone.queue_free)
+			_cones[id] = cone
+
+		cone.visible = _labels_on and brain.health.alive and brain.hostile
+		if not cone.visible:
+			continue
+
+		var seen := brain.awareness
+		var colour := SAFE.lerp(WARY, seen / EnemyInput.SUSPECT) if seen < EnemyInput.SUSPECT else WARY.lerp(SPOTTED, (seen - EnemyInput.SUSPECT) / (1.0 - EnemyInput.SUSPECT))
+		var eye := body.global_position + Vector3(0.0, EnemyCover.EYE, 0.3)
+		var half := deg_to_rad(brain.view_angle)
+		var mesh := cone.mesh as ImmediateMesh
+		mesh.clear_surfaces()
+		mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+		var previous := Vector3.INF
+		for i in CONE_RAYS + 1:
+			var angle := lerpf(-half, half, float(i) / float(CONE_RAYS))
+			var end := eye + Vector3(cos(angle) * float(body.facing), sin(angle), 0.0) * brain.sight_range
+			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(eye, end, 1))
+			if not hit.is_empty():
+				end = hit.position
+				end.z = eye.z
+
+			if previous != Vector3.INF:
+				for point: Vector3 in [eye, previous, end]:
+					mesh.surface_set_color(colour)
+					mesh.surface_add_vertex(point)
+
+			previous = end
+
+		mesh.surface_end()
+
+
+func _on_bang(at: Vector3, radius: float) -> void:
+	_rings.append([at, radius, 0.7])
+
+
+func _draw_rings(delta: float) -> void:
+	_ring_mesh.clear_surfaces()
+	if not _labels_on:
+		_rings.clear()
+		return
+
+	var noise := NoiseSource.of(player)
+	var centre := player.global_position + Vector3(0.0, 1.0, 0.3)
+	if noise.radius > 0.0:
+		_ring(centre, noise.radius, Color(1.0, 1.0, 1.0, 0.5))
+
+	for ring: Array in _rings:
+		var left: float = ring[2] - delta
+		ring[2] = left
+		var spread := minf((1.0 - left / 0.7) * 2.0, 1.0)
+		_ring((ring[0] as Vector3) + Vector3(0.0, 1.0, 0.3), (ring[1] as float) * spread, Color(1.0, 0.55, 0.1, clampf(left / 0.7, 0.0, 1.0)))
+
+	_rings = _rings.filter(func(ring: Array) -> bool: return ring[2] > 0.0)
+
+
+func _ring(centre: Vector3, radius: float, colour: Color) -> void:
+	_ring_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	for i in RING_POINTS + 1:
+		var angle := TAU * float(i) / float(RING_POINTS)
+		_ring_mesh.surface_set_color(colour)
+		_ring_mesh.surface_add_vertex(centre + Vector3(cos(angle), sin(angle), 0.0) * radius)
+
+	_ring_mesh.surface_end()
 
 
 func _hud_text() -> String:
@@ -274,19 +372,28 @@ func _hud_text() -> String:
 		alive += int(brain.health.alive)
 
 	var lines := PackedStringArray([
-		"TEST RANGE      you %d hp%s%s%s      enemies alive %d      spawn gun: %s" % [
+		"TEST RANGE      you %d hp%s%s%s%s      enemies alive %d      spawn gun: %s" % [
 			roundi(health.current) if not _god else 999,
 			"  GOD" if _god else "",
 			"  (enemies ignore you)" if _peaceful else ("  (enemies hunt you)" if _hunting else ""),
 			"" if _fair else "  (fair play off)",
+			_cover_text(),
 			alive,
 			String(WEAPONS[_gun]).to_upper(),
 		],
 		"1 grunt  2 rusher  3 suppressor  4 cautious  5 marksman  6 flanker  7 squad  8 hunter   (at the mouse)",
 		"Z/X gun   K kill all   Del remove all   Backspace restart stations   H heal   Y god   T ignore me   J hunt me   G fair play",
-		"V labels   N routes   F1 hide this     A/D move  Space jump  C crouch  E pick up  R reload",
+		"V labels, view cones, noise   N routes   F1 hide this     A/D move  Space jump  C crouch  E pick up  R reload",
 	])
 	return "\n".join(lines)
+
+
+func _cover_text() -> String:
+	var seen := StealthZone.at(player.global_position + Vector3.UP * 0.9)
+	if seen >= 1.0:
+		return ""
+
+	return "  (hidden)" if seen < EnemyInput.CONCEALED else "  (in shadow %d%%)" % roundi(seen * 100.0)
 
 
 func _toggle_nav() -> void:
@@ -297,7 +404,6 @@ func _toggle_nav() -> void:
 		_nav_lines.visible = not _nav_lines.visible
 
 
-## Every link of the map enemies plan routes on, as lines.
 func _build_nav_lines() -> MeshInstance3D:
 	var nav := EnemyNav.of(player, 1, 120.0)
 	var mesh := ImmediateMesh.new()

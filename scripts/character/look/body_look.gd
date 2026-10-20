@@ -1,17 +1,6 @@
 @tool
 class_name BodyLook
 extends Node
-## Dresses the ragdoll in a stylised operator: rounded primitives instead of
-## the plain collision-sized boxes, mounted on the same physical bones.
-##
-## It runs in the editor too, so a character scene shows the body it really
-## wears; there it only adds the meshes (they are not saved) and leaves the
-## scene's own nodes alone, the boxes it replaces being hidden in the scene.
-##
-## Everything is authored for a person standing upright (design space:
-## x = their left, y = up, z = forward) and mapped onto each bone's own axes
-## from the rig's rest pose, so no axis is hard-coded per bone. Limbs hang
-## along their bone, so joints line up exactly.
 
 @export var style: LookStyle:
 	set(value):
@@ -28,11 +17,8 @@ extends Node
 
 @export var ragdoll: PhysicalBoneSimulator3D
 
-## The boxes the rig already had for these stay visible, untouched.
 const KEPT := [&"Hand", &"Neck"]
 
-## The meshes built for each style, shared by every body that wears it: making
-## them is slow, and so is the hit volume made from them (see Hitboxes).
 static var _shared := { }
 
 var _bones := { }
@@ -59,7 +45,6 @@ func _ready() -> void:
 	_build()
 
 
-## Editor only: dresses the body again after the style was swapped or edited.
 func _rebuild() -> void:
 	if not is_node_ready():
 		return
@@ -112,8 +97,6 @@ func _build() -> void:
 		(_bones[part] as PhysicalBone3D).add_child(look)
 
 
-## The mesh for each bone, from the shared ones if this style has been built
-## before (in the editor it is always built again: the style is being edited).
 func _meshes() -> Dictionary:
 	if not Engine.is_editor_hint() and _shared.has(style):
 		return _shared[style]
@@ -138,8 +121,6 @@ func _meshes() -> Dictionary:
 	return meshes
 
 
-## Recolours the kept boxes. The grip code copies the palm's material onto the
-## thumb and trigger finger it builds for each gun, so one assignment covers all.
 func _paint_kept() -> void:
 	_proxy("Spine1", "Neck").material_override = _mask
 	for side in ["Left", "Right"]:
@@ -171,10 +152,6 @@ func _material(colour: Color, roughness: float, metallic := 0.0) -> StandardMate
 	return material
 
 
-## Maps design axes onto the bone's physical-body axes. rest_inverse takes the
-## upright standing axes to the body's own. Limbs hang straight down their own
-## bone (so both joints sit on the mesh axis) and face as far forward as the
-## rest pose does; the feet are modelled flat on the floor.
 func _design_basis(part: String, rest_inverse: Basis) -> Basis:
 	if part.ends_with("Foot"):
 		return Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP)
@@ -196,8 +173,6 @@ func _length(part: String) -> float:
 	return (_bones[part] as PhysicalBone3D).body_offset.origin.length() * 2.0
 
 
-## Limb rings from fractions of the bone's length (0 at the joint it hangs
-## from, 1 at the far end): Vector4(t, radius_x, radius_z, centre_z).
 func _limb(part: String, stops: Array, cap_top := 0.03, cap_bottom := 0.025, sides := 14) -> Dictionary:
 	var length := _length(part)
 	var rings := []
@@ -255,11 +230,6 @@ func _build_torso() -> void:
 		k.add(_pouch, MeshKit.box(Vector3(0.18, 0.08, 0.04), 0.018), _at(Vector3(0.0, 0.07, -0.268)))
 
 
-## An oval skull in skin colour, centred over the rig's own neck. A mask
-## hugs the lower face and a helmet covers the top. Both are cut on tilted planes
-## (the helmet's rim is high at the brow and low at the nape, the mask's edge the
-## other way), so they overlap at the sides and back and skin only shows in a
-## window across the face.
 func _build_head() -> void:
 	var g := 1.2
 	var proxy := _proxy("Head", "Head")
@@ -281,8 +251,6 @@ func _build_head() -> void:
 			k.add(_helmet, MeshKit.ellipsoid(Vector3(0.016, 0.03, 0.034) * g), _at(centre + Vector3(x, -0.028, 0.002) * g))
 
 
-## Part of an ellipsoid around the origin: the top above `cut` when top is true,
-## else the bottom below it, with a rounded rim along the cut.
 func _cap(radii: Vector3, cut: float, top: bool) -> Dictionary:
 	var limit := acos(clampf(cut / radii.y, -1.0, 1.0))
 	var rings := []
@@ -371,8 +339,6 @@ func _build_leg(side: String) -> void:
 	if style.pads_on:
 		shin_kit.add(_pad, MeshKit.box(Vector3(0.1, 0.105, 0.05), 0.022), _at(Vector3(0.0, shin * 0.5 - 0.035, 0.066), Vector3(-8.0, 0.0, 0.0)))
 
-	# The boot shaft rides on the shin so the leg can never poke through it;
-	# the foot's ankle ball hides where the two meet.
 	shin_kit.add(
 		_boot,
 		MeshKit.limb(
@@ -394,8 +360,6 @@ func _build_leg(side: String) -> void:
 	)
 
 
-## Foot space: x = left, y = up, z = forward, sole at y = -0.0475, ankle joint
-## at (0.003, 0.03, -0.111).
 func _build_foot(side: String) -> void:
 	var k: MeshKit = _kits[side + "Foot"]
 	k.add(_pad, MeshKit.box(Vector3(0.1, 0.027, 0.252), 0.0125, 3), _at(Vector3(0.003, -0.034, -0.032)))

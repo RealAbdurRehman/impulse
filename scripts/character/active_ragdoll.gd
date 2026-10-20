@@ -1,6 +1,8 @@
 class_name ActiveRagdoll
 extends PhysicalBoneSimulator3D
 
+const CORPSE_LAYER := 32
+
 @export_group("Tracking")
 @export var max_gain_per_step := 3.0
 @export var angular_frequency_hz := 6.5
@@ -79,7 +81,6 @@ extends PhysicalBoneSimulator3D
 ## Floor grip of a corpse: lower lets bullets and boots shove it along.
 @export var corpse_friction := 0.7
 
-
 @export_group("Hits")
 ## A hit builds up over this long instead of landing in one tick, so the bone
 ## eases into the jolt rather than snapping (seconds).
@@ -149,7 +150,6 @@ extends PhysicalBoneSimulator3D
 
 @onready var animated_skeleton: Skeleton3D = get_node(animated_skeleton_path)
 
-## A hit on its way in: speed and spin to give a bone, spread over kick_ramp.
 class Push:
 	var bone: PhysicalBone3D
 	var speed := Vector3.ZERO
@@ -308,14 +308,6 @@ func _ready() -> void:
 	physical_bones_start_simulation()
 
 
-## Lets go of the animated pose. The legs give out over legs_time and the upper
-## body follows over upper_time, so the body sags and falls instead of dropping
-## like a cut puppet. throw is the velocity the killing bullet gives the body: a
-## fast one cuts the body loose at once, so nothing pulls it back toward where it
-## stood. The bones join the environment layer straight away: they collide with
-## each other, and everything that stands on the floor (feet, pickups, bullets)
-## treats a corpse as scenery. They stay in the play plane so limbs can't flop
-## out of reach.
 func collapse(legs_time: float, upper_time: float, throw := Vector3.ZERO, spin := 0.0) -> void:
 	var launch := clampf(throw.length() / launch_speed, 0.0, 1.0)
 	_legs_time = maxf(lerpf(legs_time, launch_release, launch), 0.001)
@@ -329,17 +321,14 @@ func collapse(legs_time: float, upper_time: float, throw := Vector3.ZERO, spin :
 	set_physics_process(true)
 
 	for b in physical_bones:
-		b.collision_layer = 1
-		b.collision_mask = 1
+		b.collision_layer = CORPSE_LAYER
+		b.collision_mask = 1 | CORPSE_LAYER
 		b.axis_lock_linear_z = true
 		b.friction = corpse_friction
 
 	_apply_corpse_limits()
 
 
-## Pushes a bone with an impulse. While the body is held up the tracking rewrites
-## every bone's velocity each tick and would wipe an ordinary impulse, so the push
-## is applied after it, eased in over kick_ramp. offset is from the bone's centre.
 func kick(bone: PhysicalBone3D, impulse: Vector3, offset: Vector3) -> void:
 	_still = 0.0
 	set_physics_process(true)
@@ -360,7 +349,6 @@ func kick(bone: PhysicalBone3D, impulse: Vector3, offset: Vector3) -> void:
 	_pushes.append(push)
 
 
-## Gives a bone some spin (rad/s), eased in like a kick.
 func twist(bone: PhysicalBone3D, spin: Vector3) -> void:
 	var push := Push.new()
 	push.bone = bone
@@ -395,9 +383,6 @@ func _apply_kicks() -> void:
 	_apply_throw(dt)
 
 
-## The bullet that kills throws the body: the upper body most, the legs less, so
-## it is carried back and goes over instead of dropping straight down. The shove
-## is spread over throw_ramp.
 func _apply_throw(dt: float) -> void:
 	if _throw_age < 0.0:
 		return
@@ -429,8 +414,6 @@ func _is_leg(bone: PhysicalBone3D) -> bool:
 	return bone in leg_bones or bone in feet_bones
 
 
-## Loosens the tracking of one bone for a moment (grip 0 = limp, 1 = unaffected),
-## so a push on it shows, then lets it back in.
 func flinch(bone: PhysicalBone3D, time: float, grip: float) -> void:
 	if _flinch.has(bone):
 		var f: Array = _flinch[bone]
@@ -500,9 +483,9 @@ func _update_collapse(delta: float) -> void:
 	_ang_upper_s = 1.0 - smoothstep(0.0, _upper_time, late)
 
 	for b in physical_bones:
-		var scale := _mass_scale(String(b.bone_name))
-		if scale != 1.0:
-			b.mass = (_rest_mass[b] as float) * lerpf(1.0 / scale, 1.0, _legs_s)
+		var heft := _mass_scale(String(b.bone_name))
+		if heft != 1.0:
+			b.mass = (_rest_mass[b] as float) * lerpf(1.0 / heft, 1.0, _legs_s)
 
 	if _collapse > _delay + maxf(_legs_time, _upper_time):
 		_down = true
@@ -717,9 +700,6 @@ func _update_body_velocity(delta: float) -> void:
 		_body_v = _body_v.lerp(v, 1.0 - exp(-body_velocity_smoothing * delta))
 
 
-## Keeps limp arms from swinging past corpse_arm_reach from hanging by the torso:
-## an arm beyond it is turned back toward the body at arm_return_rate, so it
-## comes back smoothly rather than stopping dead.
 func _limit_arms() -> void:
 	var down := (hips.global_position - chest.global_position).normalized()
 	var reach := deg_to_rad(corpse_arm_reach)
@@ -742,8 +722,6 @@ func _limit_arms() -> void:
 			arm.angular_velocity += axis * (want - along)
 
 
-## A downed body only needs its kicks applied, and goes back to sleep once it is
-## still (a kick wakes it).
 func _corpse_step(delta: float) -> void:
 	_limit_arms()
 	_apply_kicks()
@@ -831,8 +809,6 @@ func _physics_process(delta: float) -> void:
 	_apply_kicks()
 
 
-## Arms and head keep full feedforward so aiming stays snappy; hips, torso and
-## legs track without it, which stops each step jerking the whole body.
 func _feedforward_for(bone: PhysicalBone3D) -> float:
 	if bone in arm_bones or bone.bone_name.ends_with("Head"):
 		return feedforward
@@ -961,6 +937,9 @@ func _target_body_transform(bone: PhysicalBone3D) -> Transform3D:
 
 
 func _on_animated_skeleton_updated() -> void:
+	if not animated_skeleton.is_inside_tree():
+		return
+
 	var n := animated_skeleton.get_bone_count()
 	_anim_poses.resize(n)
 
