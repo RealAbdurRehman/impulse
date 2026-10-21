@@ -21,6 +21,7 @@ signal corpse_struck(amount: float, point: Vector3, direction: Vector3, bone: Ph
 var current := 0.0
 var alive := true
 var bleeding: Bleeding
+var dismemberment: Dismemberment
 
 var last_bone: PhysicalBone3D
 var last_direction := Vector3.ZERO
@@ -39,6 +40,10 @@ static func of(collider: Object) -> Health:
 
 func _ready() -> void:
 	current = max_health
+	dismemberment = Dismemberment.new()
+	dismemberment.name = &"Dismemberment"
+	add_child(dismemberment)
+
 	bleeding = Bleeding.new()
 	bleeding.name = &"Bleeding"
 	add_child(bleeding)

@@ -65,6 +65,17 @@ func fade(level: float) -> void:
 			material.set_shader_parameter("fade", level)
 
 
+func stump(parent: PhysicalBone3D, limb: PhysicalBone3D, joint: Vector3, toward: Vector3, damage: float) -> void:
+	var gore := maxf(amount, 0.5) * clampf(damage / 60.0, 0.8, 2.0)
+	_wound(parent, joint, 0.075 + 0.02 * gore, 0.3)
+	_wound(limb, joint, 0.065 + 0.015 * gore, 0.25)
+	_bleed(parent, joint, toward, 26.0, drip_rate * 2.0, 1.0)
+	_bleed(limb, joint, -toward, 12.0, drip_rate, 0.5)
+	_world.cloud(joint, toward, 0.32 + 0.1 * gore, 2, 0.7, 1.0, 0.6)
+	_world.jet(joint, toward, 20 + int(14.0 * gore), Vector2(2.5, 8.0), 0.8, Vector2(0.004, 0.014), Vector3.ZERO, 0.3)
+	_world.jet(joint, toward + Vector3.UP * 0.2, 16 + int(8.0 * gore), Vector2(3.0, 7.0), 0.22, Vector2(0.006, 0.015))
+
+
 func _on_damaged(damage: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
 	_strike(damage, point, direction, bone, health.current <= 0.0, false)
 

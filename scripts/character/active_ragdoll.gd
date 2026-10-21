@@ -199,6 +199,8 @@ var _throw_age := -1.0
 var _delay := 0.0
 var _down := false
 var _still := 0.0
+var _severed := { }
+var _roots := { }
 
 
 func _ready() -> void:
@@ -303,6 +305,47 @@ func collapse(legs_time: float, upper_time: float, throw := Vector3.ZERO, spin :
 	_apply_corpse_limits()
 
 
+func parent_bone(bone: PhysicalBone3D) -> PhysicalBone3D:
+	var idx := animated_skeleton.get_bone_parent(bone_indices[bone])
+	while idx >= 0:
+		for other in physical_bones:
+			if bone_indices[other] == idx:
+				return other
+
+		idx = animated_skeleton.get_bone_parent(idx)
+
+	return null
+
+
+func can_sever(bone: PhysicalBone3D) -> bool:
+	return not _roots.has(bone) and parent_bone(bone) != null
+
+
+func sever(bone: PhysicalBone3D) -> Array[PhysicalBone3D]:
+	_roots[bone] = true
+	var detached: Array[PhysicalBone3D] = [bone]
+	for other in physical_bones:
+		var up := parent_bone(other)
+		while up != null:
+			if up == bone:
+				detached.append(other)
+				break
+
+			up = parent_bone(up)
+
+	for b in detached:
+		_severed[b] = true
+
+	bone.joint_type = PhysicalBone3D.JOINT_TYPE_6DOF
+	for axis in ["x", "y", "z"]:
+		bone.set("joint_constraints/%s/linear_limit_enabled" % axis, false)
+		bone.set("joint_constraints/%s/angular_limit_enabled" % axis, false)
+
+	_still = 0.0
+	set_physics_process(true)
+	return detached
+
+
 func kick(bone: PhysicalBone3D, impulse: Vector3, offset: Vector3) -> void:
 	_still = 0.0
 	set_physics_process(true)
@@ -367,6 +410,9 @@ func _apply_throw(dt: float) -> void:
 	share += smoothstep(0.0, ramp, _throw_age)
 
 	for b in physical_bones:
+		if _severed.has(b):
+			continue
+
 		var weight := 1.0
 		if b == hips:
 			weight = lerpf(1.0, throw_leg_share, 0.5)
@@ -680,6 +726,9 @@ func _limit_arms() -> void:
 
 	for shoulder in _forearm_of:
 		var arm: PhysicalBone3D = shoulder
+		if _severed.has(arm) or _severed.has(_forearm_of[arm]):
+			continue
+
 		var dir := ((_forearm_of[arm] as PhysicalBone3D).global_position - arm.global_position).normalized()
 		var excess := dir.angle_to(down) - reach
 		if excess <= 0.0:
@@ -721,6 +770,9 @@ func _physics_process(delta: float) -> void:
 	_update_collapse(delta)
 
 	for bone in physical_bones:
+		if _severed.has(bone):
+			continue
+
 		var target := _target_body_transform(bone)
 
 		_update_feedforward(bone, target, delta)

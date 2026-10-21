@@ -7,6 +7,7 @@ var clock := 0.0
 var stains: BloodStains
 var drops: BloodDrops
 var mist: BloodMist
+var gibs: Gibs
 
 
 static func of(node: Node) -> BloodWorld:
@@ -32,6 +33,10 @@ func _ready() -> void:
 	mist = BloodMist.new()
 	mist.name = &"Mist"
 	add_child(mist)
+
+	gibs = Gibs.new()
+	gibs.name = &"Gibs"
+	add_child(gibs)
 
 	_warm_up()
 
