@@ -3,7 +3,6 @@ extends Node3D
 
 @export var input: ActorInput
 @export var health: Health
-## Solid capsule that stops other characters walking through this one.
 @export var blocker: StaticBody3D
 
 @export_group("Speeds")
@@ -65,7 +64,6 @@ extends Node3D
 @export_group("Push")
 @export var push_decay := 1.5
 
-## How long a shoved character keeps stepping back once the contact ends.
 @export var shove_time := 0.3
 
 var desired_speed := 0.0

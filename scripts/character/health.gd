@@ -3,27 +3,24 @@ extends Node
 
 signal damaged(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D)
 signal died
+signal corpse_struck(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D)
 
 @export var ragdoll: PhysicalBoneSimulator3D
 @export var max_health := 100.0
 
-## Which side this character is on. Characters on the same side (set, and equal)
-## walk through each other and their bullets pass through each other.
 @export var team: StringName = &""
 
 @export_group("Hit zones")
 @export var head_multiplier := 3.0
 @export var limb_multiplier := 0.75
 
-## Bullets shove a corpse harder: nothing is holding it up any more.
 @export var corpse_impulse_scale := 1.0
 
-## Hits this close together (seconds) count as one blow, so a shotgun blast
-## adds up.
 @export var blow_window := 0.1
 
 var current := 0.0
 var alive := true
+var bleeding: Bleeding
 
 var last_bone: PhysicalBone3D
 var last_direction := Vector3.ZERO
@@ -42,6 +39,9 @@ static func of(collider: Object) -> Health:
 
 func _ready() -> void:
 	current = max_health
+	bleeding = Bleeding.new()
+	bleeding.name = &"Bleeding"
+	add_child(bleeding)
 
 	for bone in ragdoll.get_children():
 		if bone is PhysicalBone3D:
@@ -59,6 +59,7 @@ func hit(
 	impulse := 0.0,
 ) -> void:
 	if not alive:
+		corpse_struck.emit(amount * _zone(bone), point, direction, bone)
 		return
 
 	var tick := Engine.get_physics_frames()

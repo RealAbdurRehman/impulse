@@ -35,24 +35,17 @@ const CLEARED_RANGE := 15.0
 @export var health: Health
 
 @export_group("Personality")
-## AUTO picks one that suits the gun; each enemy still varies around it.
 @export var archetype := EnemyTraits.Archetype.AUTO
 @export var skill_range := Vector2(0.25, 0.85)
-## 0 = different every run.
 @export var random_seed := 0
 
 @export_group("Senses")
 @export var sight_range := 20.0
-## Half the angle (degrees) of the cone it sees in, up and down from the way it faces.
 @export var view_angle := 55.0
-## Sees anything this close even with its back turned.
 @export var rear_awareness := 1.5
-## Seconds it keeps heading for where it last saw the target before it searches.
 @export var memory_time := 5.0
 @export var search_time := 5.0
-## Seconds between noticing the target and the first shot (varies with skill).
 @export var reaction_time := 0.6
-## Shows a "?" while it is suspicious and a "!" when it spots you.
 @export var show_mark := true
 
 @export_group("Patrol")
@@ -60,29 +53,21 @@ const CLEARED_RANGE := 15.0
 @export var idle_time := Vector2(1.5, 4.5)
 
 @export_group("Combat")
-## Range it likes to fight at, by gun, in metres; each enemy scales it by its nature.
 @export var shotgun_range := Vector2(2.5, 6.0)
 @export var sniper_range := Vector2(14.0, 26.0)
 @export var rifle_range := Vector2(6.0, 13.0)
 @export var pistol_range := Vector2(4.5, 10.0)
-## Beyond this it raises the gun to its eye before shooting (smaller spread).
 @export var scope_distance := 4.5
 
 @export_group("Fair play")
-## Holds fire while the player's camera doesn't show it (unless it has been shot),
-## and keeps to ranges the picture covers.
 @export var fair_play := true
-## How far outside the picture (metres) it still counts as seen.
 @export var fair_margin := 0.3
-## Seconds after appearing before it notices anything.
 @export var spawn_grace := 1.5
 
 @export_group("Tactics")
-## How far it looks for cover and for a flanking route, in metres.
 @export var cover_search := 14.0
 @export var flank_search := 30.0
 @export var flank_limit := 40.0
-## How far around its spawn point the level is mapped for routes and cover.
 @export var map_extent := 200.0
 
 var traits: EnemyTraits
@@ -841,6 +826,8 @@ func vanish() -> void:
 	tween.tween_method(func(amount: float) -> void:
 		for material in fades:
 			material.albedo_color.a = 1.0 - amount
+
+		health.bleeding.fade(1.0 - amount)
 	, 0.0, 1.0, FADE_TIME)
 	tween.tween_callback(_body.queue_free)
 

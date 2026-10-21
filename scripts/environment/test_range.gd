@@ -33,9 +33,7 @@ const SPAWN_KEYS := {
 @export var enemy_scene: PackedScene
 @export var player: CharacterMovement
 @export var camera: Camera3D
-## Falling below this height kills whoever it is.
 @export var void_height := -8.0
-## Seconds before the level restarts after the player dies.
 @export var restart_delay := 6.0
 
 var _gun := 0

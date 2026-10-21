@@ -10,20 +10,15 @@ extends Node
 @export var carrier: WeaponCarrier
 
 @export_group("Collapse")
-## Seconds for the legs and for the upper body to give out.
 @export var head_shot := Vector2(0.12, 0.25)
 @export var leg_shot := Vector2(0.15, 0.9)
 @export var body_shot := Vector2(0.55, 0.9)
 
 @export_group("Killing blow")
-## The bullet that kills still hits: it throws the body (m/s) by how hard it hit
-## (Health.blow, N s). Even a light blow throws it throw_min; a heavier one gets
-## closer to throw_top, covering 63% of the way at throw_blow. Some of it goes up.
 @export var throw_min := 1.0
 @export var throw_top := 4.5
 @export var throw_blow := 40.0
 @export var throw_lift := 0.35
-## Backward spin of the torso, per m/s of throw (rad/s).
 @export var throw_spin := 1.2
 
 

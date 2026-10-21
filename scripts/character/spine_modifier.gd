@@ -104,12 +104,9 @@ extends SkeletonModifier3D
 @export_range(0.0, 1.0) var recoil_head_share := 0.45
 
 @export_group("Hit")
-## How the torso rocks when shot: a spring (radians), and a jolt builds up over
-## hit_ramp seconds instead of arriving at once.
 @export var hit_stiffness := 55.0
 @export var hit_damping := 12.0
 @export var hit_ramp := 0.15
-## The torso never rocks back further than this, however many bullets land (degrees).
 @export_range(0.0, 90.0) var hit_max_degrees := 35.0
 
 var recoil: WeaponRecoil

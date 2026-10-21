@@ -4,12 +4,8 @@ extends Marker3D
 @export var enemy_scene: PackedScene
 @export var target: CharacterMovement
 @export var archetype := EnemyTraits.Archetype.AUTO
-## Empty keeps the gun the enemy scene comes with.
 @export var weapon: WeaponStats
-## Metres it walks to and fro from here, along the floor (negative goes left);
-## 0 wanders round the spot.
 @export var patrol_length := 0.0
-## 0 = different every time.
 @export var random_seed := 0
 @export var spawn_on_ready := true
 

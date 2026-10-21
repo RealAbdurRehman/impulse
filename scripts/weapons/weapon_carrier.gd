@@ -7,7 +7,6 @@ extends Node
 @export var throw_velocity := Vector2(1.0, 1.2)
 @export var throw_spin := 4.0
 
-## A gun that slips out of a dying hand just falls, it isn't tossed.
 @export var drop_velocity := Vector2(0.2, 0.0)
 
 

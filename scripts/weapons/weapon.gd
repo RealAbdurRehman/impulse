@@ -14,13 +14,10 @@ signal aim_changed(aiming: bool)
 @export var holder: GunHolder
 @export var character: CharacterMovement
 
-## Added to every sound this weapon makes (quieter for guns that aren't yours).
 @export var volume_db := 0.0
 
-## Multiplies each weapon's impact_impulse on characters. Lower it for a more sober feel.
 @export var bullet_force := 18.0
 
-## Bullets go through characters on the shooter's own side unless this is on.
 @export var friendly_fire := false
 
 var animator: GunAnimator

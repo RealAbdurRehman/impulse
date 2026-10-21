@@ -7,16 +7,13 @@ extends Node
 @export var spine: SpineModifier
 
 @export_group("Step back")
-## Added per 25 damage, decays on its own; limit is the most it can build up to.
 @export var stagger := 0.5
 @export var limit := 1.0
 
 @export_group("Rock")
-## Torso swing speed per 25 damage (rad/s, the spring does the rest), and the head follows.
 @export var lean_kick := 5.5
 
 @export_group("Shot leg")
-## Downward push on the pelvis when a leg is hit, and how long the pelvis lets go.
 @export var buckle := 70.0
 @export var buckle_time := 0.5
 
@@ -24,7 +21,6 @@ extends Node
 @export var limb_time := 0.45
 @export var leg_time := 0.9
 @export_range(0.0, 1.0) var grip := 0.03
-## Extra spin on the hit bone per 25 damage (rad/s).
 @export var spin := 7.0
 
 

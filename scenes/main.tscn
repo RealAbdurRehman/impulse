@@ -7,12 +7,12 @@
 [ext_resource type="Script" uid="uid://c46li2osifcqh" path="res://scripts/environment/weapon_rack.gd" id="rack_script"]
 [ext_resource type="Script" uid="uid://c5ej635bxwbg1" path="res://scripts/environment/test_range.gd" id="range_script"]
 [ext_resource type="Script" uid="uid://dqiddgx1tgcul" path="res://scripts/environment/enemy_spawn.gd" id="spawn_script"]
-[ext_resource type="Script" path="res://scripts/environment/stealth_zone.gd" id="zone_script"]
 [ext_resource type="Resource" uid="uid://bbaeow0swd2rf" path="res://scenes/weapons/g17_stats.tres" id="stats_g17"]
 [ext_resource type="Resource" uid="uid://b8obfstpskff5" path="res://scenes/weapons/l96a1_stats.tres" id="stats_l96a1"]
 [ext_resource type="Resource" uid="uid://c1cimbvnu8wjs" path="res://scenes/weapons/m4a1_stats.tres" id="stats_m4a1"]
 [ext_resource type="Resource" uid="uid://c8kjesil16hjo" path="res://scenes/weapons/rem870_stats.tres" id="stats_rem870"]
 [ext_resource type="Script" uid="uid://b48wbk45u40el" path="res://scripts/weapons/weapon_stats.gd" id="stats_script"]
+[ext_resource type="Script" uid="uid://d140dflocpw4o" path="res://scripts/environment/stealth_zone.gd" id="zone_script"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.4196, 0.4784, 0.5412, 1)
@@ -135,6 +135,12 @@ size = Vector3(11.3, 1, 4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_16"]
 size = Vector3(11.3, 1, 4)
 
+[sub_resource type="BoxMesh" id="sy_m1"]
+size = Vector3(86, 1, 4)
+
+[sub_resource type="BoxShape3D" id="sy_s2"]
+size = Vector3(86, 1, 4)
+
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 size = Vector3(170, 30, 1)
 
@@ -166,6 +172,12 @@ size = Vector3(0.4, 3.8, 4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_101"]
 size = Vector3(0.4, 3.8, 4)
+
+[sub_resource type="BoxMesh" id="sy_m3"]
+size = Vector3(90, 30, 1)
+
+[sub_resource type="BoxShape3D" id="sy_s4"]
+size = Vector3(90, 30, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_94"]
 size = Vector3(0.6, 0.8, 4)
@@ -729,18 +741,6 @@ size = Vector3(1.2, 1.1, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_113"]
 size = Vector3(20, 3.4, 0.2)
 
-[sub_resource type="BoxMesh" id="sy_m1"]
-size = Vector3(86, 1, 4)
-
-[sub_resource type="BoxShape3D" id="sy_s2"]
-size = Vector3(86, 1, 4)
-
-[sub_resource type="BoxMesh" id="sy_m3"]
-size = Vector3(90, 30, 1)
-
-[sub_resource type="BoxShape3D" id="sy_s4"]
-size = Vector3(90, 30, 1)
-
 [sub_resource type="BoxMesh" id="sy_m5"]
 size = Vector3(18.4, 0.3, 3.8)
 
@@ -920,6 +920,16 @@ surface_material_override/0 = SubResource("Mat_yard")
 [node name="Shape" type="CollisionShape3D" parent="Environment/Ground/Backyard_b" unique_id=2001874872]
 shape = SubResource("BoxShape3D_16")
 
+[node name="Yard_w" type="StaticBody3D" parent="Environment/Ground" unique_id=1344370139]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, -0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_w" unique_id=776715117]
+mesh = SubResource("sy_m1")
+surface_material_override/0 = SubResource("Mat_yard")
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Ground/Yard_w" unique_id=1139589980]
+shape = SubResource("sy_s2")
+
 [node name="Walls" type="Node3D" parent="Environment" unique_id=449982210]
 
 [node name="Back" type="StaticBody3D" parent="Environment/Walls" unique_id=1669529184]
@@ -971,6 +981,16 @@ surface_material_override/0 = SubResource("Mat_facade")
 
 [node name="Shape" type="CollisionShape3D" parent="Environment/Walls/Block6" unique_id=1019125982]
 shape = SubResource("BoxShape3D_101")
+
+[node name="Back_w" type="StaticBody3D" parent="Environment/Walls" unique_id=1524467357]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, 7, -2.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Back_w" unique_id=1768578999]
+mesh = SubResource("sy_m3")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Walls/Back_w" unique_id=1779754076]
+shape = SubResource("sy_s4")
 
 [node name="Props" type="Node3D" parent="Environment" unique_id=857184126]
 
@@ -1112,6 +1132,15 @@ surface_material_override/0 = SubResource("Mat_wall")
 
 [node name="Shape" type="CollisionShape3D" parent="Environment/Props/Shed" unique_id=505428348]
 shape = SubResource("BoxShape3D_105")
+
+[node name="Alley_crate_1" parent="Environment/Props" unique_id=931464043 instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -118, 0, 0)
+
+[node name="Alley_crate_2" parent="Environment/Props" unique_id=468838748 instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 0, 0)
+
+[node name="Alley_crate_3" parent="Environment/Props" unique_id=1087285209 instance=ExtResource("crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, 0)
 
 [node name="Stairs" type="Node3D" parent="Environment" unique_id=2109941212]
 
@@ -2199,6 +2228,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 1.7, -2)
 mesh = SubResource("BoxMesh_113")
 surface_material_override/0 = SubResource("Mat_wall")
 
+[node name="Hall_roof" type="MeshInstance3D" parent="Environment/Decor" unique_id=768517121]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 3.3, 0)
+mesh = SubResource("sy_m5")
+surface_material_override/0 = SubResource("Mat_hall")
+
+[node name="Hall_back" type="MeshInstance3D" parent="Environment/Decor" unique_id=79153750]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, -2.1)
+mesh = SubResource("sy_m6")
+surface_material_override/0 = SubResource("Mat_facade")
+
 [node name="Sign_Courtyard" type="Label3D" parent="Environment" unique_id=1551589908]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 6, -1.9)
 pixel_size = 0.012
@@ -2260,6 +2299,78 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.483955, 1.2, -1)
 script = ExtResource("rack_script")
 weapons = Array[ExtResource("stats_script")]([ExtResource("stats_m4a1"), ExtResource("stats_rem870"), ExtResource("stats_l96a1")])
 cell = Vector2(1.5, 0.4)
+
+[node name="Zones" type="Node3D" parent="Environment" unique_id=379986673]
+
+[node name="Hedge_1" type="Node3D" parent="Environment/Zones" unique_id=2001009456]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Hedge_2" type="Node3D" parent="Environment/Zones" unique_id=1921954714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Hedge_3" type="Node3D" parent="Environment/Zones" unique_id=1745604376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 0.9, 0)
+script = ExtResource("zone_script")
+size = Vector3(3.4, 1.8, 3)
+visibility = 0.08
+color = Color(0.14, 0.42, 0.16, 0.55)
+
+[node name="Shadow_hall" type="Node3D" parent="Environment/Zones" unique_id=560131452]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, 0)
+script = ExtResource("zone_script")
+size = Vector3(18, 3.2, 3)
+visibility = 0.3
+color = Color(0, 0, 0.06, 0.45)
+
+[node name="Basement_dark" type="Node3D" parent="Environment/Zones" unique_id=1623956773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -1.2, 0)
+script = ExtResource("zone_script")
+size = Vector3(14, 2.4, 3)
+visibility = 0.45
+color = Color(0, 0, 0.05, 0.28)
+
+[node name="Lobby_curtain" type="Node3D" parent="Environment/Zones" unique_id=1793399821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 1, 0)
+script = ExtResource("zone_script")
+size = Vector3(1.6, 2, 3)
+visibility = 0.12
+color = Color(0.45, 0.2, 0.2, 0.6)
+
+[node name="Sign_Stealth" type="Label3D" parent="Environment" unique_id=690074056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 6, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "STEALTH YARD"
+font_size = 96
+
+[node name="Sign_Hedges" type="Label3D" parent="Environment" unique_id=955908268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "HEDGES"
+font_size = 96
+
+[node name="Sign_Shadow" type="Label3D" parent="Environment" unique_id=509150678]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "SHADOW HALL"
+font_size = 96
+
+[node name="Sign_Alley" type="Label3D" parent="Environment" unique_id=585929839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 5, -1.9)
+pixel_size = 0.012
+modulate = Color(1, 1, 1, 0.6)
+text = "SNIPER ALLEY"
+font_size = 96
 
 [node name="Spawns" type="Node3D" parent="." unique_id=1702525197]
 
@@ -2445,106 +2556,16 @@ archetype = 5
 weapon = ExtResource("stats_l96a1")
 random_seed = 218
 
-[node name="Camera" type="Camera3D" parent="." unique_id=639322886 node_paths=PackedStringArray("target")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 2, 8)
-script = ExtResource("camera_script")
-target = NodePath("../Player")
-
-[node name="Player" parent="." unique_id=152713374 instance=ExtResource("player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 0, 0)
-
-[node name="Yard_w" type="StaticBody3D" parent="Environment/Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, -0.5, 0)
-
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_w"]
-mesh = SubResource("sy_m1")
-surface_material_override/0 = SubResource("Mat_yard")
-
-[node name="Shape" type="CollisionShape3D" parent="Environment/Ground/Yard_w"]
-shape = SubResource("sy_s2")
-
-[node name="Back_w" type="StaticBody3D" parent="Environment/Walls"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, 7, -2.5)
-
-[node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Back_w"]
-mesh = SubResource("sy_m3")
-surface_material_override/0 = SubResource("Mat_wall")
-
-[node name="Shape" type="CollisionShape3D" parent="Environment/Walls/Back_w"]
-shape = SubResource("sy_s4")
-
-[node name="Zones" type="Node3D" parent="Environment"]
-
-[node name="Sign_Stealth" type="Label3D" parent="Environment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 6, -1.9)
-pixel_size = 0.012
-modulate = Color(1, 1, 1, 0.6)
-text = "STEALTH YARD"
-font_size = 96
-
-[node name="Hedge_1" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -67, 0.9, 0)
-script = ExtResource("zone_script")
-size = Vector3(3.4, 1.8, 3)
-visibility = 0.08
-color = Color(0.14, 0.42, 0.16, 0.55)
-
-[node name="Hedge_2" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 0.9, 0)
-script = ExtResource("zone_script")
-size = Vector3(3.4, 1.8, 3)
-visibility = 0.08
-color = Color(0.14, 0.42, 0.16, 0.55)
-
-[node name="Hedge_3" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 0.9, 0)
-script = ExtResource("zone_script")
-size = Vector3(3.4, 1.8, 3)
-visibility = 0.08
-color = Color(0.14, 0.42, 0.16, 0.55)
-
-[node name="Sign_Hedges" type="Label3D" parent="Environment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -75, 5, -1.9)
-pixel_size = 0.012
-modulate = Color(1, 1, 1, 0.6)
-text = "HEDGES"
-font_size = 96
-
-[node name="Yard_hedge_guard" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+[node name="Yard_hedge_guard" type="Marker3D" parent="Spawns" unique_id=1911118861 node_paths=PackedStringArray("target")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -89, 0.05, 0)
 script = ExtResource("spawn_script")
 enemy_scene = ExtResource("enemy")
 target = NodePath("../../Player")
 archetype = 1
 weapon = ExtResource("stats_m4a1")
-patrol_length = 4
 random_seed = 301
 
-[node name="Shadow_hall" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, 0)
-script = ExtResource("zone_script")
-size = Vector3(18, 3.2, 3)
-visibility = 0.3
-color = Color(0, 0, 0.06, 0.45)
-
-[node name="Hall_roof" type="MeshInstance3D" parent="Environment/Decor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 3.3, 0)
-mesh = SubResource("sy_m5")
-surface_material_override/0 = SubResource("Mat_hall")
-
-[node name="Hall_back" type="MeshInstance3D" parent="Environment/Decor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, -2.1)
-mesh = SubResource("sy_m6")
-surface_material_override/0 = SubResource("Mat_facade")
-
-[node name="Sign_Shadow" type="Label3D" parent="Environment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 5, -1.9)
-pixel_size = 0.012
-modulate = Color(1, 1, 1, 0.6)
-text = "SHADOW HALL"
-font_size = 96
-
-[node name="Yard_hall_guard_a" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+[node name="Yard_hall_guard_a" type="Marker3D" parent="Spawns" unique_id=325831598 node_paths=PackedStringArray("target")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -110.5, 0.05, 0)
 script = ExtResource("spawn_script")
 enemy_scene = ExtResource("enemy")
@@ -2553,7 +2574,7 @@ archetype = 4
 weapon = ExtResource("stats_m4a1")
 random_seed = 302
 
-[node name="Yard_hall_guard_b" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+[node name="Yard_hall_guard_b" type="Marker3D" parent="Spawns" unique_id=1116436772 node_paths=PackedStringArray("target")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -95.5, 0.05, 0)
 script = ExtResource("spawn_script")
 enemy_scene = ExtResource("enemy")
@@ -2562,23 +2583,7 @@ archetype = 1
 weapon = ExtResource("stats_g17")
 random_seed = 303
 
-[node name="Alley_crate_1" parent="Environment/Props" instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -118, 0, 0)
-
-[node name="Alley_crate_2" parent="Environment/Props" instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 0, 0)
-
-[node name="Alley_crate_3" parent="Environment/Props" instance=ExtResource("crate")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130, 0, 0)
-
-[node name="Sign_Alley" type="Label3D" parent="Environment"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -124, 5, -1.9)
-pixel_size = 0.012
-modulate = Color(1, 1, 1, 0.6)
-text = "SNIPER ALLEY"
-font_size = 96
-
-[node name="Yard_sniper" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+[node name="Yard_sniper" type="Marker3D" parent="Spawns" unique_id=351445744 node_paths=PackedStringArray("target")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -134.5, 0.05, 0)
 script = ExtResource("spawn_script")
 enemy_scene = ExtResource("enemy")
@@ -2587,7 +2592,7 @@ archetype = 5
 weapon = ExtResource("stats_l96a1")
 random_seed = 304
 
-[node name="Yard_spotter" type="Marker3D" parent="Spawns" node_paths=PackedStringArray("target")]
+[node name="Yard_spotter" type="Marker3D" parent="Spawns" unique_id=1382138323 node_paths=PackedStringArray("target")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -128, 0.05, 0)
 script = ExtResource("spawn_script")
 enemy_scene = ExtResource("enemy")
@@ -2596,16 +2601,10 @@ archetype = 6
 weapon = ExtResource("stats_m4a1")
 random_seed = 305
 
-[node name="Basement_dark" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -1.2, 0)
-script = ExtResource("zone_script")
-size = Vector3(14, 2.4, 3)
-visibility = 0.45
-color = Color(0, 0, 0.05, 0.28)
+[node name="Camera" type="Camera3D" parent="." unique_id=639322886 node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 2, 8)
+script = ExtResource("camera_script")
+target = NodePath("../Player")
 
-[node name="Lobby_curtain" type="Node3D" parent="Environment/Zones"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.1, 1, 0)
-script = ExtResource("zone_script")
-size = Vector3(1.6, 2, 3)
-visibility = 0.12
-color = Color(0.45, 0.2, 0.2, 0.6)
+[node name="Player" parent="." unique_id=152713374 instance=ExtResource("player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 0, 0)

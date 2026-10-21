@@ -75,41 +75,24 @@ const CORPSE_LAYER := 32
 @export var mirror_left_elbow := true
 
 @export_group("Collapse")
-## Seconds for the upper body to lose its grip after the legs start to give way.
 @export var upper_collapse_delay := 0.12
 
-## Floor grip of a corpse: lower lets bullets and boots shove it along.
 @export var corpse_friction := 0.7
 
 @export_group("Hits")
-## A hit builds up over this long instead of landing in one tick, so the bone
-## eases into the jolt rather than snapping (seconds).
 @export var kick_ramp := 0.18
 
-## A held-up body soaks hits up through its joints, so they are amplified to show;
-## the caps are the largest speed and spin a single hit can give a bone.
 @export var kick_gain := 4.0
 @export var max_kick_speed := 5.0
 @export var max_kick_spin := 35.0
 
-## Flesh soaks bullets: one hit never pushes a corpse's bone faster than
-## corpse_hit_speed (heavy bullets get close to it, light ones well under;
-## corpse_hit_scale is how heavy "heavy" is), and every hit that lands in quick
-## succession gives less than the last. Each hit adds soak_per_hit to a soak that
-## fades at soak_fade per second, and a hit is scaled by 1 / (1 + soak).
 @export var corpse_hit_speed := 8.0
 @export var corpse_hit_scale := 6.0
 @export var soak_per_hit := 0.0
 @export var soak_fade := 4.0
 
-## A hit bone lets go of the animated pose over this long, and takes it back
-## smoothly once its flinch time is up.
 @export var flinch_attack := 0.1
 
-## Joint limits a body keeps once it is down, so a corpse can't fold into poses a
-## person can't make (legs curled up to the chest or swung over the back, a head
-## tucked to the belly). Measured from straight about the hip's swing axis:
-## positive is the leg going forward and up.
 @export var corpse_hip_flexion := 75.0
 @export var corpse_hip_extension := 25.0
 @export var corpse_hip_swing := 25.0
@@ -117,24 +100,15 @@ const CORPSE_LAYER := 32
 @export var corpse_spine_limits := Vector3(20.0, 15.0, 20.0)
 @export var corpse_head_limits := Vector3(30.0, 25.0, 25.0)
 
-## Limp arms can't swing further than this from hanging by the torso (degrees, 0 =
-## along the body, 90 = straight out), however hard the body is thrown, and are
-## brought back at this rate (1/s). Without it, thrown arms end up over the head.
 @export var corpse_arm_reach := 70.0
 @export var arm_return_rate := 14.0
 
-## Limp arms pass through the body they hang from instead of propping on it
-## (and on each other), so they drop to the floor rather than resting in the air.
 @export var arms_ignore_body := true
 
 @export_group("Killing blow")
-## A throw this fast (m/s) cuts the body loose from its standing pose at once;
-## slower ones sag first. The loss of grip takes launch_release seconds.
 @export var launch_speed := 2.5
 @export var launch_release := 0.05
 
-## The throw is spread over this long (seconds), and the legs go with it by
-## this share of the upper body's speed.
 @export var throw_ramp := 0.1
 @export_range(0.0, 1.0) var throw_leg_share := 0.6
 
