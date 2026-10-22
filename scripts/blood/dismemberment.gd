@@ -43,15 +43,20 @@ func _ready() -> void:
 	health.corpse_struck.connect(_on_corpse_struck)
 
 
-func _on_damaged(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
-	_strike(amount, point, direction, bone, false)
+func _on_damaged(amount: float, _point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
+	_strike(amount, direction, bone, false)
 
 
-func _on_corpse_struck(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
-	_strike(amount, point, direction, bone, true)
+func _on_corpse_struck(
+	amount: float,
+	_point: Vector3,
+	direction: Vector3,
+	bone: PhysicalBone3D,
+) -> void:
+	_strike(amount, direction, bone, true)
 
 
-func _strike(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D, corpse: bool) -> void:
+func _strike(amount: float, direction: Vector3, bone: PhysicalBone3D, corpse: bool) -> void:
 	if not enabled:
 		return
 
@@ -76,7 +81,11 @@ func _cut(bone: PhysicalBone3D, damage: float, direction: Vector3, corpse: bool)
 	var half := bone.global_transform.basis * bone.body_offset.origin
 	var near := bone.global_position + half
 	var far := bone.global_position - half
-	var joint := near if near.distance_to(parent.global_position) < far.distance_to(parent.global_position) else far
+	var joint := (
+		near
+		if near.distance_to(parent.global_position) < far.distance_to(parent.global_position)
+		else far
+	)
 	var reach := (bone.global_position - joint).normalized()
 	var radius: float = StumpCap.RADIUS[StumpCap.part_of(bone)]
 
@@ -107,12 +116,17 @@ func _cut(bone: PhysicalBone3D, damage: float, direction: Vector3, corpse: bool)
 		StumpCap.attach(bone, joint, -reach, radius)
 
 	var dir := Vector3(direction.x, direction.y, 0.0).normalized()
-	var speed := lerpf(launch.x, launch.y, clampf(damage / 250.0, 0.0, 1.0)) * float(THROW[StumpCap.part_of(bone)])
+	var speed := lerpf(launch.x, launch.y, clampf(damage / 250.0, 0.0, 1.0)) * float(
+		THROW[StumpCap.part_of(bone)]
+	)
 	var thrown := (dir * 0.75 + reach * 0.5).normalized() * speed + Vector3.UP
 	for piece in loose:
 		piece.linear_velocity += thrown
-		piece.angular_velocity += Vector3.BACK * randf_range(-12.0, 12.0) + Vector3(randf_range(-3.0, 3.0), randf_range(-3.0, 3.0), 0.0)
+		piece.angular_velocity += Vector3.BACK * randf_range(-12.0, 12.0) + Vector3(
+			randf_range(-3.0, 3.0),
+			randf_range(-3.0, 3.0),
+			0.0,
+		)
 
 	health.bleeding.stump(parent, bone, joint, reach, damage)
 	BloodWorld.of(self).gibs.burst(joint, dir, 3 + int(damage * gibs_per_damage), Vector2(1.5, 5.5))
-

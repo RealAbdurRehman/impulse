@@ -747,6 +747,12 @@ size = Vector3(18.4, 0.3, 3.8)
 [sub_resource type="BoxMesh" id="sy_m6"]
 size = Vector3(18, 3.2, 0.2)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ceiling_basement"]
+size = Vector3(14, 0.3, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ceiling_hall"]
+size = Vector3(12, 0.3, 4)
+
 [node name="TestRange" type="Node3D" unique_id=1212374667 node_paths=PackedStringArray("player", "camera")]
 script = ExtResource("range_script")
 enemy_scene = ExtResource("enemy")
@@ -2608,3 +2614,15 @@ target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=152713374 instance=ExtResource("player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 0, 0)
+
+[node name="Basement_ceiling_body" type="StaticBody3D" parent="Environment/Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -0.15, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Basement_ceiling_body"]
+shape = SubResource("BoxShape3D_ceiling_basement")
+
+[node name="Hall_ceiling_body" type="StaticBody3D" parent="Environment/Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 2.25, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Hall_ceiling_body"]
+shape = SubResource("BoxShape3D_ceiling_hall")

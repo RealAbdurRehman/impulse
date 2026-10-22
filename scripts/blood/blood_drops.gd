@@ -20,7 +20,6 @@ var _size := PackedFloat32Array()
 var _left := PackedFloat32Array()
 var _drip := PackedByteArray()
 var _next := 0
-var _live := 0
 var _buffer := PackedFloat32Array()
 var _multi: MultiMesh
 var _query := PhysicsRayQueryParameters3D.new()
@@ -143,7 +142,9 @@ func _land(point: Vector3, normal: Vector3, vel: Vector3, size: float, drip: boo
 	var along := vel - normal * vel.dot(normal)
 	var glance := along.length() / maxf(speed, 0.001)
 	var punch := clampf(speed * 0.22, 0.55, 1.5)
-	var radius := size * splat_scale * punch * randf_range(0.6, 1.5) * (1.0 + 1.1 * pow(randf(), 5.0))
+	var radius := size * splat_scale * punch * randf_range(0.6, 1.5) * (
+		1.0 + 1.1 * pow(randf(), 5.0)
+	)
 	if radius < 0.03 and randf() < 0.4:
 		return
 
@@ -157,9 +158,23 @@ func _land(point: Vector3, normal: Vector3, vel: Vector3, size: float, drip: boo
 		var runs := 1 + int(randf() < 0.3) + int(randf() < 0.12)
 		for i in runs:
 			var at := point + side * randf_range(-0.5, 0.5) * radius * float(i)
-			stains.streak(at, normal, lerpf(0.06, 0.5, pow(randf(), 1.6)), randf_range(0.5, 1.0), clock)
+			stains.streak(
+				at,
+				normal,
+				lerpf(0.06, 0.5, pow(randf(), 1.6)),
+				randf_range(0.5, 1.0),
+				clock,
+			)
 
 	if size > 0.011 and speed > 3.0:
 		for i in mini(int(size * 220.0), 5):
-			var kick := normal * randf_range(0.5, 0.9) + Vector3(randf_range(-1.0, 1.0), randf_range(0.0, 0.5), randf_range(-1.0, 1.0)) * 0.7
-			spawn(point + normal * 0.01, kick.normalized() * speed * randf_range(0.12, 0.3), size * randf_range(0.2, 0.4))
+			var kick := normal * randf_range(0.5, 0.9) + Vector3(
+				randf_range(-1.0, 1.0),
+				randf_range(0.0, 0.5),
+				randf_range(-1.0, 1.0),
+			) * 0.7
+			spawn(
+				point + normal * 0.01,
+				kick.normalized() * speed * randf_range(0.12, 0.3),
+				size * randf_range(0.2, 0.4),
+			)

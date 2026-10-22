@@ -52,6 +52,7 @@ ads_move_scale = 0.35
 ads_spread_scale = 0.1
 ads_recoil_scale = 0.85
 damage = 120.0
+penetration = 1.0
 max_range = 120.0
 impact_impulse = 8.0
 spread_degrees = 0.15

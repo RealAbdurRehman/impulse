@@ -304,7 +304,7 @@ func _pellet_direction(dir: Vector3, index: int) -> Vector3:
 const FAN: Array[float] = [0.0, 0.05, -0.05, 0.1, -0.1, 0.15, -0.15]
 
 
-func _cast(origin: Vector3, end: Vector3) -> Dictionary:
+func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 	var space := holder.gun.get_world_3d().direct_space_state
 	var best := { }
 	var nearest := INF
@@ -313,15 +313,15 @@ func _cast(origin: Vector3, end: Vector3) -> Dictionary:
 			origin + Vector3(0.0, 0.0, z),
 			end + Vector3(0.0, 0.0, z),
 			stats.hit_mask | Hitboxes.LAYER,
-			_exclude,
+			exclude,
 		)
 		query.collide_with_areas = true
 
 		var hit := space.intersect_ray(query)
-		var skipped := _exclude
+		var skipped := exclude
 		while not hit.is_empty() and _is_friend(hit.collider):
-			if skipped.size() == _exclude.size():
-				skipped = _exclude.duplicate()
+			if skipped.size() == exclude.size():
+				skipped = exclude.duplicate()
 
 			skipped.append(hit.rid)
 			query.exclude = skipped
@@ -343,19 +343,83 @@ func _is_friend(collider: Object) -> bool:
 	return not friendly_fire and other != null and other.team != &"" and other.team == character.health.team
 
 
+const MAX_PASSES := 12
+
+
 func _trace(origin: Vector3, dir: Vector3) -> void:
 	var end := origin + dir * stats.max_range
-	var hit := _cast(origin, end)
+	var skip := _exclude.duplicate()
+	var reach := stats.penetration
+	var from := origin
+	var first := { }
+	var struck := { }
 
-	if hit.is_empty():
-		bullet_traced.emit(origin, end, hit)
+	for i in MAX_PASSES:
+		var hit := _cast(from, origin + dir * stats.max_range, skip)
+		if hit.is_empty():
+			break
+
+		if first.is_empty():
+			first = hit
+
+		if struck.is_empty() and Health.of(hit.collider) != null:
+			struck = hit
+
+		_apply_hit(hit, dir, origin.distance_to(hit.position), lerpf(0.4, 1.0, reach / stats.penetration))
+
+		var resistance := Surfaces.resistance(hit.collider)
+		var depth := reach / resistance
+		var exit := _exit(hit, dir, depth, skip)
+		_pass_through(hit, skip)
+
+		if exit.is_empty():
+			end = hit.position + dir * depth
+			break
+
+		reach -= hit.position.distance_to(exit.position) * resistance
+		from = exit.position + dir * 0.01
+		from.z = character.plane_z
+
+	bullet_traced.emit(origin, end, struck if not struck.is_empty() else first)
+
+
+func _exit(hit: Dictionary, dir: Vector3, depth: float, skip: Array[RID]) -> Dictionary:
+	var space := holder.gun.get_world_3d().direct_space_state
+	var ignore := skip.duplicate()
+	var start: Vector3 = hit.position
+
+	for i in MAX_PASSES:
+		var query := PhysicsRayQueryParameters3D.create(
+			start + dir * depth,
+			start + dir * 0.002,
+			stats.hit_mask | Hitboxes.LAYER,
+			ignore,
+		)
+		query.collide_with_areas = true
+
+		var found := space.intersect_ray(query)
+		if found.is_empty() or found.rid == hit.rid:
+			return found
+
+		ignore.append(found.rid)
+
+	return { }
+
+
+func _pass_through(hit: Dictionary, skip: Array[RID]) -> void:
+	skip.append(hit.rid)
+
+	var bone := Hitboxes.bone_of(hit.collider)
+	if bone == null:
 		return
 
-	_apply_hit(hit, dir, origin.distance_to(hit.position))
-	bullet_traced.emit(origin, hit.position, hit)
+	skip.append(bone.get_rid())
+	for child in bone.get_children():
+		if child is Area3D:
+			skip.append(child.get_rid())
 
 
-func _apply_hit(hit: Dictionary, dir: Vector3, distance: float) -> void:
+func _apply_hit(hit: Dictionary, dir: Vector3, distance: float, power: float) -> void:
 	var collider := hit.collider as Node3D
 	var body: Node3D = Hitboxes.bone_of(collider)
 	if body == null:
@@ -368,9 +432,9 @@ func _apply_hit(hit: Dictionary, dir: Vector3, distance: float) -> void:
 	if health != null:
 		force = bullet_force * health.impulse_scale()
 
-	var impulse := dir * stats.impact_impulse * force
+	var impulse := dir * stats.impact_impulse * force * power
 	if health != null:
-		health.hit(_damage_at(distance), point, dir, body as PhysicalBone3D, impulse.length())
+		health.hit(_damage_at(distance) * power, point, dir, body as PhysicalBone3D, impulse.length())
 
 	var ragdoll := body.get_parent() as ActiveRagdoll
 	if ragdoll != null:

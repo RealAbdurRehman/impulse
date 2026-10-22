@@ -104,6 +104,8 @@ extends Resource
 @export var pellets := 1
 @export var impact_impulse := 1.0
 
+@export_range(0.01, 3.0, 0.01) var penetration := 0.3
+
 @export_flags_3d_physics var hit_mask := 3
 
 @export_range(0.0, 20.0, 0.1) var spread_degrees := 0.5

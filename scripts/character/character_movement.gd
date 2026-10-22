@@ -30,6 +30,7 @@ extends Node3D
 @export var wall_check_distance := 0.45
 @export var head_check_height := 1.5
 @export var stand_height := 1.8
+@export var head_clearance := 1.74
 @export var crouch_height := 1.35
 @export var crouch_head_check := 1.3
 
@@ -306,9 +307,9 @@ func _update_air(delta: float) -> void:
 			_vy = 0.0
 			grounded = true
 	else:
-		var bump := _ray(Vector3(p.x, old.y + stand_height - 0.1, p.z), Vector3(p.x, p.y + stand_height + 0.05, p.z))
+		var bump := _ray(Vector3(p.x, old.y + head_clearance - 0.1, p.z), Vector3(p.x, p.y + head_clearance + 0.02, p.z))
 		if not bump.is_empty():
-			p.y = maxf((bump.position as Vector3).y - stand_height - 0.05, old.y)
+			p.y = maxf((bump.position as Vector3).y - head_clearance - 0.02, old.y)
 			_vy = 0.0
 
 	global_position = p

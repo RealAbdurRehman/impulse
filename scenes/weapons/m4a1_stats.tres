@@ -36,6 +36,7 @@ ads_yaw_degrees = 4.0
 ads_zoom = 0.8
 ads_move_scale = 0.5
 damage = 20.0
+penetration = 0.6
 max_range = 90.0
 impact_impulse = 1.5
 spread_degrees = 0.8
