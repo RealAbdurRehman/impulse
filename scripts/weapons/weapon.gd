@@ -80,6 +80,8 @@ func _ready() -> void:
 	audio.name = &"WeaponAudio"
 	add_child(audio)
 
+	ImpactWorld.of.call_deferred(self)
+
 
 func reload() -> void:
 	if _reload_left > 0.0 or ammo >= stats.magazine_size:
@@ -344,6 +346,7 @@ func _is_friend(collider: Object) -> bool:
 
 
 const MAX_PASSES := 12
+const REFERENCE_DAMAGE := 25.0
 
 
 func _trace(origin: Vector3, dir: Vector3) -> void:
@@ -353,6 +356,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 	var from := origin
 	var first := { }
 	var struck := { }
+	var world := ImpactWorld.of(self)
 
 	for i in MAX_PASSES:
 		var hit := _cast(from, origin + dir * stats.max_range, skip)
@@ -365,9 +369,14 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		if struck.is_empty() and Health.of(hit.collider) != null:
 			struck = hit
 
-		_apply_hit(hit, dir, origin.distance_to(hit.position), lerpf(0.4, 1.0, reach / stats.penetration))
+		var power := lerpf(0.4, 1.0, reach / stats.penetration)
+		_apply_hit(hit, dir, origin.distance_to(hit.position), power)
 
-		var resistance := Surfaces.resistance(hit.collider)
+		var surface := Surfaces.of(hit.collider)
+		var resistance := Surfaces.style(surface).resistance
+		var size := clampf(sqrt(stats.damage * power / REFERENCE_DAMAGE), 0.5, 2.2)
+		world.strike(hit.position, hit.normal, dir, surface, size)
+
 		var depth := reach / resistance
 		var exit := _exit(hit, dir, depth, skip)
 		_pass_through(hit, skip)
@@ -375,6 +384,8 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		if exit.is_empty():
 			end = hit.position + dir * depth
 			break
+
+		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true)
 
 		reach -= hit.position.distance_to(exit.position) * resistance
 		from = exit.position + dir * 0.01

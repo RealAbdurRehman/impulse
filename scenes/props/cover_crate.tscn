@@ -11,6 +11,7 @@ albedo_color = Color(0.34, 0.36, 0.4, 1)
 roughness = 0.9
 
 [node name="CoverCrate" type="StaticBody3D"]
+metadata/surface = &"wood"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)

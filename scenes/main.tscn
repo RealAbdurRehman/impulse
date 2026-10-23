@@ -778,6 +778,7 @@ environment = SubResource("Env_res")
 
 [node name="Yard_a" type="StaticBody3D" parent="Environment/Ground" unique_id=112040928]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, -0.5, 0)
+metadata/surface = &"dirt"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_a" unique_id=1384905033]
 mesh = SubResource("BoxMesh_3")
@@ -788,6 +789,7 @@ shape = SubResource("BoxShape3D_3")
 
 [node name="Yard_b" type="StaticBody3D" parent="Environment/Ground" unique_id=535689046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.4, -0.5, 0)
+metadata/surface = &"dirt"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_b" unique_id=1459823093]
 mesh = SubResource("BoxMesh_4")
@@ -908,6 +910,7 @@ shape = SubResource("BoxShape3D_14")
 
 [node name="Backyard_a" type="StaticBody3D" parent="Environment/Ground" unique_id=1088873812]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70.75, -0.5, 0)
+metadata/surface = &"dirt"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Backyard_a" unique_id=1060438667]
 mesh = SubResource("BoxMesh_15")
@@ -918,6 +921,7 @@ shape = SubResource("BoxShape3D_15")
 
 [node name="Backyard_b" type="StaticBody3D" parent="Environment/Ground" unique_id=1832663088]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83.35, -0.5, 0)
+metadata/surface = &"dirt"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Backyard_b" unique_id=565855132]
 mesh = SubResource("BoxMesh_16")
@@ -928,6 +932,7 @@ shape = SubResource("BoxShape3D_16")
 
 [node name="Yard_w" type="StaticBody3D" parent="Environment/Ground" unique_id=1344370139]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, -0.5, 0)
+metadata/surface = &"dirt"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Ground/Yard_w" unique_id=776715117]
 mesh = SubResource("sy_m1")
@@ -970,6 +975,7 @@ shape = SubResource("BoxShape3D_2")
 
 [node name="Block3" type="StaticBody3D" parent="Environment/Walls" unique_id=1939488393]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 5.2, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Block3" unique_id=1223817579]
 mesh = SubResource("BoxMesh_98")
@@ -980,6 +986,7 @@ shape = SubResource("BoxShape3D_98")
 
 [node name="Block6" type="StaticBody3D" parent="Environment/Walls" unique_id=99048863]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 6.3, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Walls/Block6" unique_id=1804754765]
 mesh = SubResource("BoxMesh_101")
@@ -1005,6 +1012,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38.5, 0, 0)
 
 [node name="Block1" type="StaticBody3D" parent="Environment/Props" unique_id=648154255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35.6, 0.4, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block1" unique_id=1751408243]
 mesh = SubResource("BoxMesh_94")
@@ -1015,6 +1023,7 @@ shape = SubResource("BoxShape3D_94")
 
 [node name="Planter" type="StaticBody3D" parent="Environment/Props" unique_id=504549230]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.2, 0.25, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Planter" unique_id=186244685]
 mesh = SubResource("BoxMesh_95")
@@ -1025,6 +1034,7 @@ shape = SubResource("BoxShape3D_95")
 
 [node name="Block2" type="StaticBody3D" parent="Environment/Props" unique_id=2079004646]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, -2, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block2" unique_id=1677349232]
 mesh = SubResource("BoxMesh_96")
@@ -1038,6 +1048,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.2, -2.4, 0)
 
 [node name="Desk" type="StaticBody3D" parent="Environment/Props" unique_id=339335734]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 0.25, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Desk" unique_id=776378784]
 mesh = SubResource("BoxMesh_97")
@@ -1048,6 +1059,7 @@ shape = SubResource("BoxShape3D_97")
 
 [node name="Block4" type="StaticBody3D" parent="Environment/Props" unique_id=254579288]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 0.4, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block4" unique_id=947090474]
 mesh = SubResource("BoxMesh_99")
@@ -1058,6 +1070,7 @@ shape = SubResource("BoxShape3D_99")
 
 [node name="Block5" type="StaticBody3D" parent="Environment/Props" unique_id=155487723]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.3, 2.8, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block5" unique_id=2114734447]
 mesh = SubResource("BoxMesh_100")
@@ -1068,6 +1081,7 @@ shape = SubResource("BoxShape3D_100")
 
 [node name="Desk3" type="StaticBody3D" parent="Environment/Props" unique_id=425194746]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.8, 5.05, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Desk3" unique_id=2134169679]
 mesh = SubResource("BoxMesh_102")
@@ -1078,6 +1092,7 @@ shape = SubResource("BoxShape3D_102")
 
 [node name="AC1" type="StaticBody3D" parent="Environment/Props" unique_id=1099872251]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49.7, 7.6, 0)
+metadata/surface = &"metal"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/AC1" unique_id=398391004]
 mesh = SubResource("BoxMesh_103")
@@ -1088,6 +1103,7 @@ shape = SubResource("BoxShape3D_103")
 
 [node name="AC2" type="StaticBody3D" parent="Environment/Props" unique_id=1158850366]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.1, 7.6, 0)
+metadata/surface = &"metal"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/AC2" unique_id=2115809805]
 mesh = SubResource("BoxMesh_103")
@@ -1098,6 +1114,7 @@ shape = SubResource("BoxShape3D_103")
 
 [node name="Vent" type="StaticBody3D" parent="Environment/Props" unique_id=1128371328]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47.3, 7.45, 0)
+metadata/surface = &"metal"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Vent" unique_id=75060759]
 mesh = SubResource("BoxMesh_104")
@@ -1111,6 +1128,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 0, 0)
 
 [node name="Block7" type="StaticBody3D" parent="Environment/Props" unique_id=1926875138]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72.5, 0.4, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block7" unique_id=1180708624]
 mesh = SubResource("BoxMesh_94")
@@ -1121,6 +1139,7 @@ shape = SubResource("BoxShape3D_94")
 
 [node name="Block8" type="StaticBody3D" parent="Environment/Props" unique_id=69270300]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80.5, 0.4, 0)
+metadata/surface = &"brick"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Block8" unique_id=755048846]
 mesh = SubResource("BoxMesh_96")
@@ -1131,6 +1150,7 @@ shape = SubResource("BoxShape3D_96")
 
 [node name="Shed" type="StaticBody3D" parent="Environment/Props" unique_id=813125904]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86.3, 1.2, 0)
+metadata/surface = &"metal"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Props/Shed" unique_id=1426108646]
 mesh = SubResource("BoxMesh_105")
@@ -2054,6 +2074,7 @@ shape = SubResource("BoxShape3D_84")
 
 [node name="Jump1" type="StaticBody3D" parent="Environment/Jumps" unique_id=520740404]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55.25, 5.2, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump1" unique_id=1469111399]
 mesh = SubResource("BoxMesh_85")
@@ -2064,6 +2085,7 @@ shape = SubResource("BoxShape3D_85")
 
 [node name="Jump2" type="StaticBody3D" parent="Environment/Jumps" unique_id=796974531]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54.35, 5.6, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump2" unique_id=1554255287]
 mesh = SubResource("BoxMesh_86")
@@ -2074,6 +2096,7 @@ shape = SubResource("BoxShape3D_86")
 
 [node name="Jump3" type="StaticBody3D" parent="Environment/Jumps" unique_id=887706566]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.45, 6, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump3" unique_id=894409678]
 mesh = SubResource("BoxMesh_87")
@@ -2084,6 +2107,7 @@ shape = SubResource("BoxShape3D_87")
 
 [node name="Jump4" type="StaticBody3D" parent="Environment/Jumps" unique_id=1187401165]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 61.25, 2.8, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump4" unique_id=925556627]
 mesh = SubResource("BoxMesh_88")
@@ -2094,6 +2118,7 @@ shape = SubResource("BoxShape3D_88")
 
 [node name="Jump5" type="StaticBody3D" parent="Environment/Jumps" unique_id=2031896952]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60.35, 3.2, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump5" unique_id=885395655]
 mesh = SubResource("BoxMesh_89")
@@ -2104,6 +2129,7 @@ shape = SubResource("BoxShape3D_89")
 
 [node name="Jump6" type="StaticBody3D" parent="Environment/Jumps" unique_id=1245741241]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59.45, 3.6, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump6" unique_id=1406173318]
 mesh = SubResource("BoxMesh_90")
@@ -2114,6 +2140,7 @@ shape = SubResource("BoxShape3D_90")
 
 [node name="Jump7" type="StaticBody3D" parent="Environment/Jumps" unique_id=896964240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 67.25, 0.4, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump7" unique_id=1213211247]
 mesh = SubResource("BoxMesh_91")
@@ -2124,6 +2151,7 @@ shape = SubResource("BoxShape3D_91")
 
 [node name="Jump8" type="StaticBody3D" parent="Environment/Jumps" unique_id=808852762]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66.35, 0.8, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump8" unique_id=266810542]
 mesh = SubResource("BoxMesh_92")
@@ -2134,6 +2162,7 @@ shape = SubResource("BoxShape3D_92")
 
 [node name="Jump9" type="StaticBody3D" parent="Environment/Jumps" unique_id=1043078444]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65.45, 1.2, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump9" unique_id=1239634791]
 mesh = SubResource("BoxMesh_93")
@@ -2144,6 +2173,7 @@ shape = SubResource("BoxShape3D_93")
 
 [node name="Jump10" type="StaticBody3D" parent="Environment/Jumps" unique_id=11527764]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.35, 0.4, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump10" unique_id=1849480387]
 mesh = SubResource("BoxMesh_91")
@@ -2154,6 +2184,7 @@ shape = SubResource("BoxShape3D_91")
 
 [node name="Jump11" type="StaticBody3D" parent="Environment/Jumps" unique_id=750309623]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82.25, 0.8, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump11" unique_id=979914254]
 mesh = SubResource("BoxMesh_92")
@@ -2164,6 +2195,7 @@ shape = SubResource("BoxShape3D_92")
 
 [node name="Jump12" type="StaticBody3D" parent="Environment/Jumps" unique_id=1024170201]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83.15, 1.2, 0)
+metadata/surface = &"wood"
 
 [node name="Mesh" type="MeshInstance3D" parent="Environment/Jumps/Jump12" unique_id=1408760042]
 mesh = SubResource("BoxMesh_93")

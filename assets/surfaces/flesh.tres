@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SurfaceStyle" format=3]
+
+[ext_resource type="Script" path="res://scripts/impacts/surface_style.gd" id="1_v4feh"]
+
+[resource]
+script = ExtResource("1_v4feh")
+dust_density = 0.65
+dust_length = Vector2(0.053999998, 0.252)
+dust_width = 0.55
+spark_speed = Vector2(1.125, 3.6)
+mark_radius = Vector2(0.0325, 0.065)

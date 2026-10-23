@@ -1,14 +1,16 @@
 class_name Surfaces
 extends RefCounted
 
-const RESISTANCE := {
-	&"flesh": 1.0,
-	&"glass": 0.5,
-	&"drywall": 0.4,
-	&"wood": 1.5,
-	&"brick": 5.0,
-	&"concrete": 8.0,
-	&"metal": 12.0,
+const STYLES := {
+	&"flesh": preload("res://assets/surfaces/flesh.tres"),
+	&"glass": preload("res://assets/surfaces/glass.tres"),
+	&"drywall": preload("res://assets/surfaces/drywall.tres"),
+	&"wood": preload("res://assets/surfaces/wood.tres"),
+	&"sand": preload("res://assets/surfaces/sand.tres"),
+	&"brick": preload("res://assets/surfaces/brick.tres"),
+	&"dirt": preload("res://assets/surfaces/dirt.tres"),
+	&"concrete": preload("res://assets/surfaces/concrete.tres"),
+	&"metal": preload("res://assets/surfaces/metal.tres"),
 }
 
 
@@ -16,11 +18,15 @@ static func of(collider: Object) -> StringName:
 	if Hitboxes.bone_of(collider) != null:
 		return &"flesh"
 
-	if collider.has_meta(&"surface"):
-		return StringName(collider.get_meta(&"surface"))
+	var node := collider as Node
+	while node != null:
+		if node.has_meta(&"surface"):
+			return StringName(node.get_meta(&"surface"))
+
+		node = node.get_parent()
 
 	return &"concrete"
 
 
-static func resistance(collider: Object) -> float:
-	return RESISTANCE[of(collider)]
+static func style(surface: StringName) -> SurfaceStyle:
+	return STYLES[surface]

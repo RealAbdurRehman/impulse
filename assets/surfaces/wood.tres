@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SurfaceStyle" format=3]
+
+[ext_resource type="Script" path="res://scripts/impacts/surface_style.gd" id="1_378ry"]
+
+[resource]
+script = ExtResource("1_378ry")
+resistance = 1.5
+dust_color = Color(0.82, 0.72, 0.58, 1)
+dust_density = 0.52
+dust_count = 4.0
+dust_length = Vector2(0.044999998, 0.17999999)
+dust_width = 0.55
+dust_speed = Vector2(0.8, 2.6)
+dust_life = Vector2(0.4, 0.8)
+dust_rise = 0.1
+dust_grain = 0.4
+dust_forward = 0.3
+debris_count = 8.0
+debris_colors = Array[Color]([Color(0.74, 0.56, 0.34, 1), Color(0.56, 0.39, 0.21, 1), Color(0.84, 0.7, 0.46, 1)])
+debris_size = Vector2(0.014, 0.04)
+debris_shape = Vector3(1, 0.12, 0.12)
+debris_speed = Vector2(1, 4.5)
+debris_bounce = 0.25
+spark_speed = Vector2(1.125, 3.6)
+mark = 4
+mark_radius = Vector2(0.051999997, 0.091)
+mark_color = Color(0.82, 0.68, 0.46, 1)
