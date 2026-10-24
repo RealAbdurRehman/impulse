@@ -76,21 +76,28 @@ func _strike(amount: float, direction: Vector3, bone: PhysicalBone3D, corpse: bo
 		_cut(bone, damage, direction, corpse)
 
 
+func _end_near(of: PhysicalBone3D, point: Vector3) -> Vector3:
+	var half := of.global_transform.basis * of.body_offset.origin
+	var near := of.global_position + half
+	var far := of.global_position - half
+	return near if near.distance_to(point) < far.distance_to(point) else far
+
+
 func _cut(bone: PhysicalBone3D, damage: float, direction: Vector3, corpse: bool) -> void:
 	var parent := ragdoll.parent_bone(bone)
-	var half := bone.global_transform.basis * bone.body_offset.origin
-	var near := bone.global_position + half
-	var far := bone.global_position - half
+	var foot := StumpCap.part_of(bone) == &"Foot"
 	var joint := (
-		near
-		if near.distance_to(parent.global_position) < far.distance_to(parent.global_position)
-		else far
+		_end_near(parent, bone.global_position) if foot else _end_near(bone, parent.global_position)
 	)
-	var reach := (bone.global_position - joint).normalized()
+	var reach := (
+		(joint - parent.global_position).normalized()
+		if foot
+		else (bone.global_position - joint).normalized()
+	)
 	var radius: float = StumpCap.RADIUS[StumpCap.part_of(bone)]
 
 	var loose := ragdoll.sever(bone)
-	if not corpse:
+	if not corpse and not health.immortal:
 		health.current = 0.0
 
 	if StumpCap.part_of(bone) == &"Head":

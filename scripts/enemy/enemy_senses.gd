@@ -30,7 +30,6 @@ func shot(from: Vector3, dir: Vector3, reach: float, target: Health, friendly_fi
 	if friendly_fire and _ally_in_tube(from, dir, reach, target):
 		return Shot.ALLY
 
-	var space := body.get_world_3d().direct_space_state
 	for z in FAN:
 		var query := PhysicsRayQueryParameters3D.create(
 			from + Vector3(0.0, 0.0, z),
@@ -40,16 +39,7 @@ func shot(from: Vector3, dir: Vector3, reach: float, target: Health, friendly_fi
 		)
 		query.collide_with_areas = true
 
-		var hit := space.intersect_ray(query)
-		var skipped := _own
-		while not friendly_fire and not hit.is_empty() and _is_friend(hit.collider):
-			if skipped.size() == _own.size():
-				skipped = _own.duplicate()
-
-			skipped.append(hit.rid)
-			query.exclude = skipped
-			hit = space.intersect_ray(query)
-
+		var hit := _first_hit(query, not friendly_fire)
 		if not hit.is_empty() and Health.of(hit.collider) != target:
 			return Shot.WALL
 
@@ -66,8 +56,23 @@ func beam(from: Vector3, dir: Vector3, reach: float) -> float:
 	var query := PhysicsRayQueryParameters3D.create(from, from + dir * reach, body.ground_mask | Hitboxes.LAYER, _own)
 	query.collide_with_areas = true
 
-	var hit := body.get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := _first_hit(query, true)
 	return reach if hit.is_empty() else from.distance_to(hit.position)
+
+
+func _first_hit(query: PhysicsRayQueryParameters3D, skip_friends: bool) -> Dictionary:
+	var space := body.get_world_3d().direct_space_state
+	var hit := space.intersect_ray(query)
+	var skipped := _own
+	while skip_friends and not hit.is_empty() and _is_friend(hit.collider):
+		if skipped.size() == _own.size():
+			skipped = _own.duplicate()
+
+		skipped.append(hit.rid)
+		query.exclude = skipped
+		hit = space.intersect_ray(query)
+
+	return hit
 
 
 func _ally_in_tube(from: Vector3, dir: Vector3, reach: float, target: Health) -> bool:

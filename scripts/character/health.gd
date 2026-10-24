@@ -20,6 +20,7 @@ signal corpse_struck(amount: float, point: Vector3, direction: Vector3, bone: Ph
 
 var current := 0.0
 var alive := true
+var immortal := false
 var bleeding: Bleeding
 var dismemberment: Dismemberment
 
@@ -75,7 +76,7 @@ func hit(
 	_blow_tick = tick
 
 	amount *= _zone(bone)
-	current = maxf(current - amount, 0.0)
+	current = maxf(current - amount, _floor())
 	last_bone = bone
 	last_direction = direction
 	last_amount = amount
@@ -94,10 +95,14 @@ func drain(amount: float) -> void:
 	if not alive:
 		return
 
-	current = maxf(current - amount, 0.0)
+	current = maxf(current - amount, _floor())
 	if current <= 0.0:
 		alive = false
 		died.emit()
+
+
+func _floor() -> float:
+	return 1.0 if immortal else 0.0
 
 
 func impulse_scale() -> float:

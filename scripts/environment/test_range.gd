@@ -229,6 +229,7 @@ func _respawn_stations() -> void:
 
 func _heal() -> void:
 	var health := player.get_node("Health") as Health
+	health.immortal = _god
 	health.max_health = 1000000.0 if _god else 100.0
 	health.current = health.max_health
 
@@ -244,6 +245,7 @@ func _fall_check() -> void:
 	if player.global_position.y < void_height:
 		var health := player.get_node("Health") as Health
 		if health.alive:
+			health.immortal = false
 			var bone := health.ragdoll.get_child(0) as PhysicalBone3D
 			health.hit(100000.0, bone.global_position, Vector3.UP, bone)
 
