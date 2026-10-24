@@ -34,17 +34,17 @@ static func faces(meshes: Array[MeshInstance3D], to_bone: Transform3D) -> Packed
 	return out
 
 
-static func span(faces: PackedVector3Array) -> Vector2:
+static func span(tris: PackedVector3Array) -> Vector2:
 	var low := INF
 	var high := -INF
-	for v in faces:
+	for v in tris:
 		low = minf(low, v.y)
 		high = maxf(high, v.y)
 
 	return Vector2(low, high)
 
 
-static func build(faces: PackedVector3Array, centre: float, half: float, start: float, width: float, gap: float) -> ArrayMesh:
+static func build(tris: PackedVector3Array, centre: float, half: float, start: float, width: float, gap: float) -> ArrayMesh:
 	var step := 2.0 * half / float(ROWS)
 	var gap_y := step * 0.5
 	var first := centre - half - gap_y
@@ -52,7 +52,7 @@ static func build(faces: PackedVector3Array, centre: float, half: float, start: 
 	for k in 2 * ROWS + 3:
 		planes.append(PackedVector2Array())
 
-	_slice(faces, first, gap_y, planes)
+	_slice(tris, first, gap_y, planes)
 
 	var hulls: Array[PackedVector2Array] = []
 	var heights := PackedFloat32Array()
@@ -115,12 +115,12 @@ static func build(faces: PackedVector3Array, centre: float, half: float, start: 
 	return mesh
 
 
-static func _slice(faces: PackedVector3Array, first: float, gap: float, planes: Array[PackedVector2Array]) -> void:
+static func _slice(tris: PackedVector3Array, first: float, gap: float, planes: Array[PackedVector2Array]) -> void:
 	var last := planes.size() - 1
-	for t in range(0, faces.size(), 3):
-		var a := faces[t]
-		var b := faces[t + 1]
-		var c := faces[t + 2]
+	for t in range(0, tris.size(), 3):
+		var a := tris[t]
+		var b := tris[t + 1]
+		var c := tris[t + 2]
 		var low := minf(a.y, minf(b.y, c.y))
 		var high := maxf(a.y, maxf(b.y, c.y))
 		var k0 := maxi(ceili((low - first) / gap), 0)

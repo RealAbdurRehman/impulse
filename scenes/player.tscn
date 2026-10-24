@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_death.gd" id="6_death"]
 [ext_resource type="Script" path="res://scripts/player/player_healing.gd" id="7_healing"]
 [ext_resource type="Script" path="res://scripts/ui/player_hud.gd" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/player/player_stamina.gd" id="9_stamina"]
 
 [node name="Player" unique_id=1491936547 node_paths=PackedStringArray("input", "health") instance=ExtResource("1_char")]
 input = NodePath("PlayerInput")
@@ -49,9 +50,16 @@ health = NodePath("../Health")
 movement = NodePath("..")
 input = NodePath("../PlayerInput")
 
-[node name="PlayerHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("health", "healing", "weapon", "movement")]
+[node name="PlayerHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("health", "healing", "stamina", "weapon", "movement")]
 script = ExtResource("8_hud")
 health = NodePath("../Health")
 healing = NodePath("../PlayerHealing")
+stamina = NodePath("../PlayerStamina")
 weapon = NodePath("../Weapon")
 movement = NodePath("..")
+
+[node name="PlayerStamina" type="Node" parent="." node_paths=PackedStringArray("movement", "input", "health")]
+script = ExtResource("9_stamina")
+movement = NodePath("..")
+input = NodePath("../PlayerInput")
+health = NodePath("../Health")

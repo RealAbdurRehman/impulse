@@ -1,6 +1,8 @@
 class_name CharacterMovement
 extends Node3D
 
+signal jumped
+
 @export var input: ActorInput
 @export var health: Health
 @export var blocker: StaticBody3D
@@ -201,6 +203,8 @@ func _physics_process(delta: float) -> void:
 
 		_jump_buffer = 0.0
 		_coyote = 0.0
+
+		jumped.emit()
 
 	if jump_cut < 1.0 and input.jump_released and not grounded and _vy > 0.0:
 		_vy *= jump_cut
