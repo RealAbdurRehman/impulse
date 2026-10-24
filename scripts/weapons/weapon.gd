@@ -294,9 +294,13 @@ func _shoot() -> void:
 	ammo_changed.emit(ammo, stats.magazine_size)
 
 
-func _pellet_direction(dir: Vector3, index: int) -> Vector3:
+func spread_cone() -> float:
 	var base := stats.spread_degrees + _bloom
-	var cone := deg_to_rad(base * lerpf(1.0, stats.ads_spread_scale, character.aim_amount))
+	return deg_to_rad(base * lerpf(1.0, stats.ads_spread_scale, character.aim_amount))
+
+
+func _pellet_direction(dir: Vector3, index: int) -> Vector3:
+	var cone := spread_cone()
 	if stats.pellets == 1:
 		return dir.rotated(Vector3.BACK, cone * (randf() + randf() - 1.0))
 
