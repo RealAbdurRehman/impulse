@@ -56,6 +56,7 @@ func _throw(old_weapon: Weapon, old_holder: GunHolder, toss: Vector2) -> void:
 	character.aim_amount = 0.0
 	character.aim_speed_scale = 1.0
 	character.aim_zoom = 1.0
+	character.aim_look = 1.0
 
 	var spin := -facing * throw_spin
 	if absf(angle) > 0.15:

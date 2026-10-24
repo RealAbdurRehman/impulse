@@ -238,6 +238,7 @@ func _update_aim(delta: float) -> void:
 	character.aim_amount = smoothstep(0.0, 1.0, _aim)
 	character.aim_speed_scale = lerpf(1.0, stats.ads_move_scale, character.aim_amount)
 	character.aim_zoom = lerpf(1.0, stats.ads_zoom, character.aim_amount)
+	character.aim_look = lerpf(1.0, stats.ads_look, character.aim_amount)
 
 
 func _gun_ready() -> bool:

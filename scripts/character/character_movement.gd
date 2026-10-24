@@ -94,6 +94,7 @@ var aim_pitch := 0.0
 var aim_amount := 0.0
 var aim_speed_scale := 1.0
 var aim_zoom := 1.0
+var aim_look := 1.0
 
 var _stairs_amt := 0.0
 var _target_yaw := 0.0

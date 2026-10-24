@@ -93,6 +93,7 @@ extends Resource
 @export var ads_eye_distance := 0.22
 @export_range(-45.0, 45.0) var ads_yaw_degrees := 0.0
 @export var ads_zoom := 0.9
+@export_range(1.0, 5.0, 0.05) var ads_look := 1.0
 @export var ads_move_scale := 0.55
 @export_range(0.0, 1.0) var ads_spread_scale := 0.3
 @export_range(0.0, 1.0) var ads_recoil_scale := 0.7
