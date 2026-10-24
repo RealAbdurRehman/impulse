@@ -18,5 +18,7 @@ ads_zoom = 1.1
 ads_look = 2.5
 smoke_size = 0.5
 recoil_push = 0.02
+camera_kick = 0.22
+camera_shake = 0.15
 sounds = ExtResource("2_x3472")
 metadata/_custom_type_script = "uid://b48wbk45u40el"

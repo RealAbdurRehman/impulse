@@ -200,6 +200,10 @@ extends Resource
 
 @export_range(0.0, 1.0) var recoil_aim_influence := 1.0
 
+@export_group("Camera")
+@export var camera_kick := 0.05
+@export_range(0.0, 1.0, 0.01) var camera_shake := 0.12
+
 @export_group("Slide")
 @export var slide_travel := 0.05
 @export var slide_back_time := 0.03

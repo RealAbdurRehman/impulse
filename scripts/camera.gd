@@ -16,11 +16,24 @@ extends Camera3D
 
 var height_offset: float = 1.0
 
+var fx: CameraFx
+
 var _lead := 0.0
+var _rig := Vector3.ZERO
+var _fov := 0.0
+var _fov_before := 0.0
 
 
 func _ready() -> void:
 	fov = field_of_view
+	_fov = field_of_view
+	_fov_before = field_of_view
+	_rig = global_position
+
+	fx = CameraFx.new()
+	fx.name = &"CameraFx"
+	fx.target = target
+	add_child(fx)
 
 
 func _physics_process(delta: float) -> void:
@@ -36,8 +49,9 @@ func _physics_process(delta: float) -> void:
 	var mouse_pos: Vector2 = get_viewport().get_mouse_position()
 	var mouse_screen_center: Vector2 = (mouse_pos - (viewport_size / 2.0)) / (viewport_size / 2.0)
 
-	fov = field_of_view * target.aim_zoom
-	var half_height := z_distance * tan(deg_to_rad(fov) * 0.5)
+	_fov_before = _fov
+	_fov = field_of_view * target.aim_zoom * fx.fov_scale
+	var half_height := z_distance * tan(deg_to_rad(_fov) * 0.5)
 	var reach_x := maxf(half_height * viewport_size.x / viewport_size.y * keep_in_frame, mouse_look_weight)
 	var reach_y := maxf(half_height * keep_in_frame, mouse_look_weight)
 
@@ -54,5 +68,10 @@ func _physics_process(delta: float) -> void:
 		target_pos.z + z_distance,
 	)
 
-	global_position = global_position.lerp(desired_pos, 1.0 - exp(-follow_speed * delta))
-	rotation_degrees = Vector3.ZERO
+	_rig = _rig.lerp(desired_pos, 1.0 - exp(-follow_speed * delta))
+	global_position = _rig + Vector3(fx.offset.x, fx.offset.y, 0.0)
+	rotation = Vector3(0.0, 0.0, fx.roll)
+
+
+func _process(_delta: float) -> void:
+	fov = lerpf(_fov_before, _fov, Engine.get_physics_interpolation_fraction())

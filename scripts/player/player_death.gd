@@ -10,5 +10,5 @@ func _after_death() -> void:
 	movement.focus = ragdoll.hips
 
 	if restart_delay > 0.0:
-		await get_tree().create_timer(restart_delay).timeout
+		await get_tree().create_timer(restart_delay, true, false, true).timeout
 		get_tree().reload_current_scene()
