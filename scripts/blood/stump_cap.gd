@@ -65,9 +65,14 @@ static func attach(bone: PhysicalBone3D, joint: Vector3, outward: Vector3, radiu
 	var placed := Transform3D(Basis(side, up, side.cross(up)), joint)
 	var cloth: Color
 	if part_of(bone) == &"Hand":
-		cloth = ((bone.get_node(^"Hand") as MeshInstance3D).material_override as StandardMaterial3D).albedo_color
+		cloth = (
+			(bone.get_node(^"Hand") as MeshInstance3D).material_override as StandardMaterial3D
+		).albedo_color
 	else:
-		cloth = ((bone.get_node(^"Look") as MeshInstance3D).mesh.surface_get_material(0) as StandardMaterial3D).albedo_color
+		cloth = (
+			(bone.get_node(^"Look") as MeshInstance3D).mesh.surface_get_material(0)
+			as StandardMaterial3D
+		).albedo_color
 
 	var cap := MeshInstance3D.new()
 	cap.name = &"Stump"
@@ -120,13 +125,37 @@ static func _mesh(radius: float, cloth: Color) -> ArrayMesh:
 	for r in rings.size() - 1:
 		for i in SIDES:
 			var j := (i + 1) % SIDES
-			_tri(st, grid[r][i], grid[r + 1][j], grid[r][j], tones[r][i], tones[r + 1][j], tones[r][j])
-			_tri(st, grid[r][i], grid[r + 1][i], grid[r + 1][j], tones[r][i], tones[r + 1][i], tones[r + 1][j])
+			_tri(
+				st,
+				grid[r][i],
+				grid[r + 1][j],
+				grid[r][j],
+				tones[r][i],
+				tones[r + 1][j],
+				tones[r][j],
+			)
+			_tri(
+				st,
+				grid[r][i],
+				grid[r + 1][i],
+				grid[r + 1][j],
+				tones[r][i],
+				tones[r + 1][i],
+				tones[r + 1][j],
+			)
 
 	var last := rings.size() - 1
 	for i in SIDES:
 		var j := (i + 1) % SIDES
-		_tri(st, grid[last][i], centre, grid[last][j], tones[last][i], Color(0.09, 0.004, 0.008), tones[last][j])
+		_tri(
+			st,
+			grid[last][i],
+			centre,
+			grid[last][j],
+			tones[last][i],
+			Color(0.09, 0.004, 0.008),
+			tones[last][j],
+		)
 
 	st.generate_normals()
 	var mesh := st.commit()
@@ -146,12 +175,28 @@ static func _mesh(radius: float, cloth: Color) -> ArrayMesh:
 		var jr1 := bone_r * randf_range(0.85, 1.15)
 		var p0 := Vector3(cos(a0) * jr0, base_y, sin(a0) * jr0)
 		var p1 := Vector3(cos(a1) * jr1, base_y, sin(a1) * jr1)
-		var t0 := Vector3(cos(a0) * jr0 * 0.9, top + randf_range(0.0, 0.006) * u, sin(a0) * jr0 * 0.9)
-		var t1 := Vector3(cos(a1) * jr1 * 0.9, top + randf_range(0.0, 0.006) * u, sin(a1) * jr1 * 0.9)
+		var t0 := Vector3(
+			cos(a0) * jr0 * 0.9,
+			top + randf_range(0.0, 0.006) * u,
+			sin(a0) * jr0 * 0.9,
+		)
+		var t1 := Vector3(
+			cos(a1) * jr1 * 0.9,
+			top + randf_range(0.0, 0.006) * u,
+			sin(a1) * jr1 * 0.9,
+		)
 		var ivory := Color(0.66, 0.6, 0.48)
 		_tri(bone, p0, t1, p1, ivory, ivory, ivory)
 		_tri(bone, p0, t0, t1, ivory, ivory, ivory)
-		_tri(bone, t0, Vector3(0.0, top - 0.003 * u, 0.0), t1, ivory, Color(0.32, 0.05, 0.05), ivory)
+		_tri(
+			bone,
+			t0,
+			Vector3(0.0, top - 0.003 * u, 0.0),
+			t1,
+			ivory,
+			Color(0.32, 0.05, 0.05),
+			ivory,
+		)
 
 	bone.generate_normals()
 	bone.commit(mesh)
@@ -167,7 +212,11 @@ static func _mesh(radius: float, cloth: Color) -> ArrayMesh:
 		var lean := randf_range(1.12, 1.4)
 		var root0 := Vector3(cos(a - span) * radius * 1.0, -0.012 * u, sin(a - span) * radius * 1.0)
 		var root1 := Vector3(cos(a + span) * radius * 1.0, -0.012 * u, sin(a + span) * radius * 1.0)
-		var tip := Vector3(cos(a + randf_range(-0.2, 0.2)) * radius * lean, reach, sin(a + randf_range(-0.2, 0.2)) * radius * lean)
+		var tip := Vector3(
+			cos(a + randf_range(-0.2, 0.2)) * radius * lean,
+			reach,
+			sin(a + randf_range(-0.2, 0.2)) * radius * lean,
+		)
 		_tri(rags, root0, tip, root1, cloth * 0.9, stained, cloth * 0.9)
 
 	rags.generate_normals()
@@ -176,7 +225,15 @@ static func _mesh(radius: float, cloth: Color) -> ArrayMesh:
 	return mesh
 
 
-static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, ca: Color, cb: Color, cc: Color) -> void:
+static func _tri(
+	st: SurfaceTool,
+	a: Vector3,
+	b: Vector3,
+	c: Vector3,
+	ca: Color,
+	cb: Color,
+	cc: Color,
+) -> void:
 	st.set_color(ca)
 	st.add_vertex(a)
 	st.set_color(cb)

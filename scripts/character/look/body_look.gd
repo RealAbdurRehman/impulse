@@ -143,6 +143,9 @@ func _make_materials() -> void:
 	_tag = _material(style.tag, 0.9)
 	_flesh = _material(style.skin, 0.7)
 
+	for material in [_uniform, _vest, _mask, _flesh]:
+		material.resource_name = &"body"
+
 
 func _material(colour: Color, roughness: float, metallic := 0.0) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()

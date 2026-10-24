@@ -2276,6 +2276,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -103, 1.6, -2.1)
 mesh = SubResource("sy_m6")
 surface_material_override/0 = SubResource("Mat_facade")
 
+[node name="Basement_ceiling_body" type="StaticBody3D" parent="Environment/Decor" unique_id=397075917]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -0.15, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Basement_ceiling_body" unique_id=1026747885]
+shape = SubResource("BoxShape3D_ceiling_basement")
+
+[node name="Hall_ceiling_body" type="StaticBody3D" parent="Environment/Decor" unique_id=1398643015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 2.25, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Hall_ceiling_body" unique_id=283631304]
+shape = SubResource("BoxShape3D_ceiling_hall")
+
 [node name="Sign_Courtyard" type="Label3D" parent="Environment" unique_id=1551589908]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 6, -1.9)
 pixel_size = 0.012
@@ -2646,15 +2658,3 @@ target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=152713374 instance=ExtResource("player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.5, 0, 0)
-
-[node name="Basement_ceiling_body" type="StaticBody3D" parent="Environment/Decor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -0.15, 0)
-
-[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Basement_ceiling_body"]
-shape = SubResource("BoxShape3D_ceiling_basement")
-
-[node name="Hall_ceiling_body" type="StaticBody3D" parent="Environment/Decor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 2.25, 0)
-
-[node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Hall_ceiling_body"]
-shape = SubResource("BoxShape3D_ceiling_hall")

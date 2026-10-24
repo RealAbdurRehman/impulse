@@ -86,6 +86,20 @@ func hit(
 		died.emit()
 
 
+func heal(amount: float) -> void:
+	current = minf(current + amount, max_health)
+
+
+func drain(amount: float) -> void:
+	if not alive:
+		return
+
+	current = maxf(current - amount, 0.0)
+	if current <= 0.0:
+		alive = false
+		died.emit()
+
+
 func impulse_scale() -> float:
 	return 1.0 if alive else corpse_impulse_scale
 

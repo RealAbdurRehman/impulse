@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://c53tlo7bxe4ax" path="res://scripts/character/health.gd" id="4_health"]
 [ext_resource type="Script" uid="uid://40mpl6jnjtvs" path="res://scripts/character/hit_stagger.gd" id="5_stagger"]
 [ext_resource type="Script" path="res://scripts/player/player_death.gd" id="6_death"]
+[ext_resource type="Script" path="res://scripts/player/player_healing.gd" id="7_healing"]
+[ext_resource type="Script" path="res://scripts/ui/player_hud.gd" id="8_hud"]
 
 [node name="Player" unique_id=1491936547 node_paths=PackedStringArray("input", "health") instance=ExtResource("1_char")]
 input = NodePath("PlayerInput")
@@ -40,3 +42,16 @@ health = NodePath("../Health")
 movement = NodePath("..")
 ragdoll = NodePath("../ActiveRagdoll/Armature/Skeleton3D/PhysicalBoneSimulator3D")
 spine = NodePath("../AnimatedSkeleton/Skeleton3D/SpineModifier")
+
+[node name="PlayerHealing" type="Node" parent="." node_paths=PackedStringArray("health", "movement", "input")]
+script = ExtResource("7_healing")
+health = NodePath("../Health")
+movement = NodePath("..")
+input = NodePath("../PlayerInput")
+
+[node name="PlayerHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("health", "healing", "weapon", "movement")]
+script = ExtResource("8_hud")
+health = NodePath("../Health")
+healing = NodePath("../PlayerHealing")
+weapon = NodePath("../Weapon")
+movement = NodePath("..")

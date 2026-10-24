@@ -10,6 +10,7 @@ var aim := false
 var reload := false
 var fire_mode := false
 var interact := false
+var heal := false
 
 var aim_point := Vector3.ZERO
 var has_aim := false
@@ -20,12 +21,14 @@ var fire_pressed := false
 var reload_pressed := false
 var fire_mode_pressed := false
 var interact_pressed := false
+var heal_pressed := false
 
 var _was_jump := false
 var _was_fire := false
 var _was_reload := false
 var _was_fire_mode := false
 var _was_interact := false
+var _was_heal := false
 
 
 func _init() -> void:
@@ -41,12 +44,14 @@ func _physics_process(_delta: float) -> void:
 	reload_pressed = reload and not _was_reload
 	fire_mode_pressed = fire_mode and not _was_fire_mode
 	interact_pressed = interact and not _was_interact
+	heal_pressed = heal and not _was_heal
 
 	_was_jump = jump
 	_was_fire = fire
 	_was_reload = reload
 	_was_fire_mode = fire_mode
 	_was_interact = interact
+	_was_heal = heal
 
 
 func poll() -> void:

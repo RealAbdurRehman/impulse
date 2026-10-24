@@ -3,6 +3,7 @@ extends Node
 
 const BODY_SHADER := preload("res://scripts/blood/shaders/blood_body.gdshader")
 const MAX_WOUNDS := 12
+const BAND_SHADER := preload("res://scripts/blood/shaders/bandage.gdshader")
 
 @export var amount := 0.2
 
@@ -18,6 +19,15 @@ class Wounds:
 	var info := PackedVector4Array()
 	var count := 0
 	var next := 0
+	var meshes: Array[MeshInstance3D] = []
+	var faces := PackedVector3Array()
+	var span := Vector2.ZERO
+
+
+class Band:
+	var bone: PhysicalBone3D
+	var mesh: MeshInstance3D
+	var material: ShaderMaterial
 
 
 class Bleeder:
@@ -38,6 +48,7 @@ var health: Health
 var _world: BloodWorld
 var _wounds := { }
 var _bleeders: Array[Bleeder] = []
+var _bands: Array[Band] = []
 
 
 func _ready() -> void:
@@ -58,6 +69,9 @@ func tick(clock: float) -> void:
 		for material in wounds.materials:
 			material.set_shader_parameter("clock", clock)
 
+	for band in _bands:
+		band.material.set_shader_parameter("clock", clock)
+
 
 func fade(level: float) -> void:
 	for wounds: Wounds in _wounds.values():
@@ -74,6 +88,75 @@ func stump(parent: PhysicalBone3D, limb: PhysicalBone3D, joint: Vector3, toward:
 	_world.cloud(joint, toward, 0.32 + 0.1 * gore, 2, 0.7, 1.0, 0.6)
 	_world.jet(joint, toward, 20 + int(14.0 * gore), Vector2(2.5, 8.0), 0.8, Vector2(0.004, 0.014), Vector3.ZERO, 0.3)
 	_world.jet(joint, toward + Vector3.UP * 0.2, 16 + int(8.0 * gore), Vector2(3.0, 7.0), 0.22, Vector2(0.006, 0.015))
+
+
+func bandage(bone: PhysicalBone3D, local: Vector3, wrap_time: float, soak: float) -> Band:
+	var wounds := _wounds_of(bone)
+	var part := String(bone.bone_name)
+	var slim := "Arm" in part or "Leg" in part or "Hand" in part or "Foot" in part
+
+	var low := local.y
+	var high := local.y
+	for i in wounds.count:
+		var wound := wounds.pos[i]
+		low = minf(low, wound.y - wound.w * 0.7)
+		high = maxf(high, wound.y + wound.w * 0.7)
+
+	if wounds.faces.is_empty():
+		wounds.faces = BandageMesh.faces(wounds.meshes, bone.global_transform.affine_inverse())
+		wounds.span = BandageMesh.span(wounds.faces)
+
+	var length := wounds.span.y - wounds.span.x
+	var least := 0.03 if slim else 0.035
+	var most := maxf(least, minf(length * 0.4, 0.075 if slim else 0.065))
+	var half := clampf((high - low) * 0.5 + 0.01, least, most)
+	var y := (low + high) * 0.5
+	if length > half * 2.0:
+		y = clampf(y, wounds.span.x + half, wounds.span.y - half)
+	else:
+		y = (wounds.span.x + wounds.span.y) * 0.5
+
+	var width := TAU
+	var start := 0.0
+	if part.ends_with("Head"):
+		width = TAU * 0.4
+		start = PI - width * 0.5
+
+	var band := Band.new()
+	band.bone = bone
+	band.material = ShaderMaterial.new()
+	band.material.shader = BAND_SHADER
+	band.material.set_shader_parameter("clock", _world.clock)
+	band.material.set_shader_parameter("start", _world.clock)
+	band.material.set_shader_parameter("wrap_time", wrap_time)
+	band.material.set_shader_parameter("seed", randf() * 10.0)
+	band.material.set_shader_parameter("height", half * 2.0)
+	band.material.set_shader_parameter("turns", width / TAU)
+	band.material.set_shader_parameter("soak", soak)
+	band.material.set_shader_parameter("soak_radius", half * 0.9)
+	band.material.set_shader_parameter("soak_pos", Vector3(local.x, clampf(local.y, y - half, y + half), local.z))
+
+	band.mesh = MeshInstance3D.new()
+	band.mesh.mesh = BandageMesh.build(wounds.faces, y, half, start, width, 0.007)
+	band.mesh.material_override = band.material
+	band.mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bone.add_child(band.mesh)
+	_bands.append(band)
+	return band
+
+
+func unbandage(band: Band) -> void:
+	band.mesh.queue_free()
+	_bands.erase(band)
+
+
+func staunch(bone: PhysicalBone3D) -> void:
+	var i := 0
+	while i < _bleeders.size():
+		if _bleeders[i].bone == bone:
+			_bleeders.remove_at(i)
+		else:
+			i += 1
 
 
 func _on_damaged(damage: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
@@ -208,6 +291,8 @@ func _wounds_of(bone: PhysicalBone3D) -> Wounds:
 		var mesh := node as MeshInstance3D
 		if not mesh.visible or not (mesh.name == &"Look" or BodyLook.KEPT.has(mesh.name)):
 			continue
+
+		wounds.meshes.append(mesh)
 
 		var material := ShaderMaterial.new()
 		material.shader = BODY_SHADER

@@ -21,6 +21,7 @@ func poll() -> void:
 	reload = Input.is_action_pressed("reload")
 	fire_mode = Input.is_action_pressed("fire_mode")
 	interact = Input.is_action_pressed("interact")
+	heal = Input.is_action_pressed("heal")
 
 	_aim_at_mouse()
 
