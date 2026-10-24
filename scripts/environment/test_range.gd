@@ -35,6 +35,7 @@ const SPAWN_KEYS := {
 @export var camera: Camera3D
 @export var void_height := -8.0
 @export var restart_delay := 6.0
+@export var max_attackers := 3
 
 var _gun := 0
 var _god := false
@@ -55,6 +56,7 @@ var _nav_lines: MeshInstance3D
 
 
 func _ready() -> void:
+	AttackTokens.limit = max_attackers
 	(player.get_node("PlayerDeath") as PlayerDeath).restart_delay = restart_delay
 	_hud = Label.new()
 	_hud.position = Vector2(14.0, 10.0)
@@ -74,6 +76,10 @@ func _ready() -> void:
 	rings.top_level = true
 	add_child(rings)
 	NoiseSource.of(player).bang.connect(_on_bang)
+
+	var lod := EnemyLod.new()
+	lod.target = player
+	add_child(lod)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -372,13 +378,14 @@ func _hud_text() -> String:
 		alive += int(brain.health.alive)
 
 	var lines := PackedStringArray([
-		"TEST RANGE      you %d hp%s%s%s%s      enemies alive %d      spawn gun: %s" % [
+		"TEST RANGE      you %d hp%s%s%s%s      enemies alive %d (%d attacking)      spawn gun: %s" % [
 			roundi(health.current) if not _god else 999,
 			"  GOD" if _god else "",
 			"  (enemies ignore you)" if _peaceful else ("  (enemies hunt you)" if _hunting else ""),
 			"" if _fair else "  (fair play off)",
 			_cover_text(),
 			alive,
+			AttackTokens.count(player.get_instance_id()),
 			String(WEAPONS[_gun]).to_upper(),
 		],
 		"1 grunt  2 rusher  3 suppressor  4 cautious  5 marksman  6 flanker  7 squad  8 hunter   (at the mouse)",

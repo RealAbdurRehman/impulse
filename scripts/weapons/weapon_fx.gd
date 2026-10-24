@@ -216,7 +216,7 @@ const QUAD: Array[Vector2] = [
 @export var max_strands := 4
 
 @export_group("Quality")
-@export var noise_size := 1024
+@export var noise_size := 512
 
 @export_flags_3d_physics var casing_layer := 4
 @export_flags_3d_physics var casing_mask := 1

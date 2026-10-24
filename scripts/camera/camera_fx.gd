@@ -246,6 +246,9 @@ var _dead := false
 var _dead_time := 0.0
 var _dead_side := 1.0
 
+var _watched := { }
+var _watch_left := 0.0
+
 
 func _init() -> void:
 	process_physics_priority = -10
@@ -277,8 +280,6 @@ func _ready() -> void:
 	_screen.name = &"ScreenFx"
 	add_child(_screen)
 
-	_find_weapons(get_tree().root)
-	get_tree().node_added.connect(_watch)
 
 
 func add_trauma(amount: float) -> void:
@@ -286,6 +287,11 @@ func add_trauma(amount: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_watch_left -= delta
+	if _watch_left <= 0.0:
+		_watch_left = 0.5
+		_watch_enemies()
+
 	if _carrier.weapon != _weapon:
 		_weapon = _carrier.weapon
 		_weapon.fired.connect(_on_fired)
@@ -296,8 +302,14 @@ func _physics_process(delta: float) -> void:
 	var grounded := target.grounded
 	var aim := target.aim_amount
 
-	for spring in [_kick_x, _kick_y, _roll, _punch, _land, _thud]:
-		spring.step(delta)
+	_kick_x.step(delta)
+	_kick_y.step(delta)
+	_roll.step(delta)
+	_punch.step(delta)
+	_land.step(delta)
+	_thud.step(delta)
+
+	var real := delta / maxf(Engine.time_scale, 0.05)
 
 	_trauma = maxf(_trauma - trauma_decay * delta, 0.0)
 	_shown_trauma = lerpf(_shown_trauma, _trauma, 1.0 - exp(-shake_attack * delta))
@@ -315,9 +327,9 @@ func _physics_process(delta: float) -> void:
 	var power := _shown_trauma * _shown_trauma
 	var shake_omega := TAU * shake_smoothing_hz
 	var shake := Vector3(
-		_shake_x.step(_noise.get_noise_2d(_clock, 0.0) * power, shake_omega, delta),
-		_shake_y.step(_noise.get_noise_2d(_clock, 31.7) * power, shake_omega, delta),
-		_shake_roll.step(_noise.get_noise_2d(_clock, 63.1) * power, shake_omega, delta),
+		_shake_x.step(_noise.get_noise_2d(_clock, 0.0) * power if power > 0.0 else 0.0, shake_omega, delta),
+		_shake_y.step(_noise.get_noise_2d(_clock, 31.7) * power if power > 0.0 else 0.0, shake_omega, delta),
+		_shake_roll.step(_noise.get_noise_2d(_clock, 63.1) * power if power > 0.0 else 0.0, shake_omega, delta),
 	)
 
 	var run := smoothstep(target.walk_speed, target.run_speed, speed)
@@ -378,7 +390,7 @@ func _physics_process(delta: float) -> void:
 
 	var death := 0.0
 	if _dead:
-		_dead_time += delta / maxf(Engine.time_scale, 0.05)
+		_dead_time += real
 		death = 1.0 - pow(1.0 - clampf(_dead_time / death_time, 0.0, 1.0), 3.0)
 
 	var omega := TAU * smoothing_hz
@@ -425,7 +437,7 @@ func _physics_process(delta: float) -> void:
 	_screen.scope_dir = _aim_direction(aim)
 	_screen.desaturate = slow_desaturate * slow + hurt_desaturate * hurt + bleed_desaturate * _bleed + winded_desaturate * _tired + suppress_desaturate * _suppress + death_desaturate * death
 	_screen.blood = clampf(0.6 * _hit + 0.5 * hurt + 0.25 * _bleed + 0.9 * _ooze + 0.6 * death, 0.0, 1.0)
-	_intro = maxf(_intro - delta / maxf(Engine.time_scale, 0.05) / intro_time, 0.0)
+	_intro = maxf(_intro - real / intro_time, 0.0)
 	_screen.fade = smoothstep(0.0, 1.0, _intro)
 	if _dead and _death.restart_delay > 0.0:
 		_screen.fade = maxf(_screen.fade, 1.0 - clampf((_death.restart_delay - _dead_time) / death_fade_time, 0.0, 1.0))
@@ -488,9 +500,7 @@ func _aim_direction(aim: float) -> Vector2:
 		return _screen.scope_dir
 
 	var to := camera.unproject_position(target.aim_point)
-	var toward := Vector2(to.x - from.x, from.y - to.y)
-
-	return toward.normalized() if toward.length() > 4.0 else Vector2(float(target.facing), 0.0)
+	return Vector2(to.x - from.x, from.y - to.y).normalized()
 
 
 func _soft_limit(v: Vector2, cap: float) -> Vector2:
@@ -518,19 +528,19 @@ func _on_fired(muzzle: Transform3D) -> void:
 	add_trauma(stats.camera_shake * strength)
 
 
-func _find_weapons(node: Node) -> void:
-	_watch(node)
-	for child in node.get_children():
-		_find_weapons(child)
+func _watch_enemies() -> void:
+	for gone in _watched.keys():
+		if not is_instance_valid(gone):
+			_watched.erase(gone)
 
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var weapon := (node as EnemyInput).carrier.weapon
+		if not is_instance_valid(weapon) or _watched.has(weapon):
+			continue
 
-func _watch(node: Node) -> void:
-	var weapon := node as Weapon
-	if weapon == null or weapon.character == target:
-		return
-
-	weapon.fired.connect(_on_enemy_fired.bind(weapon))
-	weapon.bullet_traced.connect(_on_enemy_bullet.bind(weapon))
+		_watched[weapon] = true
+		weapon.fired.connect(_on_enemy_fired.bind(weapon))
+		weapon.bullet_traced.connect(_on_enemy_bullet.bind(weapon))
 
 
 func _chest() -> Vector2:

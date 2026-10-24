@@ -22,6 +22,7 @@ const SETTLE := 0.25
 const PAINT_TIME := 1.4
 const CLOSE_ENOUGH := 1.5
 const SIDE_LIMIT := 3
+const DENIED_HOLD := 1.5
 const MIN_VIEW_REACH := 3.0
 const SPACING := 1.3
 const ROOM_RADIUS := 3.0
@@ -188,6 +189,7 @@ var _follow := Vector2(INF, INF)
 var _around_left := 0.0
 var _shot := EnemySenses.Shot.CLEAR
 var _shot_left := 0.0
+var _denied_left := 0.0
 
 
 func _ready() -> void:
@@ -239,6 +241,10 @@ func _ready() -> void:
 	carrier.weapon.bullet_traced.connect(_on_traced)
 
 
+func is_calm() -> bool:
+	return _mode == Mode.PATROL and awareness < 0.01 and not hunt and health.alive
+
+
 func poll() -> void:
 	var delta := get_physics_process_delta_time()
 	if _nav == null:
@@ -255,6 +261,7 @@ func poll() -> void:
 	_age += delta
 	_hurt_left = maxf(_hurt_left - delta, 0.0)
 	_provoked_left = maxf(_provoked_left - delta, 0.0)
+	_denied_left = maxf(_denied_left - delta, 0.0)
 	_painting = false
 	_since_seen += delta
 	_flank_cooldown = maxf(_flank_cooldown - delta, 0.0)
@@ -294,6 +301,11 @@ func describe() -> String:
 		doing += " %d%%%s" % [roundi(awareness * 100.0), " wary" if _wary_left > 0.0 else ""]
 	else:
 		doing = Plan.keys()[_plan] + (" (unseen)" if _hidden else "")
+		if AttackTokens.holds(get_instance_id()):
+			doing += " (attacking)"
+		elif _waiting():
+			doing += " (waiting)"
+
 		if _plan == Plan.COVER:
 			doing += " " + Phase.keys()[_phase]
 		elif _plan == Plan.ENGAGE:
@@ -304,6 +316,7 @@ func describe() -> String:
 
 func _exit_tree() -> void:
 	EnemyCover.release(get_instance_id())
+	AttackTokens.release(get_instance_id())
 
 
 func _on_traced(_from: Vector3, _to: Vector3, hit: Dictionary) -> void:
@@ -313,6 +326,7 @@ func _on_traced(_from: Vector3, _to: Vector3, hit: Dictionary) -> void:
 
 func _on_died() -> void:
 	EnemyCover.release(get_instance_id())
+	AttackTokens.release(get_instance_id())
 	if _mark != null:
 		_mark.hide()
 
@@ -966,6 +980,8 @@ func _decide(delta: float, weapon: Weapon, distance: float) -> void:
 			want = true
 		elif _visible and traits.caution > 0.5 and _rng.randf() < (traits.caution - 0.4) * 0.25:
 			want = true
+		elif _waiting() and _visible and _rng.randf() < traits.caution + 0.3:
+			want = true
 
 		_first_contact = false
 		if want and _take_cover(me, there, band):
@@ -978,7 +994,7 @@ func _decide(delta: float, weapon: Weapon, distance: float) -> void:
 
 	elif _plan == Plan.COVER and _phase != Phase.GO:
 		var lost := not _cover.hides(_spot, there)
-		var impatient := _plan_age > 2.5 and _rng.randf() < traits.aggression * 0.5 and weapon.ammo > 0
+		var impatient := _plan_age > 2.5 and not _waiting() and _rng.randf() < traits.aggression * 0.5 and weapon.ammo > 0
 		if lost or impatient:
 			_leave_plan()
 			return
@@ -1061,7 +1077,7 @@ func _in_cover(delta: float, weapon: Weapon) -> void:
 		crouch = true
 		_hide_left -= delta
 		var loaded := weapon.ammo > 0 and not weapon.is_reloading()
-		if _hide_left <= 0.0 and loaded:
+		if _hide_left <= 0.0 and loaded and _attack_ok():
 			_phase = Phase.PEEK
 			_peek_left = _rng.randf_range(1.2, 2.6)
 			_peek_rounds = _gunner.rounds
@@ -1071,7 +1087,8 @@ func _in_cover(delta: float, weapon: Weapon) -> void:
 	_peek_left -= delta
 	var shot := _gunner.rounds > _peek_rounds
 	var done := (shot and _gunner.firing_done()) or _peek_left <= 0.0 or _hurt_left > 0.0 or weapon.ammo <= 0
-	if done:
+	if done or not _attack_ok():
+		AttackTokens.release(get_instance_id())
 		_phase = Phase.HIDE
 		_hide_left = _hide_time()
 		_cover_cycles += 1
@@ -1130,7 +1147,7 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 			_pilot.walk(_strafe, false, delta, false)
 		Tactic.HOLD:
 			_stand(delta, toward if distance < band.x * 0.9 else 0.0)
-			crouch = _holds_low(weapon, distance, band)
+			crouch = _holds_low(weapon, distance, band) or (_waiting() and traits.caution > 0.3)
 
 	if absf(move) > 0.1 and not _pilot.committed:
 		var ahead := _follow[1 if move > 0.0 else 0]
@@ -1224,7 +1241,7 @@ func _pick_tactic(distance: float, band: Vector2, weapon: Weapon) -> void:
 		_tactic_left = 0.5
 		return
 
-	if distance > _lane(band) and _rng.randf() < traits.rush:
+	if distance > _lane(band) and not _waiting() and _rng.randf() < traits.rush:
 		_tactic = Tactic.ADVANCE
 		_tactic_left = _rng.randf_range(1.2, 2.5)
 		return
@@ -1252,7 +1269,7 @@ func _pick_tactic(distance: float, band: Vector2, weapon: Weapon) -> void:
 			_tactic = Tactic.RETREAT
 
 	var lane := _lane(band)
-	if _tactic == Tactic.ADVANCE and distance <= lane:
+	if _tactic == Tactic.ADVANCE and (distance <= lane or (_waiting() and distance <= band.y)):
 		_tactic = Tactic.STRAFE
 	elif _tactic == Tactic.RETREAT and distance >= lane and distance <= band.y:
 		_tactic = Tactic.STRAFE
@@ -1317,11 +1334,29 @@ func _fire(delta: float, weapon: Weapon, me: Vector3, scoped: bool) -> void:
 	if _plan == Plan.COVER:
 		may_fire = may_fire and _phase == Phase.PEEK
 
+	if weapon.ammo <= 0 or weapon.is_reloading() or _hidden:
+		AttackTokens.release(get_instance_id())
+	elif may_fire:
+		may_fire = _attack_ok()
+
 	if _visible and _shot == EnemySenses.Shot.ALLY and _plan == Plan.ENGAGE and _tactic == Tactic.HOLD:
 		_tactic = Tactic.STRAFE
 		_tactic_left = _rng.randf_range(0.5, 1.2)
 
 	fire = _gunner.trigger(delta, may_fire, weapon)
+
+
+func _attack_ok() -> bool:
+	if _laser != null:
+		return true
+
+	var ok := AttackTokens.request(target.get_instance_id(), get_instance_id(), not _gunner.firing_done())
+	_denied_left = 0.0 if ok else DENIED_HOLD
+	return ok
+
+
+func _waiting() -> bool:
+	return _denied_left > 0.0
 
 
 func _paint(delta: float, weapon: Weapon, scoped: bool) -> void:

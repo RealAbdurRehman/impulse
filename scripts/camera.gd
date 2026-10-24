@@ -17,7 +17,6 @@ extends Camera3D
 var height_offset: float = 1.0
 
 var fx: CameraFx
-var reticle: Reticle
 
 var _lead := 0.0
 var _rig := Vector3.ZERO
@@ -36,7 +35,7 @@ func _ready() -> void:
 	fx.target = target
 	add_child(fx)
 
-	reticle = Reticle.new()
+	var reticle := Reticle.new()
 	reticle.name = &"Reticle"
 	reticle.target = target
 	add_child(reticle)

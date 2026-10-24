@@ -21,7 +21,11 @@ buses/default_bus_layout="uid://ctti0cldq28rl"
 
 [display]
 
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 window/size/mode=3
+window/stretch/mode.web="viewport"
+window/stretch/aspect.web="expand"
 
 [editor_plugins]
 
@@ -102,6 +106,7 @@ heal={
 
 3d/physics_engine="Jolt Physics"
 common/physics_interpolation=true
+common/max_physics_steps_per_frame.web=3
 
 [rendering]
 
@@ -110,3 +115,5 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 anti_aliasing/quality/use_debanding=true
+lights_and_shadows/directional_shadow/size.web=2048
+anti_aliasing/quality/msaa_3d.web=1

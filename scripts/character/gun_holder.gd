@@ -3,6 +3,8 @@ extends Node
 
 signal assembled
 
+static var _fits := { }
+
 
 class Grip:
 	var hole := Vector3.ZERO
@@ -401,7 +403,12 @@ func _grip(
 	yaw: float,
 	side: float,
 ) -> Grip:
-	var fit := GripFit.new(gun, part).fit(GripFit.local(marker, gun).origin, axis, palm, side)
+	var origin := GripFit.local(marker, gun).origin
+	var key := "%s|%s|%s|%s|%s|%s" % [gun.scene_file_path, part, origin, axis, palm, side]
+	if not _fits.has(key):
+		_fits[key] = GripFit.new(gun, part).fit(origin, axis, palm, side)
+
+	var fit: GripFit.Fit = _fits[key]
 
 	var g := Grip.new()
 	g.hole = fit.hole * gun.scale

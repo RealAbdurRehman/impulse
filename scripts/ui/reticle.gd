@@ -8,6 +8,13 @@ const SHADOW := Color(0.0, 0.0, 0.0, 0.42)
 
 enum Mark { NONE, HIT, HEAD, KILL, KILL_HEAD }
 
+const TICKS := [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
+const DIAGONALS := [
+	Vector2(0.7071, 0.7071),
+	Vector2(0.7071, -0.7071),
+	Vector2(-0.7071, 0.7071),
+	Vector2(-0.7071, -0.7071),
+]
 const PROBES := [
 	Vector3(0.0, 0.0, 0.0),
 	Vector3(1.0, 0.0, 0.0),
@@ -74,6 +81,8 @@ var _reload_elapsed := 0.0
 var _mark := Mark.NONE
 var _mark_age := 0.0
 var _died := { }
+var _watched := { }
+var _watch_left := 0.0
 
 
 func _init() -> void:
@@ -93,9 +102,6 @@ func _ready() -> void:
 	_healing = target.get_node("PlayerHealing") as PlayerHealing
 	target.health.died.connect(_on_player_died)
 
-	_watch(get_tree().root)
-	get_tree().node_added.connect(_watch_new)
-
 	if hide_system_cursor:
 		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
 
@@ -105,15 +111,17 @@ func _exit_tree() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-func _watch(node: Node) -> void:
-	_watch_new(node)
-	for child in node.get_children():
-		_watch(child)
+func _watch_enemies() -> void:
+	for gone in _watched.keys():
+		if not is_instance_valid(gone):
+			_watched.erase(gone)
 
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var health := (node as EnemyInput).health
+		if _watched.has(health):
+			continue
 
-func _watch_new(node: Node) -> void:
-	var health := node as Health
-	if health != null and health != target.health:
+		_watched[health] = true
 		health.died.connect(_on_died.bind(health))
 
 
@@ -179,6 +187,11 @@ func _on_traced(_from: Vector3, _to: Vector3, hit: Dictionary) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_watch_left -= delta
+	if _watch_left <= 0.0:
+		_watch_left = 0.25
+		_watch_enemies()
+
 	if _carrier.weapon != _weapon:
 		_bind(_carrier.weapon)
 
@@ -261,11 +274,13 @@ func _process(delta: float) -> void:
 	_emphasis = lerpf(_emphasis, lively, 1.0 - exp(-10.0 * real))
 	_visible = _alpha * lerpf(rest_alpha, 1.0, _emphasis)
 
-	_canvas.queue_redraw()
+	_canvas.visible = _alpha > 0.01
+	if _canvas.visible:
+		_canvas.queue_redraw()
 
 
 func paint(c: Control) -> void:
-	if _alpha < 0.01 or not is_instance_valid(_weapon):
+	if not is_instance_valid(_weapon):
 		return
 
 	var k := c.size.y / design_height
@@ -307,28 +322,27 @@ func _paint_barrel(c: Control, at: Vector2, k: float, tone: Color) -> void:
 	else:
 		var width := lerpf(1.5, 1.2, aim) * k
 		var length := lerpf(tick_length, tick_length * 1.4, aim) * k
-		for dir in [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]:
+		for dir in TICKS:
 			_stroke(c, at + dir * gap, at + dir * (gap + length), width, color, k)
 
 	_dot(c, at, 1.2 * k, color, k)
 
 
 func _paint_ring(c: Control, at: Vector2, k: float) -> void:
-	var stats := _weapon.stats
-	var radius := ring_radius * k
-	var capacity := stats.magazine_size
+	var capacity := _weapon.stats.magazine_size
 	var fraction := float(_weapon.ammo) / float(capacity)
 	var low := fraction <= low_ammo
 	var reloading := _weapon.is_reloading()
 
-	var show := clampf(_ring_time / 0.4, 0.0, 1.0)
+	var visibility := clampf(_ring_time / 0.4, 0.0, 1.0)
 	if low or reloading:
-		show = 1.0
+		visibility = 1.0
 
-	if show <= 0.01:
+	if visibility <= 0.01:
 		return
 
-	var base := Color(INK, 0.16 * show * _alpha)
+	var radius := ring_radius * k
+	var base := Color(INK, 0.16 * visibility * _alpha)
 	if reloading:
 		var progress := clampf(_reload_elapsed / maxf(_weapon.reload_total, 0.01), 0.0, 1.0)
 		_arc(c, at, radius, 1.6 * k, 0.0, TAU, base, k)
@@ -341,15 +355,17 @@ func _paint_ring(c: Control, at: Vector2, k: float) -> void:
 	var color := INK
 	if low:
 		color = HOT.lerp(AMBER, 0.0 if _weapon.ammo <= 0 else 0.5)
-		show *= 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.012)
+		visibility *= 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.012)
 
 	color = color.lerp(HOT, _flash)
 	var gap_angle := minf(step * 0.32, 0.12)
+	var points := 2 if segments > 12 else 5
+	var lit_color := Color(color, 0.85 * visibility * _alpha)
+	var dim_color := Color(color, 0.16 * visibility * _alpha)
 	for i in segments:
 		var from := -PI * 0.5 + step * float(i) + gap_angle
 		var to := -PI * 0.5 + step * float(i + 1) - gap_angle
-		var on := i < lit
-		_arc(c, at, radius, 1.6 * k, from, to, Color(color, (0.85 if on else 0.16) * show * _alpha), k)
+		c.draw_arc(at, radius, from, to, points, lit_color if i < lit else dim_color, 1.6 * k, true)
 
 
 func _paint_mark(c: Control, at: Vector2, k: float) -> void:
@@ -369,8 +385,7 @@ func _paint_mark(c: Control, at: Vector2, k: float) -> void:
 
 	var near := (7.0 + 4.0 * t) * k * pop
 	var far := near + (6.0 if killed else 4.5) * k * pop
-	for diagonal in [Vector2(1, 1), Vector2(1, -1), Vector2(-1, 1), Vector2(-1, -1)]:
-		var dir: Vector2 = diagonal.normalized()
+	for dir in DIAGONALS:
 		_stroke(c, at + dir * near, at + dir * far, (2.2 if killed else 1.8) * k, Color(color, fade), k)
 
 	if _mark == Mark.KILL_HEAD:

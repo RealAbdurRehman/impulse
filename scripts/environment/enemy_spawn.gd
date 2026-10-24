@@ -8,17 +8,39 @@ extends Marker3D
 @export var patrol_length := 0.0
 @export var random_seed := 0
 @export var spawn_on_ready := true
+@export var spawn_range := 60.0
 
 var enemy: CharacterMovement
+
+var _left := 0.0
 
 
 func _ready() -> void:
 	add_to_group(&"enemy_spawns")
+	set_physics_process(false)
 	if spawn_on_ready:
+		if _near():
+			spawn()
+		else:
+			set_physics_process(true)
+
+
+func _physics_process(delta: float) -> void:
+	_left -= delta
+	if _left > 0.0:
+		return
+
+	_left = 0.5
+	if _near():
 		spawn()
 
 
+func _near() -> bool:
+	return target == null or global_position.distance_to(target.global_position) < spawn_range
+
+
 func spawn() -> CharacterMovement:
+	set_physics_process(false)
 	clear()
 
 	enemy = enemy_scene.instantiate() as CharacterMovement

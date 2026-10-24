@@ -2,8 +2,10 @@ class_name Hitboxes
 extends Node
 
 const LAYER := 16
+const POINTS_PER_MESH := 48
 
-static var _hulls := { }
+static var _shapes := { }
+static var _spread: Array[Vector3] = []
 
 @export var ragdoll: PhysicalBoneSimulator3D
 
@@ -24,16 +26,64 @@ func _ready() -> void:
 			_add(bone)
 
 
-static func _hull(mesh: Mesh) -> PackedVector3Array:
-	if not _hulls.has(mesh):
-		_hulls[mesh] = mesh.create_convex_shape(true, true).points
+static func _directions() -> Array[Vector3]:
+	if _spread.is_empty():
+		for x in [-1.0, 0.0, 1.0]:
+			for y in [-1.0, 0.0, 1.0]:
+				for z in [-1.0, 0.0, 1.0]:
+					if x != 0.0 or y != 0.0 or z != 0.0:
+						_spread.append(Vector3(x, y, z).normalized())
 
-	return _hulls[mesh]
+	return _spread
+
+
+static func _reduce(points: PackedVector3Array, keep: int) -> PackedVector3Array:
+	if points.size() <= keep:
+		return points
+
+	var nearest := PackedFloat32Array()
+	nearest.resize(points.size())
+	nearest.fill(INF)
+
+	var picked := PackedVector3Array()
+	var taken := { }
+	for dir in _directions():
+		var best := -INF
+		var at := 0
+		for i in points.size():
+			var reach := points[i].dot(dir)
+			if reach > best:
+				best = reach
+				at = i
+
+		if not taken.has(at):
+			taken[at] = true
+			picked.append(points[at])
+
+	for p in picked:
+		for i in points.size():
+			nearest[i] = minf(nearest[i], points[i].distance_squared_to(p))
+
+	while picked.size() < keep:
+		var far := -1.0
+		var index := 0
+		for i in points.size():
+			if nearest[i] > far:
+				far = nearest[i]
+				index = i
+
+		var chosen := points[index]
+		picked.append(chosen)
+		for i in points.size():
+			nearest[i] = minf(nearest[i], points[i].distance_squared_to(chosen))
+
+	return picked
 
 
 func _add(bone: PhysicalBone3D) -> void:
-	var points := PackedVector3Array()
 	var to_bone := bone.global_transform.affine_inverse()
+	var parts: Array[Dictionary] = []
+	var key := String(bone.bone_name)
 
 	for node in bone.find_children("*", "MeshInstance3D", true, false):
 		var mesh := node as MeshInstance3D
@@ -41,14 +91,30 @@ func _add(bone: PhysicalBone3D) -> void:
 			continue
 
 		var local := to_bone * mesh.global_transform
-		for p in _hull(mesh.mesh):
-			points.append(local * p)
+		parts.append({ "mesh": mesh.mesh, "local": local })
+		var box := mesh.mesh.get_aabb()
+		key += "|%s|%s|%s|%s|%s|%s" % [
+			mesh.mesh.get_class(),
+			str(box.position.snapped(Vector3.ONE * 0.0001)),
+			str(box.size.snapped(Vector3.ONE * 0.0001)),
+			str(local.origin.snapped(Vector3.ONE * 0.0001)),
+			str(local.basis.x.snapped(Vector3.ONE * 0.0001)),
+			str(local.basis.y.snapped(Vector3.ONE * 0.0001)),
+		]
 
-	if points.is_empty():
+	if parts.is_empty():
 		return
 
-	var hull := ConvexPolygonShape3D.new()
-	hull.points = points
+	if not _shapes.has(key):
+		var points := PackedVector3Array()
+		for part in parts:
+			var hull := (part.mesh as Mesh).create_convex_shape(true, false).points
+			for p in _reduce(hull, POINTS_PER_MESH):
+				points.append((part.local as Transform3D) * p)
+
+		var hull := ConvexPolygonShape3D.new()
+		hull.points = points
+		_shapes[key] = hull
 
 	var area := Area3D.new()
 	area.name = &"Hitbox"
@@ -58,6 +124,6 @@ func _add(bone: PhysicalBone3D) -> void:
 	area.set_meta(&"bone", bone)
 
 	var shape := CollisionShape3D.new()
-	shape.shape = hull
+	shape.shape = _shapes[key]
 	area.add_child(shape)
 	bone.add_child(area)

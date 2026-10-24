@@ -1,25 +1,11 @@
 shader_type canvas_item;
 
-uniform sampler2D screen : hint_screen_texture, repeat_disable, filter_linear;
-
 uniform float vignette = 0.0;
-uniform float aberration = 0.0;
-uniform float desaturate = 0.0;
-uniform float fade = 0.0;
-uniform float grain = 0.0;
-uniform float focus = 0.0;
-// edge blur on every side (tunnel vision when winded)
-uniform float haze = 0.0;
-uniform float blood = 0.0;
-// scope darkens and blurs only the side behind the aim; scope_dir points the way the player aims (y up)
 uniform float scope = 0.0;
 uniform vec2 scope_dir = vec2(1.0, 0.0);
-// where the player is on screen (uv, y down); kept sharp while scoped
-uniform vec2 scope_anchor = vec2(0.5, 0.5);
-
-// xy: where the bullet's path enters the screen (uv, y down), zw: its travel direction on screen
+uniform float fade = 0.0;
+uniform float streaking = 0.0;
 uniform vec4 hits[4];
-// x: random seed, y: strike (1 at the moment of impact, falls quickly), z: strength (fades out)
 uniform vec4 hit_style[4];
 
 const vec3 BLOOD_DARK = vec3(0.26, 0.01, 0.015);
@@ -56,48 +42,15 @@ float fbm(vec2 p) {
 }
 
 
-vec3 grab(vec2 uv, vec2 split) {
-	return vec3(
-		textureLod(screen, uv + split, 0.0).r,
-		textureLod(screen, uv, 0.0).g,
-		textureLod(screen, uv - split, 0.0).b
-	);
-}
-
-
-vec3 lens(vec2 uv, vec2 split, vec2 px) {
-	vec3 sum = grab(uv, split);
-	if (px.y < 0.0005) {
-		return sum;
-	}
-
-	for (int i = 0; i < 8; i++) {
-		float a = float(i) * 0.785398;
-		sum += grab(uv + vec2(cos(a), sin(a)) * px, split);
-	}
-
-	for (int i = 0; i < 4; i++) {
-		float a = float(i) * 1.570796 + 0.785398;
-		sum += grab(uv + vec2(cos(a), sin(a)) * px * 0.5, split);
-	}
-
-	return sum / 13.0;
-}
-
-
-// One soft blood smear entering at `entry` and running along `dir`.
-// pos/entry are in screen-height units (y down), dir is a unit vector.
-// Returns the density of blood at pos (0 = none).
 float smear(vec2 pos, vec2 entry, vec2 dir, float reach, float width, float seed) {
 	vec2 rel = pos - entry;
 	float along = dot(rel, dir);
-	float across = dot(rel, vec2(-dir.y, dir.x));
-
 	float t = along / reach;
 	if (t < -0.2 || t > 1.5) {
 		return 0.0;
 	}
 
+	float across = dot(rel, vec2(-dir.y, dir.x));
 	float tip = 1.0 + (fbm(vec2(along * 9.0, across * 2.5) + seed * 17.0) - 0.5) * 0.8;
 	float run = clamp(1.0 - t / tip, 0.0, 1.0);
 
@@ -113,7 +66,6 @@ float smear(vec2 pos, vec2 entry, vec2 dir, float reach, float width, float seed
 }
 
 
-// Fine droplets thrown along the bullet's path beyond the smear.
 float speckle(vec2 pos, vec2 entry, vec2 dir, float reach, float seed) {
 	vec2 side = vec2(-dir.y, dir.x);
 	float total = 0.0;
@@ -136,7 +88,6 @@ float speckle(vec2 pos, vec2 entry, vec2 dir, float reach, float seed) {
 }
 
 
-// Blood that streaks in along the bullet's path from the edge of the screen.
 vec4 blood_hits(vec2 pos, float aspect) {
 	float cover = 0.0;
 	float heat = 0.0;
@@ -153,10 +104,14 @@ vec4 blood_hits(vec2 pos, float aspect) {
 		vec2 entry = hits[i].xy * vec2(aspect, 1.0);
 		vec2 dir = hits[i].zw;
 
+		float reach = mix(0.27, 0.42, hash1(seed * 5.7)) * (0.55 + 0.45 * power) * (1.0 + 0.3 * strike);
+		if (distance(pos, entry) > reach * 1.7 + 0.12) {
+			continue;
+		}
+
 		float turn = (hash1(seed * 3.1) - 0.5) * 0.3;
 		vec2 main_dir = vec2(dir.x * cos(turn) - dir.y * sin(turn), dir.x * sin(turn) + dir.y * cos(turn));
 		vec2 main_in = entry - main_dir * 0.05;
-		float reach = mix(0.27, 0.42, hash1(seed * 5.7)) * (0.55 + 0.45 * power) * (1.0 + 0.3 * strike);
 		float width = mix(0.03, 0.05, hash1(seed * 8.3));
 
 		float density = smear(pos, main_in, main_dir, reach, width, seed);
@@ -186,30 +141,26 @@ vec4 blood_hits(vec2 pos, float aspect) {
 void fragment() {
 	vec2 centre = SCREEN_UV - 0.5;
 	float aspect = SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x;
-	vec2 p = vec2(centre.x * aspect, -centre.y);
-	float radius = length(p);
-	float rim = smoothstep(0.3, 1.0, radius);
+	float rim = smoothstep(0.3, 1.0, length(vec2(centre.x * aspect, centre.y)));
 
-	float behind = 1.0 - smoothstep(-0.55, 0.15, dot(vec2(centre.x, -centre.y) * 2.0, scope_dir));
-	float clear = smoothstep(0.07, 0.24, length((SCREEN_UV - scope_anchor) * vec2(aspect, 1.0)));
-	float lens_zone = (focus * behind + haze) * clear * smoothstep(0.3, 0.95, radius);
-	vec2 blur = vec2(1.0 / aspect, 1.0) * lens_zone * 0.0065;
-	vec2 split = centre * (aberration + 0.0035 * focus * behind * clear) * (0.35 + radius);
-	vec3 col = lens(SCREEN_UV, split, blur);
+	float dark = vignette * rim;
+	if (scope > 0.001) {
+		float behind = 1.0 - smoothstep(-0.55, 0.15, dot(vec2(centre.x, -centre.y) * 2.0, scope_dir));
+		dark += scope * behind * rim;
+	}
 
-	col = mix(col, vec3(dot(col, vec3(0.299, 0.587, 0.114))), desaturate);
+	dark = clamp(dark, 0.0, 1.0);
 
-	// edge darkening and a red filter at the periphery; both keep the scene's own detail
-	float dark = clamp(vignette * rim + scope * behind * rim, 0.0, 1.0);
-	col *= 1.0 - dark;
+	vec4 splash = vec4(0.0);
+	if (streaking > 0.0) {
+		splash = blood_hits(vec2(SCREEN_UV.x * aspect, SCREEN_UV.y), aspect);
+	}
 
-	float luma = dot(col, vec3(0.299, 0.587, 0.114));
-	col = mix(col, vec3(luma) * vec3(1.45, 0.45, 0.4), clamp(blood * rim, 0.0, 1.0));
+	float covered = splash.a + dark * (1.0 - splash.a);
+	vec3 paint = splash.rgb * splash.a;
 
-	vec4 splash = blood_hits(vec2(SCREEN_UV.x * aspect, SCREEN_UV.y), aspect);
-	col = mix(col, splash.rgb, splash.a);
+	float alpha = fade + covered * (1.0 - fade);
+	paint *= 1.0 - fade;
 
-	col += (hash(FRAGCOORD.xy + fract(TIME) * 100.0) - 0.5) * grain;
-
-	COLOR = vec4(mix(col, vec3(0.0), fade), 1.0);
+	COLOR = vec4(paint / max(alpha, 0.0001), alpha);
 }
