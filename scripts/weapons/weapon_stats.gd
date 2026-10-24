@@ -159,8 +159,6 @@ extends Resource
 @export var tracer_color := Color(1.0, 0.97, 0.85)
 @export var tracer_glow_color := Color(1.0, 0.55, 0.22)
 
-@export_range(0.0, 1.0) var tracer_chance := 1.0
-
 @export_group("Casing")
 @export var eject_casings := true
 

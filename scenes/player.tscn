@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_death.gd" id="6_death"]
 [ext_resource type="Script" path="res://scripts/player/player_healing.gd" id="7_healing"]
 [ext_resource type="Script" path="res://scripts/ui/player_hud.gd" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/player/player_slow_motion.gd" id="9_slowmo"]
 [ext_resource type="Script" path="res://scripts/player/player_stamina.gd" id="9_stamina"]
 
 [node name="Player" unique_id=1491936547 node_paths=PackedStringArray("input", "health") instance=ExtResource("1_char")]
@@ -62,4 +63,8 @@ movement = NodePath("..")
 script = ExtResource("9_stamina")
 movement = NodePath("..")
 input = NodePath("../PlayerInput")
+health = NodePath("../Health")
+
+[node name="PlayerSlowMotion" type="Node" parent="." node_paths=PackedStringArray("health")]
+script = ExtResource("9_slowmo")
 health = NodePath("../Health")

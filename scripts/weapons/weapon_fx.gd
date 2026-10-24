@@ -333,7 +333,7 @@ func _current_shift() -> Vector3:
 func _on_bullet_traced(from: Vector3, to: Vector3, _hit: Dictionary) -> void:
 	var s := weapon.stats
 	var dist := from.distance_to(to)
-	if dist < 0.5 or randf() > s.tracer_chance:
+	if dist < 0.5:
 		return
 
 	from += _shift
