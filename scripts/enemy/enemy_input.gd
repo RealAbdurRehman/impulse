@@ -245,6 +245,17 @@ func is_calm() -> bool:
 	return _mode == Mode.PATROL and awareness < 0.01 and not hunt and health.alive
 
 
+func warning() -> float:
+	if not health.alive:
+		return 0.0
+
+	return 1.0 if _mode == Mode.COMBAT else awareness
+
+
+func alarmed() -> bool:
+	return health.alive and _alarm_left > 0.0
+
+
 func poll() -> void:
 	var delta := get_physics_process_delta_time()
 	if _nav == null:
