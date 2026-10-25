@@ -15,45 +15,14 @@ var heft := 0.5
 
 static func of(stats: WeaponStats) -> SprintStyle:
 	var style := SprintStyle.new()
-	if stats.manual_cycle and stats.pellets <= 1:
-		style.gun_degrees = 40.0
-		style.hand_degrees = 6.0
-		style.reach = 0.18
-		style.height = -0.36
-		style.elbow_degrees = -30.0
-		style.twist_release = 0.7
-		style.lag_hz = 4.0
-		style.pitch_gain = 5.0
-		style.heft = 1.0
-	elif stats.pellets > 1:
-		style.gun_degrees = 36.0
-		style.hand_degrees = 6.0
-		style.reach = 0.2
-		style.height = -0.34
-		style.elbow_degrees = -30.0
-		style.twist_release = 0.7
-		style.lag_hz = 4.5
-		style.pitch_gain = 4.5
-		style.heft = 0.75
-	elif stats.automatic:
-		style.gun_degrees = 36.0
-		style.hand_degrees = 6.0
-		style.reach = 0.2
-		style.height = -0.34
-		style.elbow_degrees = -30.0
-		style.twist_release = 0.7
-		style.lag_hz = 5.0
-		style.pitch_gain = 4.0
-		style.heft = 0.6
-	else:
-		style.gun_degrees = 64.0
-		style.hand_degrees = 8.0
-		style.reach = 0.2
-		style.height = -0.22
-		style.elbow_degrees = -12.0
-		style.twist_release = 0.4
-		style.lag_hz = 6.0
-		style.pitch_gain = 3.5
-		style.heft = 0.2
-
+	style.gun_degrees = stats.sprint_gun_degrees
+	style.hand_degrees = stats.sprint_hand_degrees
+	style.reach = stats.sprint_reach
+	style.height = stats.sprint_height
+	style.elbow_degrees = stats.sprint_elbow_degrees
+	style.twist_release = stats.sprint_twist_release
+	style.lag = stats.sprint_lag
+	style.lag_hz = stats.sprint_lag_hz
+	style.pitch_gain = stats.sprint_pitch_gain
+	style.heft = stats.sprint_heft
 	return style

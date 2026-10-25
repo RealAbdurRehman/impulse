@@ -2,32 +2,32 @@
 
 [ext_resource type="PackedScene" uid="uid://mve47hodrql7" path="res://scenes/character.tscn" id="1_char"]
 [ext_resource type="Script" uid="uid://c4844efrvxgx5" path="res://scripts/player/player_input.gd" id="2_input"]
-[ext_resource type="Script" path="res://scripts/player/player_pickup.gd" id="3_pickup"]
+[ext_resource type="Script" uid="uid://dj1bdb61m0fud" path="res://scripts/player/player_pickup.gd" id="3_pickup"]
 [ext_resource type="Script" uid="uid://c53tlo7bxe4ax" path="res://scripts/character/health.gd" id="4_health"]
 [ext_resource type="Script" uid="uid://40mpl6jnjtvs" path="res://scripts/character/hit_stagger.gd" id="5_stagger"]
-[ext_resource type="Script" path="res://scripts/player/player_death.gd" id="6_death"]
-[ext_resource type="Script" path="res://scripts/player/player_healing.gd" id="7_healing"]
-[ext_resource type="Script" path="res://scripts/ui/player_hud.gd" id="8_hud"]
-[ext_resource type="Script" path="res://scripts/player/player_slow_motion.gd" id="9_slowmo"]
-[ext_resource type="Script" path="res://scripts/player/player_stamina.gd" id="9_stamina"]
+[ext_resource type="Script" uid="uid://cgxu13a0kaad3" path="res://scripts/player/player_death.gd" id="6_death"]
+[ext_resource type="Script" uid="uid://ca3diada27acq" path="res://scripts/player/player_healing.gd" id="7_healing"]
+[ext_resource type="Script" uid="uid://b6ycgrt6poli2" path="res://scripts/ui/player_hud.gd" id="8_hud"]
+[ext_resource type="Script" uid="uid://llllvlng2npg" path="res://scripts/player/player_slow_motion.gd" id="9_slowmo"]
+[ext_resource type="Script" uid="uid://biaeyumrogojv" path="res://scripts/player/player_stamina.gd" id="9_stamina"]
 
 [node name="Player" unique_id=1491936547 node_paths=PackedStringArray("input", "health") instance=ExtResource("1_char")]
 input = NodePath("PlayerInput")
 health = NodePath("Health")
 
-[node name="PlayerInput" type="Node" parent="."]
+[node name="PlayerInput" type="Node" parent="." index="13" unique_id=1021873175]
 script = ExtResource("2_input")
 
-[node name="PlayerPickup" type="Node" parent="." node_paths=PackedStringArray("carrier")]
+[node name="PlayerPickup" type="Node" parent="." index="14" unique_id=2119400975 node_paths=PackedStringArray("carrier")]
 script = ExtResource("3_pickup")
 carrier = NodePath("../WeaponCarrier")
 
-[node name="Health" type="Node" parent="." node_paths=PackedStringArray("ragdoll")]
+[node name="Health" type="Node" parent="." index="15" unique_id=1158503490 node_paths=PackedStringArray("ragdoll")]
 script = ExtResource("4_health")
-team = &"player"
 ragdoll = NodePath("../ActiveRagdoll/Armature/Skeleton3D/PhysicalBoneSimulator3D")
+team = &"player"
 
-[node name="PlayerDeath" type="Node" parent="." node_paths=PackedStringArray("pickup", "health", "movement", "gait", "ragdoll", "animated", "input", "carrier")]
+[node name="PlayerDeath" type="Node" parent="." index="16" unique_id=99951967 node_paths=PackedStringArray("pickup", "health", "movement", "gait", "ragdoll", "animated", "input", "carrier")]
 script = ExtResource("6_death")
 pickup = NodePath("../PlayerPickup")
 health = NodePath("../Health")
@@ -38,20 +38,20 @@ animated = NodePath("../AnimatedSkeleton")
 input = NodePath("../PlayerInput")
 carrier = NodePath("../WeaponCarrier")
 
-[node name="HitStagger" type="Node" parent="." node_paths=PackedStringArray("health", "movement", "ragdoll", "spine")]
+[node name="HitStagger" type="Node" parent="." index="17" unique_id=1149143539 node_paths=PackedStringArray("health", "movement", "ragdoll", "spine")]
 script = ExtResource("5_stagger")
 health = NodePath("../Health")
 movement = NodePath("..")
 ragdoll = NodePath("../ActiveRagdoll/Armature/Skeleton3D/PhysicalBoneSimulator3D")
 spine = NodePath("../AnimatedSkeleton/Skeleton3D/SpineModifier")
 
-[node name="PlayerHealing" type="Node" parent="." node_paths=PackedStringArray("health", "movement", "input")]
+[node name="PlayerHealing" type="Node" parent="." index="18" unique_id=1947158490 node_paths=PackedStringArray("health", "movement", "input")]
 script = ExtResource("7_healing")
 health = NodePath("../Health")
 movement = NodePath("..")
 input = NodePath("../PlayerInput")
 
-[node name="PlayerHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("health", "healing", "stamina", "weapon", "movement")]
+[node name="PlayerHud" type="CanvasLayer" parent="." index="19" unique_id=1189984553 node_paths=PackedStringArray("health", "healing", "stamina", "weapon", "movement")]
 script = ExtResource("8_hud")
 health = NodePath("../Health")
 healing = NodePath("../PlayerHealing")
@@ -59,12 +59,12 @@ stamina = NodePath("../PlayerStamina")
 weapon = NodePath("../Weapon")
 movement = NodePath("..")
 
-[node name="PlayerStamina" type="Node" parent="." node_paths=PackedStringArray("movement", "input", "health")]
+[node name="PlayerStamina" type="Node" parent="." index="20" unique_id=1539766239 node_paths=PackedStringArray("movement", "input", "health")]
 script = ExtResource("9_stamina")
 movement = NodePath("..")
 input = NodePath("../PlayerInput")
 health = NodePath("../Health")
 
-[node name="PlayerSlowMotion" type="Node" parent="." node_paths=PackedStringArray("health")]
+[node name="PlayerSlowMotion" type="Node" parent="." index="21" unique_id=2085042497 node_paths=PackedStringArray("health")]
 script = ExtResource("9_slowmo")
 health = NodePath("../Health")

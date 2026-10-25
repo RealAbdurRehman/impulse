@@ -48,6 +48,18 @@ extends Resource
 @export_range(10.0, 90.0) var aim_up_limit_degrees := 80.0
 @export_range(10.0, 90.0) var aim_down_limit_degrees := 70.0
 
+@export_group("Sprint")
+@export_range(-90.0, 90.0) var sprint_gun_degrees := 36.0
+@export_range(-45.0, 45.0) var sprint_hand_degrees := 6.0
+@export var sprint_reach := 0.2
+@export var sprint_height := -0.34
+@export_range(-90.0, 90.0) var sprint_elbow_degrees := -30.0
+@export_range(0.0, 1.0) var sprint_twist_release := 0.7
+@export_range(0.0, 1.0) var sprint_lag := 1.0
+@export_range(1.0, 12.0) var sprint_lag_hz := 5.0
+@export_range(0.0, 10.0) var sprint_pitch_gain := 4.0
+@export_range(0.0, 1.0) var sprint_heft := 0.6
+
 @export_group("Fire")
 @export var automatic := true
 @export var auto_reload := false
