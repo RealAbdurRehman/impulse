@@ -108,8 +108,8 @@ func _add(bone: PhysicalBone3D) -> void:
 	if not _shapes.has(key):
 		var points := PackedVector3Array()
 		for part in parts:
-			var hull := (part.mesh as Mesh).create_convex_shape(true, false).points
-			for p in _reduce(hull, POINTS_PER_MESH):
+			var mesh_points := (part.mesh as Mesh).create_convex_shape(true, false).points
+			for p in _reduce(mesh_points, POINTS_PER_MESH):
 				points.append((part.local as Transform3D) * p)
 
 		var hull := ConvexPolygonShape3D.new()

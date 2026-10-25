@@ -194,6 +194,7 @@ const PROBE_UP := 0.8
 @export var hips_spring := 160.0
 @export var hips_damping := 22.0
 @export var hip_clamp_speed := 4.0
+@export var run_hip_clamp_speed := 0.5
 @export var foot_speed_limit := 6.0
 
 @export var step_impact := 0.18
@@ -1083,7 +1084,7 @@ func _update_hips(delta: float, on_floor: bool) -> void:
 		_hip_y = ny
 
 	if on_floor and _hip_y > max_y:
-		_hip_y = maxf(max_y, _hip_y - hip_clamp_speed * delta)
+		_hip_y = maxf(max_y, _hip_y - lerpf(hip_clamp_speed, run_hip_clamp_speed, _run_amt) * delta)
 		_hip_vel = minf(_hip_vel, 0.0)
 
 	hips_offset_y = _hip_y - (root.y + hip_rest_height)

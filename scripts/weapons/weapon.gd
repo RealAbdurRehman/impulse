@@ -154,8 +154,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		_press_buffer = maxf(_press_buffer - delta, 0.0)
 
-	var pressed := _press_buffer > 0.0
-	var held := automatic and not stats.manual_cycle and input.fire
+	var carried := holder.spine.sprint_amount > 0.15
+	var pressed := _press_buffer > 0.0 and not carried
+	var held := automatic and not stats.manual_cycle and input.fire and not carried
 
 	_bloom = maxf(_bloom - stats.bloom_recovery * delta, 0.0)
 

@@ -351,6 +351,7 @@ func _assemble() -> void:
 	spine.hold_twist_degrees = stats.hold_twist_degrees
 	spine.hold_yaw_degrees = stats.hold_yaw_degrees
 	spine.ads_yaw_degrees = stats.ads_yaw_degrees
+	spine.sprint_style = SprintStyle.of(stats)
 	spine.max_aim_up_degrees = stats.aim_up_limit_degrees
 	spine.max_aim_down_degrees = stats.aim_down_limit_degrees
 

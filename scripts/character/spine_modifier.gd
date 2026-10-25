@@ -98,6 +98,14 @@ extends SkeletonModifier3D
 @export var wrist_follow_speed := 14.0
 @export_range(0.0, 90.0) var wrist_follow_limit_degrees := 70.0
 
+@export_group("Sprint")
+@export_range(0.0, 1.0) var sprint_min_speed := 0.65
+@export var sprint_blend_speed := 6.5
+@export var sprint_snap_speed := 40.0
+@export var sprint_fire_release := 0.3
+@export var sprint_lag_limit := 0.08
+@export var sprint_mean_rate := 4.0
+
 @export_group("Recoil")
 @export var recoil_arm_follow := 18.0
 @export_range(0.0, 1.0) var recoil_arm_share := 0.2
@@ -161,6 +169,10 @@ var hold_support := Transform3D.IDENTITY
 
 var gun_pose := Transform3D.IDENTITY
 
+var sprint_style := SprintStyle.new()
+var sprint_amount := 0.0
+var _sprint_speed := 0.0
+
 var _chain: Array[int] = []
 var _head_tip := -1
 var _left: Array[int] = []
@@ -170,6 +182,11 @@ var _chest_off := 0.0
 var _head_off := 0.0
 var _aim := 0.0
 var _aim_input := 0.0
+var _pose_aim := 0.0
+var _lag_stages: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO, Vector3.ZERO]
+var _lag_mean := Vector3.ZERO
+var _lag_ready := false
+var _since_fire := 9.0
 var _clock := 0.0
 var _arm_flip := 0.0
 var _twist := 0.0
@@ -239,12 +256,64 @@ func _process_modification() -> void:
 		reload.lowered,
 	)
 
+	_update_sprint(dt)
 	_apply_spine(skel, dt)
 
 	if gun_equipped:
 		_hold_gun(skel, dt)
 	else:
 		_lower_arms(skel)
+
+
+func _update_sprint(dt: float) -> void:
+	var input := character.input
+	_since_fire = 0.0 if input.fire else _since_fire + dt
+
+	var carrying := (
+		gun_equipped
+		and input.sprint
+		and gait.speed_ratio > sprint_min_speed
+		and character.aim_amount < 0.05
+		and _since_fire > sprint_fire_release
+		and not reload.active
+		and not character.crouching
+	)
+	var interrupted := (
+		input.fire
+		or character.aim_amount >= 0.05
+		or reload.active
+		or _since_fire < sprint_fire_release
+	)
+	var omega := lerpf(sprint_blend_speed, sprint_blend_speed * 0.7, sprint_style.heft)
+	if interrupted:
+		omega = sprint_snap_speed
+
+	var goal := 1.0 if carrying else 0.0
+	_sprint_speed += (omega * omega * (goal - sprint_amount) - 2.0 * omega * _sprint_speed) * dt
+	sprint_amount = clampf(sprint_amount + _sprint_speed * dt, 0.0, 1.0)
+	if sprint_amount <= 0.0 or sprint_amount >= 1.0:
+		_sprint_speed = 0.0
+
+	var carry_pitch := deg_to_rad(sprint_style.gun_degrees)
+	_pose_aim = _aim + (carry_pitch - _aim) * sprint_amount
+
+
+func _shoulder_lag(mid: Vector3, dt: float) -> Vector3:
+	if not _lag_ready:
+		_lag_stages = [mid, mid, mid]
+		_lag_mean = mid
+		_lag_ready = true
+
+	var omega := TAU * sprint_style.lag_hz
+	var k := 1.0 - exp(-omega * dt)
+	var input := mid
+	for i in _lag_stages.size():
+		_lag_stages[i] = _lag_stages[i].lerp(input, k)
+		input = _lag_stages[i]
+
+	_lag_mean = _lag_mean.lerp(mid, 1.0 - exp(-sprint_mean_rate * dt))
+	var offset := (_lag_stages[2] - mid).limit_length(sprint_lag_limit)
+	return offset * sprint_style.lag * sprint_amount
 
 
 func _target_pitch(skel: Skeleton3D) -> float:
@@ -288,11 +357,12 @@ func jolt(speed: float) -> void:
 
 
 func _apply_spine(skel: Skeleton3D, dt: float) -> void:
-	var chest_share := chest_aim_share if _aim > 0.0 else chest_aim_share_down
-	var chest_target := _posture_lean() - _aim * chest_share
+	var aim := _aim * (1.0 - sprint_amount)
+	var chest_share := chest_aim_share if aim > 0.0 else chest_aim_share_down
+	var chest_target := _posture_lean() - aim * chest_share
 	chest_target += deg_to_rad(ads_chest_lean_degrees) * character.aim_amount
 	var head_target := (
-		chest_target * (1.0 - head_level) - _aim * head_aim_share + deg_to_rad(head_forward_tilt)
+		chest_target * (1.0 - head_level) - aim * head_aim_share + deg_to_rad(head_forward_tilt)
 	)
 	head_target += deg_to_rad(ads_head_tilt_degrees) * character.aim_amount
 
@@ -302,7 +372,8 @@ func _apply_spine(skel: Skeleton3D, dt: float) -> void:
 	var k := 1.0 - exp(-smoothing_speed * dt)
 	_chest_off = lerpf(_chest_off, chest_target, k)
 	_head_off = lerpf(_head_off, head_target, k)
-	_twist = lerpf(_twist, deg_to_rad(hold_twist_degrees) if gun_equipped else 0.0, k)
+	var twist_goal := deg_to_rad(hold_twist_degrees) * (1.0 - sprint_style.twist_release * sprint_amount)
+	_twist = lerpf(_twist, twist_goal if gun_equipped else 0.0, k)
 
 	var ramp := maxf(hit_ramp, 0.001)
 	var slot := _hit_jolts.size() - 1
@@ -382,12 +453,16 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 
 	_yaw = deg_to_rad(hold_yaw_degrees + ads_yaw_degrees * character.aim_amount)
 
-	var frame_pitch := _aim + tilt + flip
+	var lag := _shoulder_lag(mid, dt)
+	var lag_pitch := (_lag_stages[2].y - _lag_mean.y) * sprint_style.pitch_gain * sprint_amount
+
+	var frame_pitch := _pose_aim + lag_pitch + tilt + flip
 	var frame := _gun_frame(frame_pitch + barrel.lift)
-	var level_frame := _gun_frame(_aim + tilt + barrel.lift)
+	var level_frame := _gun_frame(_pose_aim + lag_pitch + tilt + barrel.lift)
 
 	_arm_flip = lerpf(_arm_flip, flip, 1.0 - exp(-recoil_arm_follow * dt))
-	var held := _held_pitch() + tilt + _arm_flip * recoil_arm_share
+	var hand_pitch := lerpf(_held_pitch(), deg_to_rad(sprint_style.hand_degrees), sprint_amount)
+	var held := hand_pitch + tilt + _arm_flip * recoil_arm_share
 
 	var held_aim := Vector3(0.0, sin(held), cos(held))
 	var held_up := Vector3(0.0, cos(held), -sin(held))
@@ -406,11 +481,13 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	var limit_left: float = (_upper_len[_left[0]] + _fore_len[_left[0]]) * max_arm_extension
 	var limit_right: float = (_upper_len[_right[0]] + _fore_len[_right[0]]) * max_arm_extension
 
-	var reach := hold_reach - slide - reload_pull
-	var forward := Vector3(0.0, 0.0, hold_up_forward * smoothstep(0.4, 1.3, _aim + tilt))
+	var reach := lerpf(hold_reach, sprint_style.reach, sprint_amount) - slide - reload_pull
+	var reach_floor := lerpf(hold_reach_min, minf(hold_reach_min, sprint_style.reach), sprint_amount)
+	var drop := lerpf(hold_drop, -sprint_style.height, sprint_amount)
+	var forward := Vector3(0.0, 0.0, hold_up_forward * smoothstep(0.4, 1.3, _pose_aim + tilt) * (1.0 - sprint_amount))
 	var anchor := Vector3.ZERO
 	for i in 6:
-		anchor = mid + body * Vector3(reach, lift - hold_drop, hold_side) + forward
+		anchor = mid + body * Vector3(reach, lift - drop, hold_side) + forward + lag
 
 		var over := maxf(
 			_support_excess(anchor, frame, support_rel, s_left, limit_left, reload_hand),
@@ -419,11 +496,11 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 		if over <= 0.0:
 			break
 
-		reach = maxf(reach - over, hold_reach_min)
+		reach = maxf(reach - over, reach_floor)
 
 	var raise := maxf(
 		character.aim_amount,
-		low_aim_raise * smoothstep(low_aim_start_degrees, low_aim_full_degrees, -rad_to_deg(_aim)),
+		low_aim_raise * smoothstep(low_aim_start_degrees, low_aim_full_degrees, -rad_to_deg(_aim)) * (1.0 - sprint_amount),
 	)
 	var pivot_world := anchor
 	if raise > 0.0:
@@ -473,9 +550,9 @@ func _hold_gun(skel: Skeleton3D, dt: float) -> void:
 	gun_pose = Transform3D(frame, pivot_world - frame * gun_anchor)
 	_muzzle_skel = gun_pose * gun_muzzle
 
-	var main_flare := lerpf(elbow_flare_degrees, bolt_flare_degrees, main_bolt)
+	var main_flare := lerpf(lerpf(elbow_flare_degrees, bolt_flare_degrees, main_bolt), sprint_style.elbow_degrees, sprint_amount)
 	var pole_right := _elbow_pole(body.y, -body.z, deg_to_rad(main_flare))
-	var support_flare := lerpf(support_flare_degrees, reload.rack_elbow_degrees, reload.rack_amount)
+	var support_flare := lerpf(lerpf(support_flare_degrees, reload.rack_elbow_degrees, reload.rack_amount), sprint_style.elbow_degrees, sprint_amount)
 	var pole_left := _elbow_pole(body.y, body.z, deg_to_rad(support_flare))
 
 	var main_basis := frame * hold_main.basis

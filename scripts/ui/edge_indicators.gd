@@ -19,7 +19,7 @@ class Tag:
 	var fade := 1.0
 	var mark := 0.0
 	var span := 1.0
-	var seed := 0.0
+	var variation := 0.0
 
 
 @export var design_height := 1080.0
@@ -161,9 +161,9 @@ func _process(delta: float) -> void:
 		_place(tag, half)
 
 
-func _make_tag(seed: float) -> Tag:
+func _make_tag(variation: float) -> Tag:
 	var tag := Tag.new()
-	tag.seed = seed
+	tag.variation = variation
 	tag.material = _material()
 	tag.rect.material = tag.material
 	tag.rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -190,7 +190,7 @@ func _place(tag: Tag, half: float) -> void:
 	tag.material.set_shader_parameter(&"gauge", tag.level)
 	tag.material.set_shader_parameter(&"bang", 1.0 if tag.threat else 0.0)
 	tag.material.set_shader_parameter(&"age", tag.age)
-	tag.material.set_shader_parameter(&"seed", tag.seed)
+	tag.material.set_shader_parameter(&"seed", tag.variation)
 	tag.material.set_shader_parameter(&"direction", tag.direction)
 
 
