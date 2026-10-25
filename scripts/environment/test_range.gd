@@ -78,6 +78,7 @@ func _ready() -> void:
 	NoiseSource.of(player).bang.connect(_on_bang)
 
 	add_child(EdgeIndicators.new())
+	player.add_child(VisibilityMark.new())
 
 	var lod := EnemyLod.new()
 	lod.target = player
