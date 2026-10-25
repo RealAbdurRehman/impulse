@@ -6,7 +6,13 @@ const HOT := Color(0.92, 0.22, 0.18)
 const AMBER := Color(0.92, 0.62, 0.2)
 const SHADOW := Color(0.0, 0.0, 0.0, 0.42)
 
-enum Mark { NONE, HIT, HEAD, KILL, KILL_HEAD }
+enum Mark {
+	NONE,
+	HIT,
+	HEAD,
+	KILL,
+	KILL_HEAD,
+}
 
 const TICKS := [Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT, Vector2.UP]
 const DIAGONALS := [
@@ -28,6 +34,7 @@ const PROBES := [
 
 class Canvas extends Control:
 	var reticle: Reticle
+
 
 	func _draw() -> void:
 		reticle.paint(self)
@@ -104,7 +111,7 @@ func _ready() -> void:
 	target.health.died.connect(_on_player_died)
 
 	if hide_system_cursor:
-		Input.mouse_mode = Input.MOUSE_MODE_CONFINED_HIDDEN
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 
 func _exit_tree() -> void:
@@ -229,7 +236,9 @@ func _physics_process(delta: float) -> void:
 	_spread = spread_meters * per_meter
 
 	var on_screen := get_viewport().get_visible_rect().grow(-6.0).has_point(at)
-	_looking_at_enemy = on_screen and _over_enemy(point, clampf(target_tolerance + spread_meters * 0.5, 0.1, 0.45))
+	_looking_at_enemy = (
+		on_screen and _over_enemy(point, clampf(target_tolerance + spread_meters * 0.5, 0.1, 0.45))
+	)
 
 
 func _over_enemy(point: Vector3, radius: float) -> bool:
@@ -242,7 +251,10 @@ func _over_enemy(point: Vector3, radius: float) -> bool:
 		query.position = point + probe * radius
 		for found in space.intersect_point(query, 8):
 			var health := Health.of(found.collider)
-			if health != null and health != target.health and health.alive and not _is_friend(health):
+			if (
+				health != null and health != target.health
+				and health.alive and not _is_friend(health)
+			):
 				return true
 
 	return false
@@ -302,7 +314,16 @@ func paint(c: Control) -> void:
 
 func _paint_cursor(c: Control, at: Vector2, k: float) -> void:
 	var aim := _weapon.character.aim_amount
-	_arc(c, at, lerpf(cursor_radius, cursor_radius * 0.75, aim) * k, 1.1 * k, 0.0, TAU, Color(INK, 0.9 * _visible), k)
+	_arc(
+		c,
+		at,
+		lerpf(cursor_radius, cursor_radius * 0.75, aim) * k,
+		1.1 * k,
+		0.0,
+		TAU,
+		Color(INK, 0.9 * _visible),
+		k,
+	)
 
 
 func _connector(c: Control, from: Vector2, to: Vector2, k: float) -> void:
@@ -349,7 +370,16 @@ func _paint_ring(c: Control, at: Vector2, k: float) -> void:
 	if reloading:
 		var progress := clampf(_reload_elapsed / maxf(_weapon.reload_total, 0.01), 0.0, 1.0)
 		_arc(c, at, radius, 1.6 * k, 0.0, TAU, base, k)
-		_arc(c, at, radius, 1.6 * k, -PI * 0.5, -PI * 0.5 + TAU * progress, Color(AMBER, 0.95 * _alpha), k)
+		_arc(
+			c,
+			at,
+			radius,
+			1.6 * k,
+			-PI * 0.5,
+			-PI * 0.5 + TAU * progress,
+			Color(AMBER, 0.95 * _alpha),
+			k,
+		)
 		return
 
 	var segments := mini(capacity, 30)
@@ -414,12 +444,37 @@ func _paint_mark(c: Control, at: Vector2, k: float) -> void:
 	var near := (7.0 + 4.0 * t) * k * pop
 	var far := near + (6.0 if killed else 4.5) * k * pop
 	for dir in DIAGONALS:
-		_stroke(c, at + dir * near, at + dir * far, (2.2 if killed else 1.8) * k, Color(color, fade), k)
+		_stroke(
+			c,
+			at + dir * near,
+			at + dir * far,
+			(2.2 if killed else 1.8) * k,
+			Color(color, fade),
+			k,
+		)
 
 	if _mark == Mark.KILL_HEAD:
-		_arc(c, at, (8.0 + 18.0 * t) * k, 1.2 * k, 0.0, TAU, Color(AMBER, 0.7 * pow(1.0 - t, 2.0)), k)
+		_arc(
+			c,
+			at,
+			(8.0 + 18.0 * t) * k,
+			1.2 * k,
+			0.0,
+			TAU,
+			Color(AMBER, 0.7 * pow(1.0 - t, 2.0)),
+			k,
+		)
 	elif killed:
-		_arc(c, at, (7.0 + 12.0 * t) * k, 1.1 * k, 0.0, TAU, Color(HOT, 0.45 * pow(1.0 - t, 2.0)), k)
+		_arc(
+			c,
+			at,
+			(7.0 + 12.0 * t) * k,
+			1.1 * k,
+			0.0,
+			TAU,
+			Color(HOT, 0.45 * pow(1.0 - t, 2.0)),
+			k,
+		)
 
 
 func _stroke(c: Control, from: Vector2, to: Vector2, width: float, color: Color, k: float) -> void:
@@ -427,9 +482,27 @@ func _stroke(c: Control, from: Vector2, to: Vector2, width: float, color: Color,
 	c.draw_line(from, to, color, width, true)
 
 
-func _arc(c: Control, at: Vector2, radius: float, width: float, from: float, to: float, color: Color, k: float) -> void:
+func _arc(
+	c: Control,
+	at: Vector2,
+	radius: float,
+	width: float,
+	from: float,
+	to: float,
+	color: Color,
+	k: float,
+) -> void:
 	var points := maxi(int(absf(to - from) * radius / (1.5 * k)), 6)
-	c.draw_arc(at, radius, from, to, points, Color(SHADOW, SHADOW.a * color.a), width + 1.2 * k, true)
+	c.draw_arc(
+		at,
+		radius,
+		from,
+		to,
+		points,
+		Color(SHADOW, SHADOW.a * color.a),
+		width + 1.2 * k,
+		true,
+	)
 	c.draw_arc(at, radius, from, to, points, color, width, true)
 
 
