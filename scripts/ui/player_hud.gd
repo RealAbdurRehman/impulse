@@ -12,10 +12,8 @@ const AMBER := Color(0.92, 0.62, 0.2)
 @export var health: Health
 @export var healing: PlayerHealing
 @export var stamina: PlayerStamina
-@export var movement: CharacterMovement
 
 @export var margin := 24.0
-@export var head_height := 2.0
 @export var design_height := 1080.0
 
 class Canvas extends Control:
@@ -26,7 +24,6 @@ class Canvas extends Control:
 
 var _canvas: Canvas
 var _box := StyleBoxFlat.new()
-var _shown := 0.0
 
 
 func _ready() -> void:
@@ -40,8 +37,7 @@ func _ready() -> void:
 	add_child(_canvas)
 
 
-func _process(delta: float) -> void:
-	_shown = move_toward(_shown, 1.0 if healing.is_applying() else 0.0, delta * 6.0)
+func _process(_delta: float) -> void:
 	_canvas.queue_redraw()
 
 
@@ -50,8 +46,6 @@ func paint(c: Control) -> void:
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(k, k))
 	var view := c.size / k
 	_paint_vitals(c, view)
-	if _shown > 0.0:
-		_paint_ring(c, k)
 
 
 func _paint_vitals(c: Control, view: Vector2) -> void:
@@ -105,13 +99,3 @@ func _paint_roll(c: Control, at: Vector2) -> void:
 	c.draw_circle(at, 8.0, GAUZE)
 	c.draw_circle(at, 5.0, Color(0.7, 0.66, 0.56))
 	c.draw_circle(at, 2.2, GAUZE)
-
-
-func _paint_ring(c: Control, k: float) -> void:
-	var camera := get_viewport().get_camera_3d()
-	var at := camera.unproject_position(movement.global_position + Vector3.UP * head_height) / k
-	var font := ThemeDB.fallback_font
-
-	c.draw_arc(at, 20.0, 0.0, TAU, 48, Color(TRACK, 0.2 * _shown), 4.0, true)
-	c.draw_arc(at, 20.0, -PI * 0.5, -PI * 0.5 + TAU * healing.progress, 48, Color(GAUZE, _shown), 4.0, true)
-	c.draw_string(font, at + Vector2(-60.0, 40.0), "BANDAGING", HORIZONTAL_ALIGNMENT_CENTER, 120.0, 12, Color(INK, _shown))

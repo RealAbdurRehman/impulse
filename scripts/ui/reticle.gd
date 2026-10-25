@@ -75,6 +75,7 @@ var _emphasis := 0.0
 var _visible := 0.0
 var _pulse := 0.0
 var _flash := 0.0
+var _bandaging := 0.0
 var _ring_time := 0.0
 var _reload_elapsed := 0.0
 
@@ -263,6 +264,7 @@ func _process(delta: float) -> void:
 	_hostile = lerpf(_hostile, 1.0 if _looking_at_enemy else 0.0, 1.0 - exp(-18.0 * real))
 	_pulse = maxf(_pulse - 9.0 * real, 0.0)
 	_flash = maxf(_flash - 5.0 * real, 0.0)
+	_bandaging = lerpf(_bandaging, 1.0 if _healing.is_applying() else 0.0, 1.0 - exp(-10.0 * real))
 	_ring_time = maxf(_ring_time - real, 0.0)
 	_mark_age += real
 	_was_armed = _armed
@@ -274,7 +276,7 @@ func _process(delta: float) -> void:
 	_emphasis = lerpf(_emphasis, lively, 1.0 - exp(-10.0 * real))
 	_visible = _alpha * lerpf(rest_alpha, 1.0, _emphasis)
 
-	_canvas.visible = _alpha > 0.01
+	_canvas.visible = _alpha > 0.01 or _bandaging > 0.01
 	if _canvas.visible:
 		_canvas.queue_redraw()
 
@@ -292,6 +294,7 @@ func paint(c: Control) -> void:
 		_connector(c, mouse, bullet, k)
 
 	_paint_ring(c, mouse, k)
+	_paint_bandage(c, mouse, k)
 	_paint_cursor(c, mouse, k)
 	_paint_barrel(c, bullet, k, tone)
 	_paint_mark(c, bullet, k)
@@ -366,6 +369,31 @@ func _paint_ring(c: Control, at: Vector2, k: float) -> void:
 		var from := -PI * 0.5 + step * float(i) + gap_angle
 		var to := -PI * 0.5 + step * float(i + 1) - gap_angle
 		c.draw_arc(at, radius, from, to, points, lit_color if i < lit else dim_color, 1.6 * k, true)
+
+
+func _paint_bandage(c: Control, at: Vector2, k: float) -> void:
+	if _bandaging <= 0.01:
+		return
+
+	var radius := (ring_radius + 10.0) * k
+	var progress := clampf(_healing.progress, 0.0, 1.0)
+	var start := -PI * 0.5
+	var tip := start + TAU * progress
+	var width := 2.6 * k
+	_arc(c, at, radius, width, 0.0, TAU, Color(INK, 0.16 * _bandaging), k)
+	if progress > 0.0:
+		_arc(c, at, radius, width, start, tip, Color(INK, 0.95 * _bandaging), k)
+
+	var head := at + Vector2.from_angle(tip) * radius
+	var arm := 4.6 * k
+	var color := Color(INK, _bandaging)
+	var shadow := Color(SHADOW, SHADOW.a * color.a)
+	var across := [head - Vector2(arm, 0.0), head + Vector2(arm, 0.0)]
+	var down := [head - Vector2(0.0, arm), head + Vector2(0.0, arm)]
+	c.draw_line(across[0], across[1], shadow, width + 1.2 * k, true)
+	c.draw_line(down[0], down[1], shadow, width + 1.2 * k, true)
+	c.draw_line(across[0], across[1], color, width, true)
+	c.draw_line(down[0], down[1], color, width, true)
 
 
 func _paint_mark(c: Control, at: Vector2, k: float) -> void:

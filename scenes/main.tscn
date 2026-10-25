@@ -2208,7 +2208,7 @@ shape = SubResource("BoxShape3D_93")
 [node name="Decor" type="Node3D" parent="Environment" unique_id=916846386]
 
 [node name="Basement_ceiling" type="MeshInstance3D" parent="Environment/Decor" unique_id=1628524950]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -0.15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 0.957605, 0)
 mesh = SubResource("BoxMesh_106")
 surface_material_override/0 = SubResource("Mat_hall")
 
@@ -2281,6 +2281,7 @@ surface_material_override/0 = SubResource("Mat_facade")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, -0.15, 0)
 
 [node name="Shape" type="CollisionShape3D" parent="Environment/Decor/Basement_ceiling_body" unique_id=1026747885]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1228939, 0)
 shape = SubResource("BoxShape3D_ceiling_basement")
 
 [node name="Hall_ceiling_body" type="StaticBody3D" parent="Environment/Decor" unique_id=1398643015]

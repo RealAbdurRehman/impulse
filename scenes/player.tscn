@@ -51,12 +51,11 @@ health = NodePath("../Health")
 movement = NodePath("..")
 input = NodePath("../PlayerInput")
 
-[node name="PlayerHud" type="CanvasLayer" parent="." index="19" unique_id=1189984553 node_paths=PackedStringArray("health", "healing", "stamina", "movement")]
+[node name="PlayerHud" type="CanvasLayer" parent="." index="19" unique_id=1189984553 node_paths=PackedStringArray("health", "healing", "stamina")]
 script = ExtResource("8_hud")
 health = NodePath("../Health")
 healing = NodePath("../PlayerHealing")
 stamina = NodePath("../PlayerStamina")
-movement = NodePath("..")
 
 [node name="PlayerStamina" type="Node" parent="." index="20" unique_id=1539766239 node_paths=PackedStringArray("movement", "input", "health")]
 script = ExtResource("9_stamina")

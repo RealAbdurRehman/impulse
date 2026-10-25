@@ -153,7 +153,7 @@ func _start() -> void:
 
 func _apply(delta: float) -> void:
 	var broken := not movement.grounded or input.fire or input.sprint or input.aim or input.jump_pressed
-	broken = broken or input.reload_pressed or input.interact_pressed or input.heal_pressed
+	broken = broken or input.interact_pressed or input.heal_pressed
 	if broken:
 		_cancel()
 		return
