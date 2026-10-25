@@ -12,7 +12,6 @@ const AMBER := Color(0.92, 0.62, 0.2)
 @export var health: Health
 @export var healing: PlayerHealing
 @export var stamina: PlayerStamina
-@export var weapon: Weapon
 @export var movement: CharacterMovement
 
 @export var margin := 24.0
@@ -51,7 +50,6 @@ func paint(c: Control) -> void:
 	c.draw_set_transform(Vector2.ZERO, 0.0, Vector2(k, k))
 	var view := c.size / k
 	_paint_vitals(c, view)
-	_paint_ammo(c, view)
 	if _shown > 0.0:
 		_paint_ring(c, k)
 
@@ -107,22 +105,6 @@ func _paint_roll(c: Control, at: Vector2) -> void:
 	c.draw_circle(at, 8.0, GAUZE)
 	c.draw_circle(at, 5.0, Color(0.7, 0.66, 0.56))
 	c.draw_circle(at, 2.2, GAUZE)
-
-
-func _paint_ammo(c: Control, view: Vector2) -> void:
-	if not is_instance_valid(weapon):
-		return
-
-	var font := ThemeDB.fallback_font
-	var area := Rect2(view.x - margin - 190.0, view.y - margin - 82.0, 190.0, 82.0)
-	c.draw_style_box(_box, area)
-
-	var empty := weapon.ammo <= 0
-	c.draw_string(font, area.position + Vector2(18.0, 54.0), str(weapon.ammo), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 42, BLOOD if empty else INK)
-	c.draw_string(font, area.position + Vector2(172.0, 54.0), "/ %d" % weapon.stats.magazine_size, HORIZONTAL_ALIGNMENT_RIGHT, -1.0, 16, DIM)
-
-	if weapon.is_reloading():
-		c.draw_string(font, area.position + Vector2(18.0, 74.0), "RELOADING", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, DIM)
 
 
 func _paint_ring(c: Control, k: float) -> void:
