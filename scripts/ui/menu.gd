@@ -35,8 +35,8 @@ func _ready() -> void:
 	%Quit.visible = not OS.has_feature("web")
 	_fill(GAME, GameSettings.current)
 	_fill(RUN, LevelSettings.current)
-	for name in GAME:
-		_changed(get_node("%" + name)).connect(_on_game_changed.unbind(1))
+	for key in GAME:
+		_changed(get_node("%" + key)).connect(_on_game_changed.unbind(1))
 
 	%NewGameButton.pressed.connect(_open.bind(%NewGame))
 	%SettingsButton.pressed.connect(_open.bind(%Settings))
@@ -60,9 +60,9 @@ func _open(page: Control) -> void:
 
 
 func _fill(map: Dictionary, source: Resource) -> void:
-	for name in map:
-		var widget := get_node("%" + name)
-		var value = source.get(map[name])
+	for key in map:
+		var widget := get_node("%" + key)
+		var value = source.get(map[key])
 		if widget is OptionButton:
 			widget.selected = value
 		elif widget is Range:
@@ -72,10 +72,10 @@ func _fill(map: Dictionary, source: Resource) -> void:
 
 
 func _store(map: Dictionary, target: Resource) -> void:
-	for name in map:
-		var widget := get_node("%" + name)
+	for key in map:
+		var widget := get_node("%" + key)
 		var value = widget.selected if widget is OptionButton else widget.value if widget is Range else widget.button_pressed
-		target.set(map[name], type_convert(value, typeof(target.get(map[name]))))
+		target.set(map[key], type_convert(value, typeof(target.get(map[key]))))
 
 
 func _changed(widget: Control) -> Signal:

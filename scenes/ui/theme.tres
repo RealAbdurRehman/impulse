@@ -55,6 +55,8 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxEmpty" id="bare"]
+
 [sub_resource type="StyleBoxFlat" id="fill"]
 content_margin_left = 0.0
 content_margin_top = 6.0
@@ -149,8 +151,6 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxEmpty" id="bare"]
-
 [resource]
 default_font_size = 26
 Button/colors/font_color = Color(0.93, 0.93, 0.9, 1)
@@ -164,12 +164,12 @@ Button/styles/pressed = SubResource("btn_pressed")
 ButtonColumn/base_type = &"VBoxContainer"
 ButtonColumn/constants/separation = 12
 CheckButton/colors/font_color = Color(0.93, 0.93, 0.9, 1)
+CheckButton/styles/disabled = SubResource("bare")
 CheckButton/styles/focus = SubResource("focus")
-CheckButton/styles/normal = SubResource("bare")
-CheckButton/styles/pressed = SubResource("bare")
 CheckButton/styles/hover = SubResource("bare")
 CheckButton/styles/hover_pressed = SubResource("bare")
-CheckButton/styles/disabled = SubResource("bare")
+CheckButton/styles/normal = SubResource("bare")
+CheckButton/styles/pressed = SubResource("bare")
 FailTitle/base_type = &"Label"
 FailTitle/colors/font_color = Color(0.8, 0.16, 0.14, 1)
 FailTitle/font_sizes/font_size = 84
