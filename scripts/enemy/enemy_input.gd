@@ -1,10 +1,28 @@
 class_name EnemyInput
 extends ActorInput
 
-enum Mode { PATROL, SEARCH, COMBAT, CLEARED }
-enum Plan { ENGAGE, COVER, FLANK }
-enum Phase { GO, HIDE, PEEK }
-enum Tactic { HOLD, ADVANCE, RETREAT, STRAFE }
+enum Mode {
+	PATROL,
+	SEARCH,
+	COMBAT,
+	CLEARED,
+}
+enum Plan {
+	ENGAGE,
+	COVER,
+	FLANK,
+}
+enum Phase {
+	GO,
+	HIDE,
+	PEEK,
+}
+enum Tactic {
+	HOLD,
+	ADVANCE,
+	RETREAT,
+	STRAFE,
+}
 
 const SUSPECT := 0.3
 const HUNCH_HOLD := 1.5
@@ -76,8 +94,6 @@ var traits: EnemyTraits
 var engaged := false
 
 var hostile := true
-
-var hunt := false
 
 var awareness := 0.0
 
@@ -242,7 +258,7 @@ func _ready() -> void:
 
 
 func is_calm() -> bool:
-	return _mode == Mode.PATROL and awareness < 0.01 and not hunt and health.alive
+	return _mode == Mode.PATROL and awareness < 0.01 and health.alive
 
 
 func warning() -> float:
@@ -302,27 +318,6 @@ func poll() -> void:
 		_laser.hide()
 
 	_crouching = crouch
-
-
-func describe() -> String:
-	var weapon := carrier.weapon
-	var line := "%s  skill %.2f" % [EnemyTraits.Archetype.keys()[traits.archetype], traits.skill]
-	var doing: String = Mode.keys()[_mode]
-	if _mode == Mode.PATROL or _mode == Mode.SEARCH:
-		doing += " %d%%%s" % [roundi(awareness * 100.0), " wary" if _wary_left > 0.0 else ""]
-	else:
-		doing = Plan.keys()[_plan] + (" (unseen)" if _hidden else "")
-		if AttackTokens.holds(get_instance_id()):
-			doing += " (attacking)"
-		elif _waiting():
-			doing += " (waiting)"
-
-		if _plan == Plan.COVER:
-			doing += " " + Phase.keys()[_phase]
-		elif _plan == Plan.ENGAGE:
-			doing += " " + Tactic.keys()[_tactic]
-
-	return "%s\n%s\nammo %d/%d" % [line, doing, weapon.ammo, weapon.stats.magazine_size]
 
 
 func _exit_tree() -> void:
@@ -402,7 +397,11 @@ func _sense(delta: float) -> void:
 		_call_left -= delta
 		if _call_left <= 0.0 and _mode != Mode.COMBAT:
 			awareness = maxf(awareness, SUSPECT * 2.0)
-			_last_seen = _call_at + Vector3(_rng.randfn(0.0, 1.5) if _call_body == 0 else 0.0, 0.0, 0.0)
+			_last_seen = _call_at + Vector3(
+				_rng.randfn(0.0, 1.5) if _call_body == 0 else 0.0,
+				0.0,
+				0.0,
+			)
 			_last_dir = _call_dir
 			_body_target = _call_body
 			_wary_left = WARY_TIME
@@ -428,7 +427,7 @@ func _sense(delta: float) -> void:
 		if _quiet_for > HUNCH_HOLD:
 			awareness = maxf(awareness - HUNCH_FADE * delta, 0.45 if _mode == Mode.SEARCH else 0.0)
 
-	if hunt or (_alerted and distance < traits.tracking):
+	if _alerted and distance < traits.tracking:
 		_last_seen = there
 		_since_seen = 0.0
 		if not _known:
@@ -555,7 +554,10 @@ func _look_for_bodies(me: Vector3) -> void:
 		var eye := me + Vector3.UP * (EnemyCover.CROUCH_EYE if _crouching else EnemyCover.EYE)
 		var ahead := reach * float(_body.facing)
 		var in_cone := ahead > 0.0 and absf(spot.y - eye.y) <= ahead * _view_slope
-		if absf(reach) < sight_range and (in_cone or absf(reach) < rear_awareness) and _senses.sees(eye, spot + Vector3.UP * 0.3):
+		if (
+			absf(reach) < sight_range and (in_cone or absf(reach) < rear_awareness)
+			and _senses.sees(eye, spot + Vector3.UP * 0.3)
+		):
 			_find_body(id, spot)
 			return
 
@@ -615,7 +617,10 @@ func _look_screen() -> void:
 
 	var size := get_viewport().get_visible_rect().size
 	var depth := absf(cam.global_position.z - _body.global_position.z)
-	_view_reach = maxf(depth * tan(deg_to_rad(cam.fov) * 0.5) * size.x / size.y * 0.9, MIN_VIEW_REACH)
+	_view_reach = maxf(
+		depth * tan(deg_to_rad(cam.fov) * 0.5) * size.x / size.y * 0.9,
+		MIN_VIEW_REACH,
+	)
 
 
 func _reaction() -> float:
@@ -637,7 +642,12 @@ func _notice(scale := 1.0) -> void:
 	_gunner.look_ahead(_body.global_position + Vector3.UP * 1.35, _body.facing)
 
 
-func _on_damaged(amount: float, _point: Vector3, _direction: Vector3, _bone: PhysicalBone3D) -> void:
+func _on_damaged(
+	amount: float,
+	_point: Vector3,
+	_direction: Vector3,
+	_bone: PhysicalBone3D,
+) -> void:
 	if not hostile or not _target_health.alive:
 		return
 
@@ -672,7 +682,10 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 	_route_left -= delta
 	_travel_failed = false
 
-	var stale := not _pilot.has_route() or _route_goal.distance_to(goal) > 0.8 or (_pilot.blocked and _route_left <= 0.0)
+	var stale := (
+		not _pilot.has_route() or _route_goal.distance_to(goal) > 0.8
+		or (_pilot.blocked and _route_left <= 0.0)
+	)
 	if stale:
 		var from := _nav.nearest(me.x, me.y)
 		var to := _nav.nearest(goal.x, goal.y)
@@ -806,7 +819,10 @@ func _search(delta: float) -> void:
 func _begin_inspect() -> bool:
 	var dead := instance_from_id(_search_body) as EnemyInput
 	_search_body = 0
-	if dead == null or absf(dead._body.global_position.x - _body.global_position.x) > BODY_STANDOFF + 2.0:
+	if (
+		dead == null
+		or absf(dead._body.global_position.x - _body.global_position.x) > BODY_STANDOFF + 2.0
+	):
 		return false
 
 	var id := dead.get_instance_id()
@@ -826,7 +842,11 @@ func _look_at_body() -> bool:
 		return false
 
 	has_aim = true
-	aim_point = (dead.health.ragdoll.get_child(0) as Node3D).global_position + Vector3(0.0, -0.2, 0.0)
+	aim_point = (dead.health.ragdoll.get_child(0) as Node3D).global_position + Vector3(
+		0.0,
+		-0.2,
+		0.0,
+	)
 	return true
 
 
@@ -848,12 +868,16 @@ func vanish() -> void:
 				mesh.set_surface_override_material(i, _fading(material, fades))
 
 	var tween := create_tween()
-	tween.tween_method(func(amount: float) -> void:
-		for material in fades:
-			material.albedo_color.a = 1.0 - amount
+	tween.tween_method(
+		func(amount: float) -> void:
+			for material in fades:
+				material.albedo_color.a = 1.0 - amount
 
-		health.bleeding.fade(1.0 - amount)
-	, 0.0, 1.0, FADE_TIME)
+			health.bleeding.fade(1.0 - amount),
+		0.0,
+		1.0,
+		FADE_TIME,
+	)
 	tween.tween_callback(_body.queue_free)
 
 
@@ -868,7 +892,11 @@ func _search_on() -> void:
 	while _last_dir != 0.0 and _search_stage < 2:
 		_search_stage += 1
 		var ahead := _search_stage == 1
-		var spot := _search_origin + Vector3((_last_dir if ahead else -_last_dir) * (SEARCH_AHEAD if ahead else SEARCH_BEHIND), 0.0, 0.0)
+		var spot := _search_origin + Vector3(
+			(_last_dir if ahead else -_last_dir) * (SEARCH_AHEAD if ahead else SEARCH_BEHIND),
+			0.0,
+			0.0,
+		)
 		if _nav.nearest(spot.x, spot.y, 1.5) >= 0:
 			_search_at = spot
 			return
@@ -890,7 +918,9 @@ func _stand_down() -> void:
 	_mode = Mode.CLEARED
 	_killer = Time.get_ticks_msec() - _hit_ms < 500
 	_approaching = _killer
-	_cleared_left = _rng.randf_range(2.0, 4.0) * lerpf(0.8, 1.4, traits.caution) + (2.0 if _killer else 0.0)
+	_cleared_left = _rng.randf_range(2.0, 4.0) * lerpf(0.8, 1.4, traits.caution) + (
+		2.0 if _killer else 0.0
+	)
 
 
 func _cleared(delta: float) -> void:
@@ -945,7 +975,9 @@ func _combat(delta: float) -> void:
 	_still_for = 0.0 if moving else _still_for + delta
 
 	var hidden := _plan == Plan.COVER and _phase != Phase.PEEK
-	var scoped := _visible and distance > scope_distance and not weapon.is_reloading() and not hidden
+	var scoped := (
+		_visible and distance > scope_distance and not weapon.is_reloading() and not hidden
+	)
 	scoped = scoped and _still_for > SETTLE
 	_scoped_for = _scoped_for + delta if scoped else 0.0
 
@@ -956,7 +988,15 @@ func _combat(delta: float) -> void:
 		var at := target.global_position if _visible or _plan == Plan.COVER else _last_seen
 		var unsteady := moving or absf(target.velocity.x) > 0.3
 		var braced := _crouching and not moving
-		aim_point = _gunner.aim(delta, me + Vector3.UP * 1.35, at, target.crouching, unsteady, scoped, braced)
+		aim_point = _gunner.aim(
+			delta,
+			me + Vector3.UP * 1.35,
+			at,
+			target.crouching,
+			unsteady,
+			scoped,
+			braced,
+		)
 
 	_fire(delta, weapon, me, scoped)
 
@@ -1005,12 +1045,18 @@ func _decide(delta: float, weapon: Weapon, distance: float) -> void:
 
 	elif _plan == Plan.COVER and _phase != Phase.GO:
 		var lost := not _cover.hides(_spot, there)
-		var impatient := _plan_age > 2.5 and not _waiting() and _rng.randf() < traits.aggression * 0.5 and weapon.ammo > 0
+		var impatient := (
+			_plan_age > 2.5 and not _waiting()
+			and _rng.randf() < traits.aggression * 0.5 and weapon.ammo > 0
+		)
 		if lost or impatient:
 			_leave_plan()
 			return
 
-		if _cover_cycles >= 2 and _flank_cooldown <= 0.0 and _ally_engaged() and _rng.randf() < traits.cunning * 0.6:
+		if (
+			_cover_cycles >= 2 and _flank_cooldown <= 0.0
+			and _ally_engaged() and _rng.randf() < traits.cunning * 0.6
+		):
 			_start_flank(me, there)
 
 
@@ -1097,7 +1143,10 @@ func _in_cover(delta: float, weapon: Weapon) -> void:
 
 	_peek_left -= delta
 	var shot := _gunner.rounds > _peek_rounds
-	var done := (shot and _gunner.firing_done()) or _peek_left <= 0.0 or _hurt_left > 0.0 or weapon.ammo <= 0
+	var done := (
+		(shot and _gunner.firing_done()) or _peek_left <= 0.0
+		or _hurt_left > 0.0 or weapon.ammo <= 0
+	)
 	if done or not _attack_ok():
 		AttackTokens.release(get_instance_id())
 		_phase = Phase.HIDE
@@ -1108,7 +1157,11 @@ func _in_cover(delta: float, weapon: Weapon) -> void:
 
 
 func _hide_time() -> float:
-	return lerpf(0.7, 2.8, traits.patience) * _rng.randf_range(0.7, 1.4) * lerpf(1.2, 0.7, traits.aggression)
+	return lerpf(0.7, 2.8, traits.patience) * _rng.randf_range(0.7, 1.4) * lerpf(
+		1.2,
+		0.7,
+		traits.aggression,
+	)
 
 
 func _flank(delta: float) -> void:
@@ -1182,7 +1235,9 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 
 
 func _holds_low(weapon: Weapon, distance: float, band: Vector2) -> bool:
-	return _visible and traits.patience > 0.6 and distance > band.x * 1.5 and weapon.stats.manual_cycle
+	return (
+		_visible and traits.patience > 0.6 and distance > band.x * 1.5 and weapon.stats.manual_cycle
+	)
 
 
 func _chase(delta: float, run: bool) -> void:
@@ -1218,7 +1273,11 @@ func _look_around(delta: float) -> void:
 		if other == self or not other.health.alive:
 			continue
 
-		if other._on_screen and other._laser == null and signf(other._body.global_position.x - target.global_position.x) == signf(me.x - target.global_position.x):
+		if (
+			other._on_screen and other._laser == null
+			and signf(other._body.global_position.x - target.global_position.x)
+			== signf(me.x - target.global_position.x)
+		):
 			on_side += 1
 
 		var there := other._body.global_position
@@ -1265,9 +1324,17 @@ func _pick_tactic(distance: float, band: Vector2, weapon: Weapon) -> void:
 	var press := 0.3 + traits.aggression * 0.5
 	var fall_back := 0.25 + traits.caution * 0.5
 	if distance > band.y:
-		_tactic = Tactic.ADVANCE if roll < press else (Tactic.STRAFE if roll < press + 0.18 else Tactic.HOLD)
+		_tactic = (
+			Tactic.ADVANCE
+			if roll < press
+			else (Tactic.STRAFE if roll < press + 0.18 else Tactic.HOLD)
+		)
 	elif distance < band.x:
-		_tactic = Tactic.RETREAT if roll < fall_back else (Tactic.STRAFE if roll < fall_back + 0.22 else Tactic.HOLD)
+		_tactic = (
+			Tactic.RETREAT
+			if roll < fall_back
+			else (Tactic.STRAFE if roll < fall_back + 0.22 else Tactic.HOLD)
+		)
 	else:
 		var hold := 0.2 + traits.patience * 0.4
 		if roll < hold:
@@ -1350,7 +1417,10 @@ func _fire(delta: float, weapon: Weapon, me: Vector3, scoped: bool) -> void:
 	elif may_fire:
 		may_fire = _attack_ok()
 
-	if _visible and _shot == EnemySenses.Shot.ALLY and _plan == Plan.ENGAGE and _tactic == Tactic.HOLD:
+	if (
+		_visible and _shot == EnemySenses.Shot.ALLY
+		and _plan == Plan.ENGAGE and _tactic == Tactic.HOLD
+	):
 		_tactic = Tactic.STRAFE
 		_tactic_left = _rng.randf_range(0.5, 1.2)
 
@@ -1361,7 +1431,11 @@ func _attack_ok() -> bool:
 	if _laser != null:
 		return true
 
-	var ok := AttackTokens.request(target.get_instance_id(), get_instance_id(), not _gunner.firing_done())
+	var ok := AttackTokens.request(
+		target.get_instance_id(),
+		get_instance_id(),
+		not _gunner.firing_done(),
+	)
 	_denied_left = 0.0 if ok else DENIED_HOLD
 	return ok
 
@@ -1371,7 +1445,9 @@ func _waiting() -> bool:
 
 
 func _paint(delta: float, weapon: Weapon, scoped: bool) -> void:
-	_painting = _visible and scoped and not weapon.is_reloading() and weapon.holder.gun.is_inside_tree()
+	_painting = (
+		_visible and scoped and not weapon.is_reloading() and weapon.holder.gun.is_inside_tree()
+	)
 	if not _painting:
 		return
 
