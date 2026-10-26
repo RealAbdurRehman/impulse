@@ -23,10 +23,22 @@ func burst(origin: Vector3, direction: Vector3, count: int, speed: Vector2) -> v
 	for i in count:
 		var body := _make(i % 9 == 8)
 		add_child(body)
-		body.global_position = origin + Vector3(randf_range(-0.03, 0.03), randf_range(-0.03, 0.03), 0.0)
+		body.global_position = origin + Vector3(
+			randf_range(-0.03, 0.03),
+			randf_range(-0.03, 0.03),
+			0.0,
+		)
 		var spread := dir.rotated(Vector3.BACK, randf_range(-0.9, 0.9))
-		body.linear_velocity = spread * randf_range(speed.x, speed.y) + Vector3(0.0, randf_range(0.5, 2.5), randf_range(-1.0, 1.0))
-		body.angular_velocity = Vector3(randf_range(-8.0, 8.0), randf_range(-8.0, 8.0), randf_range(-8.0, 8.0))
+		body.linear_velocity = spread * randf_range(speed.x, speed.y) + Vector3(
+			0.0,
+			randf_range(0.5, 2.5),
+			randf_range(-1.0, 1.0),
+		)
+		body.angular_velocity = Vector3(
+			randf_range(-8.0, 8.0),
+			randf_range(-8.0, 8.0),
+			randf_range(-8.0, 8.0),
+		)
 		_bodies.append(body)
 
 	while _bodies.size() > capacity:
@@ -56,7 +68,11 @@ func _make(shard: bool) -> RigidBody3D:
 	look.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if shard:
 		var box := BoxMesh.new()
-		box.size = Vector3(randf_range(0.006, 0.01), randf_range(0.02, 0.035), randf_range(0.005, 0.008))
+		box.size = Vector3(
+			randf_range(0.006, 0.01),
+			randf_range(0.02, 0.035),
+			randf_range(0.005, 0.008),
+		)
 		look.mesh = box
 		look.material_override = _bone
 	else:
@@ -87,7 +103,13 @@ static func _prepare() -> void:
 	if _bone != null:
 		return
 
-	for tint in [Color(0.26, 0.02, 0.025), Color(0.34, 0.04, 0.045), Color(0.48, 0.22, 0.18), Color(0.17, 0.012, 0.016), Color(0.3, 0.03, 0.035)]:
+	for tint in [
+		Color(0.26, 0.02, 0.025),
+		Color(0.34, 0.04, 0.045),
+		Color(0.48, 0.22, 0.18),
+		Color(0.17, 0.012, 0.016),
+		Color(0.3, 0.03, 0.035),
+	]:
 		var material := StandardMaterial3D.new()
 		material.albedo_color = tint
 		material.roughness = 0.6

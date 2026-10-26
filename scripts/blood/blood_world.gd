@@ -74,7 +74,16 @@ func _process(delta: float) -> void:
 	get_tree().call_group(&"bleeding", &"tick", clock)
 
 
-func jet(origin: Vector3, direction: Vector3, count: int, speed: Vector2, spread: float, size: Vector2, inherit := Vector3.ZERO, wall := 0.5) -> void:
+func jet(
+	origin: Vector3,
+	direction: Vector3,
+	count: int,
+	speed: Vector2,
+	spread: float,
+	size: Vector2,
+	inherit := Vector3.ZERO,
+	wall := 0.5,
+) -> void:
 	for i in count:
 		var heavy := pow(randf(), 2.2)
 		var dir := _cone(direction, spread)
@@ -95,12 +104,27 @@ func wall_spatter(origin: Vector3, direction: Vector3, count: int) -> void:
 		drops.spawn(origin, dir * randf_range(5.0, 9.0), randf_range(0.003, 0.006))
 
 
-func cloud(origin: Vector3, direction: Vector3, size: float, puffs: int, life: float, speed: float, density: float) -> void:
+func cloud(
+	origin: Vector3,
+	direction: Vector3,
+	size: float,
+	puffs: int,
+	life: float,
+	speed: float,
+	density: float,
+) -> void:
 	for i in puffs:
 		var dir := _cone(direction, 0.55)
 		var at := origin + dir * randf() * size * 0.35
 		at.z += 0.25
-		mist.puff(at, dir * speed * randf_range(0.5, 1.0), size * 0.35, size * randf_range(0.9, 1.4), life * randf_range(0.8, 1.2), density * randf_range(0.7, 1.0))
+		mist.puff(
+			at,
+			dir * speed * randf_range(0.5, 1.0),
+			size * 0.35,
+			size * randf_range(0.9, 1.4),
+			life * randf_range(0.8, 1.2),
+			density * randf_range(0.7, 1.0),
+		)
 
 
 func _cone(direction: Vector3, spread: float) -> Vector3:

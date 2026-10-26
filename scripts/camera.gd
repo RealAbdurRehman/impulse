@@ -57,7 +57,10 @@ func _physics_process(delta: float) -> void:
 	_fov_before = _fov
 	_fov = field_of_view * target.aim_zoom * fx.fov_scale
 	var half_height := z_distance * tan(deg_to_rad(_fov) * 0.5)
-	var reach_x := maxf(half_height * viewport_size.x / viewport_size.y * keep_in_frame, mouse_look_weight)
+	var reach_x := maxf(
+		half_height * viewport_size.x / viewport_size.y * keep_in_frame,
+		mouse_look_weight,
+	)
 	var reach_y := maxf(half_height * keep_in_frame, mouse_look_weight)
 
 	var look := mouse_look_weight * target.aim_look

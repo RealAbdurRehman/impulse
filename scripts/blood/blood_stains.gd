@@ -18,6 +18,7 @@ const STREAK := 2.0
 @export var pool_spread := 1.6
 @export var floor_depth := 2.4
 
+
 class Pool:
 	var centre := Vector3.ZERO
 	var volume := 0.0
@@ -28,6 +29,7 @@ class Pool:
 	var right := 1.0
 	var salt := 0.0
 	var birth := 0.0
+
 
 var _material: ShaderMaterial
 var _pool_material: ShaderMaterial
@@ -59,10 +61,21 @@ func set_clock(clock: float) -> void:
 	_pool_material.set_shader_parameter("clock", clock)
 
 
-func splat(point: Vector3, normal: Vector3, travel: Vector3, radius: float, stretch: float, violence: float, clock: float) -> void:
+func splat(
+	point: Vector3,
+	normal: Vector3,
+	travel: Vector3,
+	radius: float,
+	stretch: float,
+	violence: float,
+	clock: float,
+) -> void:
 	var along := travel - normal * travel.dot(normal)
 	if along.length_squared() < 0.0001:
-		along = normal.cross(Vector3.UP if absf(normal.y) < 0.9 else Vector3.RIGHT).rotated(normal, randf() * TAU)
+		along = normal.cross(Vector3.UP if absf(normal.y) < 0.9 else Vector3.RIGHT).rotated(
+			normal,
+			randf() * TAU,
+		)
 
 	along = along.normalized()
 	var across := normal.cross(along) * radius * 2.0
@@ -83,7 +96,13 @@ func streak(point: Vector3, normal: Vector3, length: float, reach: float, clock:
 
 	up = up.normalized()
 	var axes := Basis(up.cross(normal) * 0.04, up * length, normal)
-	_put(_splat_next, Transform3D(axes, point - up * length * 0.5 + normal * 0.0035), clock, STREAK, reach)
+	_put(
+		_splat_next,
+		Transform3D(axes, point - up * length * 0.5 + normal * 0.0035),
+		clock,
+		STREAK,
+		reach,
+	)
 	_splat_next = (_splat_next + 1) % capacity
 
 

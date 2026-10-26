@@ -5,6 +5,7 @@ const SHADER := preload("res://scripts/blood/shaders/blood_mist.gdshader")
 
 @export var capacity := 80
 
+
 class Puff:
 	var pos := Vector3.ZERO
 	var vel := Vector3.ZERO
@@ -16,6 +17,7 @@ class Puff:
 	var density := 0.0
 	var salt := 0.0
 	var live := false
+
 
 static var _noise: Texture2D
 
@@ -56,7 +58,15 @@ func warm(on: bool) -> void:
 	_multi.visible_instance_count = 1 if on else 0
 
 
-func puff(pos: Vector3, vel: Vector3, from: float, to: float, life: float, density: float, drag := 3.0) -> void:
+func puff(
+	pos: Vector3,
+	vel: Vector3,
+	from: float,
+	to: float,
+	life: float,
+	density: float,
+	drag := 3.0,
+) -> void:
 	var p := _puffs[_next]
 	_next = (_next + 1) % capacity
 	p.pos = pos
