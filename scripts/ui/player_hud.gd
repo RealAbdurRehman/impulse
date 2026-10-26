@@ -16,11 +16,14 @@ const AMBER := Color(0.92, 0.62, 0.2)
 @export var margin := 24.0
 @export var design_height := 1080.0
 
+
 class Canvas extends Control:
 	var hud: PlayerHud
 
+
 	func _draw() -> void:
 		hud.paint(self)
+
 
 var _canvas: Canvas
 var _box := StyleBoxFlat.new()
@@ -56,19 +59,46 @@ func _paint_vitals(c: Control, view: Vector2) -> void:
 	var frac := clampf(health.current / health.max_health, 0.0, 1.0)
 	var bar := Rect2(area.position + Vector2(16.0, 34.0), Vector2(268.0, 10.0))
 	c.draw_rect(bar, TRACK)
-	c.draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), INK.lerp(BLOOD, clampf(1.0 - frac * 2.2, 0.0, 1.0)))
+	c.draw_rect(
+		Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)),
+		INK.lerp(BLOOD, clampf(1.0 - frac * 2.2, 0.0, 1.0)),
+	)
 
 	_paint_stamina(c, area)
 
-	c.draw_string(font, area.position + Vector2(16.0, 26.0), "HEALTH", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, DIM)
-	c.draw_string(font, area.position + Vector2(284.0, 26.0), str(ceili(health.current)), HORIZONTAL_ALIGNMENT_RIGHT, -1.0, 15, INK)
+	c.draw_string(
+		font,
+		area.position + Vector2(16.0, 26.0),
+		"HEALTH",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		13,
+		DIM,
+	)
+	c.draw_string(
+		font,
+		area.position + Vector2(284.0, 26.0),
+		str(ceili(health.current)),
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		-1.0,
+		15,
+		INK,
+	)
 
 	var bleed := healing.bleed_rate()
 	if bleed > 0.02:
 		var pulse := 0.65 + 0.35 * sin(Time.get_ticks_msec() * 0.007)
 		var tint := Color(BLOOD, pulse)
 		c.draw_circle(area.position + Vector2(22.0, 76.0), 4.0, tint)
-		c.draw_string(font, area.position + Vector2(34.0, 81.0), "BLEEDING  -%.1f/s" % bleed, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, tint)
+		c.draw_string(
+			font,
+			area.position + Vector2(34.0, 81.0),
+			"BLEEDING  -%.1f/s" % bleed,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1.0,
+			13,
+			tint,
+		)
 
 	var x := area.end.x - 18.0
 	for i in healing.bandages:
@@ -76,7 +106,15 @@ func _paint_vitals(c: Control, view: Vector2) -> void:
 		x -= 22.0
 
 	if healing.bandages > 0 and healing.open_wounds() > 0 and not healing.is_applying():
-		c.draw_string(font, Vector2(x - 6.0, area.position.y + 81.0), "F", HORIZONTAL_ALIGNMENT_RIGHT, -1.0, 13, GAUZE)
+		c.draw_string(
+			font,
+			Vector2(x - 6.0, area.position.y + 81.0),
+			"F",
+			HORIZONTAL_ALIGNMENT_RIGHT,
+			-1.0,
+			13,
+			GAUZE,
+		)
 
 
 func _paint_stamina(c: Control, area: Rect2) -> void:
@@ -88,7 +126,10 @@ func _paint_stamina(c: Control, area: Rect2) -> void:
 		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.012)
 		tint = Color(AMBER, pulse)
 		var mark := bar.position.x + bar.size.x * stamina.recover_at
-		c.draw_rect(Rect2(mark - 1.0, bar.position.y - 3.0, 2.0, bar.size.y + 6.0), Color(AMBER, 0.8))
+		c.draw_rect(
+			Rect2(mark - 1.0, bar.position.y - 3.0, 2.0, bar.size.y + 6.0),
+			Color(AMBER, 0.8),
+		)
 	else:
 		tint = Color(INK, lerpf(0.9, 0.35, smoothstep(0.6, 1.0, stamina.fraction())))
 

@@ -13,7 +13,10 @@ static func at(point: Vector3) -> float:
 	var seen := 1.0
 	for zone in _zones:
 		var offset := (point - zone.global_position).abs()
-		if offset.x <= zone.size.x * 0.5 and offset.y <= zone.size.y * 0.5 and offset.z <= zone.size.z * 0.5:
+		if (
+			offset.x <= zone.size.x * 0.5 and offset.y <= zone.size.y * 0.5
+			and offset.z <= zone.size.z * 0.5
+		):
 			seen = minf(seen, zone.visibility)
 
 	return seen

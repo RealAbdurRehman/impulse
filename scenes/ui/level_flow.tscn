@@ -1,0 +1,129 @@
+[gd_scene format=3 uid="uid://bka7bkmdymle1"]
+
+[ext_resource type="Script" uid="uid://enhevwpm5u5x" path="res://scripts/ui/level_flow.gd" id="1_flow"]
+
+[sub_resource type="StyleBoxFlat" id="Track"]
+bg_color = Color(0.035, 0.04, 0.045, 0.62)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.035, 0.04, 0.045, 0.62)
+
+[sub_resource type="StyleBoxFlat" id="Fill"]
+bg_color = Color(0.93, 0.93, 0.9, 1)
+
+[node name="LevelFlow" type="CanvasLayer" unique_id=188784469]
+process_mode = 3
+layer = 20
+script = ExtResource("1_flow")
+
+[node name="Extraction" type="Control" parent="." unique_id=1022722836]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Bar" type="VBoxContainer" parent="Extraction" unique_id=927103570]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -96.0
+offset_right = 260.0
+offset_bottom = -56.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="Extraction/Bar" unique_id=349337202]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.93, 0.9, 0.7)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 18
+text = "EXTRACTING"
+horizontal_alignment = 1
+
+[node name="Progress" type="ProgressBar" parent="Extraction/Bar" unique_id=94143406]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+theme_override_styles/background = SubResource("Track")
+theme_override_styles/fill = SubResource("Fill")
+max_value = 1.0
+step = 0.001
+show_percentage = false
+
+[node name="Result" type="Control" parent="." unique_id=905536524]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="Result" unique_id=1133271793]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="CenterContainer" parent="Result" unique_id=490600437]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Box" type="VBoxContainer" parent="Result/Center" unique_id=1908819391]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Result/Center/Box" unique_id=187780365]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 84
+text = "MISSION COMPLETE"
+horizontal_alignment = 1
+
+[node name="Prompt" type="Label" parent="Result/Center/Box" unique_id=106160018]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.93, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 28
+text = "ENTER   Retry this level          N   New level"
+horizontal_alignment = 1
+
+[node name="Seed" type="Label" parent="Result/Center/Box" unique_id=765516660]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.93, 0.9, 0.55)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 20
+text = "SEED 0"
+horizontal_alignment = 1
