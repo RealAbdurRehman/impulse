@@ -271,7 +271,9 @@ var _prev_vy := 0.0
 var _was_on_floor := true
 
 var _vel := Vector3.ZERO
-var _plane_z := 0.0
+var _plane_z: float:
+	get:
+		return character.plane_z
 
 var _last_step := -1
 var _since_step_start := 10.0
@@ -291,8 +293,6 @@ func _ready() -> void:
 func _setup_feet() -> void:
 	run_speed = character.run_speed
 
-	_plane_z = character.global_position.z
-
 	_feet.append(_make_foot(left_foot_target, left_knee_pole, 1.0))
 	_feet.append(_make_foot(right_foot_target, right_knee_pole, -1.0))
 
@@ -306,6 +306,14 @@ func _setup_feet() -> void:
 			_basis_from_normal(f.current_normal, fwd),
 			f.current,
 		)
+
+
+func shift_feet(by: Vector3) -> void:
+	for f in _feet:
+		f.planted += by
+		f.current += by
+		f.start += by
+		f.end += by
 
 
 func _make_foot(target: Node3D, pole: Node3D, side: float) -> Foot:

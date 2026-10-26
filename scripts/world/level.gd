@@ -34,6 +34,12 @@ func _ready() -> void:
 		add_child(EdgeIndicators.new())
 
 	player.add_child(VisibilityMark.new())
+	player.add_child(PlayerStairs.new())
+	EnemyNav.reset()
+	for bone: PhysicalBone3D in player.find_children("*", "PhysicalBone3D", true, false):
+		Door.exempt(bone)
+
+	get_tree().node_added.connect(_on_node_added)
 
 	var lod := EnemyLod.new()
 	lod.target = player
@@ -60,6 +66,11 @@ func _ready() -> void:
 	Transition.reveal(get_tree())
 
 
+func _on_node_added(node: Node) -> void:
+	if node is PhysicalBone3D:
+		Door.exempt(node)
+
+
 func _physics_process(_delta: float) -> void:
 	if LevelSettings.current.god_mode:
 		player.health.current = player.health.max_health
@@ -78,20 +89,25 @@ func _apply_rules(run: LevelSettings) -> void:
 
 func _assemble(run: LevelSettings, rng: RandomNumberGenerator) -> void:
 	var order: Array[PackedScene] = [start_chunk]
-	var last := -1
 	for i in run.chunk_count:
 		var index := rng.randi_range(0, middle_chunks.size() - 1)
-		if index == last:
+		for _step in middle_chunks.size():
+			if middle_chunks[index] != order[-1]:
+				break
+
 			index = (index + 1) % middle_chunks.size()
 
-		last = index
 		order.append(middle_chunks[index])
 
 	order.append(end_chunk)
 	for scene in order:
 		var chunk := scene.instantiate() as Chunk
-		add_child(chunk)
+		chunk.build(rng)
 		if not built.is_empty():
 			chunk.place_after(built[-1])
 
+		add_child(chunk)
+
 		built.append(chunk)
+
+	Backdrop.build(self, built[0].entry_point().x, built[-1].exit_point().x, rng)

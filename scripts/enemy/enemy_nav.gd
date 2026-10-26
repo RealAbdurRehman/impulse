@@ -26,6 +26,10 @@ var _mask := 1
 var _z := 0.0
 
 
+static func reset() -> void:
+	_maps.clear()
+
+
 static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	var key := node.get_world_3d().get_rid()
 	if not _maps.has(key):
@@ -260,7 +264,7 @@ func _add(from_id: int, to_id: int, kind: int, cost: float) -> void:
 
 
 func _down(x: float, y: float) -> Dictionary:
-	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y, _z), Vector3(x, BOTTOM, _z), _mask)
+	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y, _z), Vector3(x, BOTTOM, _z), _mask, Door.bodies)
 	return _space.intersect_ray(query)
 
 
@@ -271,5 +275,6 @@ func _room(x: float, y: float) -> bool:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = body_shape
 	query.collision_mask = _mask
+	query.exclude = Door.bodies
 	query.transform = Transform3D(Basis.IDENTITY, Vector3(x, y + 0.9, _z))
 	return _space.intersect_shape(query, 1).is_empty()

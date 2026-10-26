@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/stair_link.gd" id="1_link"]
+
+[node name="StairLink" type="Node3D"]
+script = ExtResource("1_link")
+
+[node name="Prompt" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0.6)
+pixel_size = 0.004
+billboard = 1
+no_depth_test = true
+modulate = Color(0.93, 0.93, 0.9, 1)
+outline_modulate = Color(0, 0, 0, 0.8)
+text = "E"
+font_size = 96
+outline_size = 18

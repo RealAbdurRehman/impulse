@@ -91,7 +91,9 @@ func _physics_process(delta: float) -> void:
 		var hit := space.intersect_ray(_query)
 		if not hit.is_empty():
 			_left[i] = 0.0
-			_land(hit.position, hit.normal, vel, size, _drip[i] == 1)
+			if not (hit.collider as Node).has_meta(&"stainless"):
+				_land(hit.position, hit.normal, vel, size, _drip[i] == 1)
+
 			continue
 
 		_pos[i] = to

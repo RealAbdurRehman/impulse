@@ -1,15 +1,15 @@
 [gd_scene format=3 uid="uid://bs414w6s17t3l"]
 
 [ext_resource type="Script" uid="uid://rq12wk87f4we" path="res://scripts/world/level.gd" id="1_hurg6"]
-[ext_resource type="PackedScene" uid="uid://cshu45hurwms2" path="res://scenes/world/chunk_start.tscn" id="2_jlhui"]
-[ext_resource type="PackedScene" uid="uid://4g83by4tbewp" path="res://scenes/world/chunk_end.tscn" id="4_pxjyy"]
-[ext_resource type="PackedScene" uid="uid://cfx8xalky4vhb" path="res://scenes/world/chunk_middle1.tscn" id="4_sw6eo"]
-[ext_resource type="PackedScene" uid="uid://bvkyv848tpbyp" path="res://scenes/world/chunk_middle2.tscn" id="5_ru6hu"]
 [ext_resource type="PackedScene" uid="uid://scyfrg3do5k0" path="res://scenes/enemy.tscn" id="5_sw6eo"]
-[ext_resource type="PackedScene" uid="uid://m3hm51uhjrhv" path="res://scenes/world/chunk_middle3.tscn" id="6_pqovr"]
 [ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="6_ru6hu"]
 [ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="7_pqovr"]
 [ext_resource type="PackedScene" uid="uid://bka7bkmdymle1" path="res://scenes/ui/level_flow.tscn" id="11_sw6eo"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunk_building.tscn" id="urban_building"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunk_street_end.tscn" id="urban_end"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunk_park.tscn" id="urban_park"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunk_street_start.tscn" id="urban_start"]
+[ext_resource type="PackedScene" path="res://scenes/world/chunk_street.tscn" id="urban_street"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.4196, 0.4784, 0.5412, 1)
@@ -30,11 +30,11 @@ tonemap_white = 8.0
 
 [node name="Level" type="Node3D" unique_id=1204838125 node_paths=PackedStringArray("player", "flow")]
 script = ExtResource("1_hurg6")
-start_chunk = ExtResource("2_jlhui")
-middle_chunks = Array[PackedScene]([ExtResource("4_sw6eo"), ExtResource("5_ru6hu"), ExtResource("6_pqovr")])
-end_chunk = ExtResource("4_pxjyy")
-enemy_scene = ExtResource("5_sw6eo")
+start_chunk = ExtResource("urban_start")
+middle_chunks = Array[PackedScene]([ExtResource("urban_building"), ExtResource("urban_street"), ExtResource("urban_building"), ExtResource("urban_park")])
+end_chunk = ExtResource("urban_end")
 player = NodePath("Player")
+enemy_scene = ExtResource("5_sw6eo")
 flow = NodePath("LevelFlow")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1464273609]

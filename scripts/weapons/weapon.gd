@@ -387,7 +387,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		var surface := Surfaces.of(hit.collider)
 		var resistance := Surfaces.style(surface).resistance
 		var size := clampf(sqrt(stats.damage * power / REFERENCE_DAMAGE), 0.5, 2.2)
-		world.strike(hit.position, hit.normal, dir, surface, size)
+		world.strike(hit.position, hit.normal, dir, surface, size, false, _marks_of(hit.collider))
 
 		var depth := reach / resistance
 		var exit := _exit(hit, dir, depth, skip)
@@ -397,7 +397,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 			end = hit.position + dir * depth
 			break
 
-		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true)
+		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true, _marks_of(exit.collider))
 
 		reach -= hit.position.distance_to(exit.position) * resistance
 		from = exit.position + dir * 0.01
@@ -440,6 +440,10 @@ func _pass_through(hit: Dictionary, skip: Array[RID]) -> void:
 	for child in bone.get_children():
 		if child is Area3D:
 			skip.append(child.get_rid())
+
+
+func _marks_of(collider: Object) -> ImpactMarks:
+	return (collider as DoorPanel).marks if collider is DoorPanel else null
 
 
 func _apply_hit(hit: Dictionary, dir: Vector3, distance: float, power: float) -> void:

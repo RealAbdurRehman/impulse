@@ -21,6 +21,8 @@ var hold_time := 0.3
 var pull := 0.0
 var lift := 0.0
 
+var _own: Array[RID] = []
+var _doors := -1
 var _shape := BoxShape3D.new()
 var _query := PhysicsShapeQueryParameters3D.new()
 var _order: Array[Vector2i] = []
@@ -34,9 +36,9 @@ func _init(ragdoll: PhysicalBoneSimulator3D) -> void:
 		if bone is PhysicalBone3D:
 			own.append(bone.get_rid())
 
+	_own = own
 	_query.shape = _shape
 	_query.collision_mask = mask
-	_query.exclude = own
 
 	for i in PULLS.size():
 		for j in LIFTS.size():
@@ -54,6 +56,12 @@ func solve(
 	barrel: Vector3,
 	dt: float,
 ) -> void:
+	if _doors != Door.revision:
+		_doors = Door.revision
+		var skip: Array[RID] = _own.duplicate()
+		skip.append_array(Door.bodies)
+		_query.exclude = skip
+
 	var length := barrel.length()
 	var along := barrel / length
 	var level := frames[0] * along

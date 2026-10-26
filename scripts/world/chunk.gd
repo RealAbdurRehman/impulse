@@ -13,6 +13,10 @@ enum Role {
 @onready var _exit := $Exit as Marker3D
 
 
+func build(_rng: RandomNumberGenerator) -> void:
+	pass
+
+
 func entry_point() -> Vector3:
 	return _entry.global_position
 
@@ -22,7 +26,7 @@ func exit_point() -> Vector3:
 
 
 func place_after(previous: Chunk) -> void:
-	global_position += previous.exit_point() - entry_point()
+	position += previous.exit_point() - ($Entry as Marker3D).position
 
 
 func spawns() -> Array[ChunkSpawn]:

@@ -1,6 +1,8 @@
 class_name CharacterMovement
 extends Node3D
 
+const DOOR_REACH := 1.8
+
 signal jumped
 
 @export var input: ActorInput
@@ -83,6 +85,8 @@ var grounded := true
 var velocity := Vector3.ZERO
 
 var plane_z := 0.0
+var _door: Door
+var _door_at := Vector3.ZERO
 
 var push := 0.0
 
@@ -176,6 +180,8 @@ func _physics_process(delta: float) -> void:
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
 	var blocked := want_dir != 0 and _world_blocked(want_dir)
+	if want_dir != 0 and _door != null:
+		_door.shove(_door_at, Vector3.RIGHT * float(want_dir) * maxf(speed, walk_speed))
 
 	if want_dir != 0 and not blocked:
 		var ahead := _character_ahead(want_dir)
@@ -362,6 +368,7 @@ func _head_height() -> float:
 
 
 func _world_blocked(dir: int) -> bool:
+	_door = null
 	if dir == 0:
 		return false
 
@@ -371,8 +378,23 @@ func _world_blocked(dir: int) -> bool:
 	var heights: Array[float] = [max_step_up + 0.1, _head_height()]
 	for h in heights:
 		var from: Vector3 = o + Vector3.UP * h
-		if not _ray(from, from + d).is_empty():
+		var hit := _ray(from, from + d * DOOR_REACH)
+		if hit.is_empty():
+			continue
+
+		var panel := hit.collider as DoorPanel
+		var near := absf(hit.position.x - o.x) <= wall_check_distance
+		if panel == null:
+			if near:
+				return true
+
+			continue
+
+		if near and panel.door.resists(hit.position, Vector3.RIGHT * float(dir)):
 			return true
+
+		_door = panel.door
+		_door_at = hit.position
 
 	return false
 
