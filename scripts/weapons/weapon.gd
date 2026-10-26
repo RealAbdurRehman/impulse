@@ -25,6 +25,7 @@ var reloader: WeaponReload
 var audio: WeaponAudio
 
 var ammo := 0
+var infinite_ammo := false
 var automatic := true
 var recoil: WeaponRecoil
 
@@ -276,7 +277,9 @@ func bullet_ray() -> Array[Vector3]:
 
 
 func _shoot() -> void:
-	ammo -= 1
+	if not infinite_ammo:
+		ammo -= 1
+
 	if stats.manual_cycle:
 		chambered = false
 		needs_cycle = true
@@ -348,7 +351,10 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 
 func _is_friend(collider: Object) -> bool:
 	var other := Health.of(collider)
-	return not friendly_fire and other != null and other.team != &"" and other.team == character.health.team
+	return (
+		not friendly_fire and other != null and other.team != &""
+		and other.team == character.health.team
+	)
 
 
 const MAX_PASSES := 12
@@ -451,7 +457,13 @@ func _apply_hit(hit: Dictionary, dir: Vector3, distance: float, power: float) ->
 
 	var impulse := dir * stats.impact_impulse * force * power
 	if health != null:
-		health.hit(_damage_at(distance) * power, point, dir, body as PhysicalBone3D, impulse.length())
+		health.hit(
+			_damage_at(distance) * power,
+			point,
+			dir,
+			body as PhysicalBone3D,
+			impulse.length(),
+		)
 
 	var ragdoll := body.get_parent() as ActiveRagdoll
 	if ragdoll != null:

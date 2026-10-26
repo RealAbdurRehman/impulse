@@ -29,6 +29,7 @@ func swap(stats: WeaponStats, ammo: int) -> void:
 	weapon.holder = holder
 	weapon.character = old_weapon.character
 	weapon.volume_db = old_weapon.volume_db
+	weapon.infinite_ammo = old_weapon.infinite_ammo
 	holder.weapon = weapon
 
 	var parent := old_weapon.get_parent()
@@ -63,7 +64,14 @@ func _throw(old_weapon: Weapon, old_holder: GunHolder, toss: Vector2) -> void:
 		spin *= signf(angle)
 
 	var velocity := Vector3(character.velocity.x + facing * toss.x, toss.y, 0.0)
-	WeaponPickup.spawn(character.get_parent(), old_weapon.stats, old_weapon.ammo, at, velocity, spin)
+	WeaponPickup.spawn(
+		character.get_parent(),
+		old_weapon.stats,
+		old_weapon.ammo,
+		at,
+		velocity,
+		spin,
+	)
 
 
 func _retire(old_holder: GunHolder, old_weapon: Weapon) -> void:

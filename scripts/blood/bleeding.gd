@@ -86,6 +86,9 @@ func stump(
 	toward: Vector3,
 	damage: float,
 ) -> void:
+	if not GameSettings.current.blood:
+		return
+
 	var gore := maxf(amount, 0.5) * clampf(damage / 60.0, 0.8, 2.0)
 	_wound(parent, joint, 0.075 + 0.02 * gore, 0.3)
 	_wound(limb, joint, 0.065 + 0.015 * gore, 0.25)
@@ -205,7 +208,7 @@ func _strike(
 	lethal: bool,
 	corpse: bool,
 ) -> void:
-	if amount <= 0.0:
+	if amount <= 0.0 or not GameSettings.current.blood:
 		return
 
 	var force := clampf(damage / 25.0, 0.3, 4.0) * amount * (0.7 if corpse else 1.0)

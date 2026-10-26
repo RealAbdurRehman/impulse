@@ -1,0 +1,468 @@
+[gd_scene format=3 uid="uid://dwe8rr3gq16x"]
+
+[ext_resource type="Script" uid="uid://defcal4rp4ruc" path="res://scripts/ui/menu.gd" id="1"]
+[ext_resource type="Script" uid="uid://ltupni4h23ni" path="res://scripts/ui/value_label.gd" id="2"]
+
+[node name="Menu" type="Control" unique_id=2000440978]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Backdrop" type="ColorRect" parent="." unique_id=191647157]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.06, 0.07, 1)
+
+[node name="Main" type="MarginContainer" parent="." unique_id=1002015063]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"MainMargin"
+
+[node name="Box" type="VBoxContainer" parent="Main" unique_id=1498745334]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="Main/Box" unique_id=1347245027]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "IMPULSE"
+
+[node name="Tagline" type="Label" parent="Main/Box" unique_id=118866788]
+layout_mode = 2
+theme_type_variation = &"TaglineLabel"
+text = "Reach the exit. Make it out alive."
+
+[node name="Gap" type="Control" parent="Main/Box" unique_id=979881125]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="Buttons" type="VBoxContainer" parent="Main/Box" unique_id=1851698643]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"ButtonColumn"
+
+[node name="NewGameButton" type="Button" parent="Main/Box/Buttons" unique_id=1065408299]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "New game"
+alignment = 0
+
+[node name="SettingsButton" type="Button" parent="Main/Box/Buttons" unique_id=1204682884]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Settings"
+alignment = 0
+
+[node name="Quit" type="Button" parent="Main/Box/Buttons" unique_id=2099768258]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Quit"
+alignment = 0
+
+[node name="NewGame" type="MarginContainer" parent="." unique_id=2007679849]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"PageMargin"
+
+[node name="Box" type="VBoxContainer" parent="NewGame" unique_id=105224312]
+layout_mode = 2
+theme_type_variation = &"PageBox"
+
+[node name="Heading" type="Label" parent="NewGame/Box" unique_id=551449486]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "NEW GAME"
+
+[node name="Columns" type="HBoxContainer" parent="NewGame/Box" unique_id=650554920]
+layout_mode = 2
+
+[node name="LevelPanel" type="PanelContainer" parent="NewGame/Box/Columns" unique_id=1070121964]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="Level" type="VBoxContainer" parent="NewGame/Box/Columns/LevelPanel" unique_id=1060720522]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level" unique_id=1025018536]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "LEVEL"
+
+[node name="Grid" type="GridContainer" parent="NewGame/Box/Columns/LevelPanel/Level" unique_id=144221832]
+layout_mode = 2
+columns = 2
+
+[node name="ChunksLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1793051611]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Middle chunks"
+
+[node name="Chunks" type="SpinBox" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1251940471]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+tooltip_text = "How long the level is. A start and an end chunk are always added."
+min_value = 2.0
+max_value = 20.0
+value = 3.0
+rounded = true
+
+[node name="EnemiesLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1337648277]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Enemies per chunk"
+
+[node name="Enemies" type="SpinBox" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=807909549]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+tooltip_text = "Limited by how many enemy spots each chunk has."
+max_value = 6.0
+value = 2.0
+rounded = true
+
+[node name="DifficultyLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=280438121]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Difficulty"
+
+[node name="Difficulty" type="OptionButton" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1001759268]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+tooltip_text = "Enemy skill, weapons and how many can attack at once."
+selected = 1
+item_count = 3
+popup/item_0/text = "Easy"
+popup/item_0/id = 0
+popup/item_1/text = "Normal"
+popup/item_1/id = 1
+popup/item_2/text = "Hard"
+popup/item_2/id = 2
+
+[node name="SeedFieldLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=18468669]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Seed"
+
+[node name="SeedField" type="LineEdit" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=172570649]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+tooltip_text = "Same seed, same level. Leave empty for a random one. Words work too."
+placeholder_text = "Random"
+max_length = 24
+
+[node name="RulesPanel" type="PanelContainer" parent="NewGame/Box/Columns" unique_id=509945765]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="Rules" type="VBoxContainer" parent="NewGame/Box/Columns/RulesPanel" unique_id=918333949]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules" unique_id=204760158]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "RULES"
+
+[node name="Grid" type="GridContainer" parent="NewGame/Box/Columns/RulesPanel/Rules" unique_id=256629502]
+layout_mode = 2
+columns = 2
+
+[node name="BandagesLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1202109069]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Starting bandages"
+
+[node name="Bandages" type="SpinBox" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=191722816]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+min_value = 3.0
+max_value = 10.0
+value = 4.0
+rounded = true
+
+[node name="GodLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1563284849]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "God mode"
+
+[node name="God" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1806799585]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "You cannot die."
+
+[node name="InfiniteAmmoLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=516015570]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Infinite ammo"
+
+[node name="InfiniteAmmo" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=2100054608]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Magazines never run dry."
+
+[node name="InfiniteStaminaLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=488213073]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Infinite stamina"
+
+[node name="InfiniteStamina" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1706346401]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Sprint and jump without getting winded."
+
+[node name="PeacefulLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1063268194]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Enemies ignore you"
+
+[node name="Peaceful" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1764384757]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Enemies never notice you. Good for exploring."
+
+[node name="Fill" type="Control" parent="NewGame/Box" unique_id=2120282004]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Footer" type="HBoxContainer" parent="NewGame/Box" unique_id=1197791371]
+layout_mode = 2
+
+[node name="NewBack" type="Button" parent="NewGame/Box/Footer" unique_id=1395821201]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Back"
+
+[node name="Spacer" type="Control" parent="NewGame/Box/Footer" unique_id=23231870]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Start" type="Button" parent="NewGame/Box/Footer" unique_id=2107664771]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+text = "Start"
+
+[node name="Settings" type="MarginContainer" parent="." unique_id=474659508]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"PageMargin"
+
+[node name="Box" type="VBoxContainer" parent="Settings" unique_id=1621132891]
+layout_mode = 2
+theme_type_variation = &"PageBox"
+
+[node name="Heading" type="Label" parent="Settings/Box" unique_id=818105886]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "SETTINGS"
+
+[node name="Tabs" type="TabContainer" parent="Settings/Box" unique_id=401464521]
+unique_name_in_owner = true
+layout_mode = 2
+current_tab = 0
+
+[node name="Graphics" type="GridContainer" parent="Settings/Box/Tabs" unique_id=1423308523]
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 0
+
+[node name="QualityLabel" type="Label" parent="Settings/Box/Tabs/Graphics" unique_id=1691059707]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Quality"
+
+[node name="Quality" type="OptionButton" parent="Settings/Box/Tabs/Graphics" unique_id=1475540847]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+tooltip_text = "Low and Medium render at a lower resolution and Low drops shadows. Use them if the web version runs slowly."
+selected = 2
+item_count = 3
+popup/item_0/text = "Low"
+popup/item_0/id = 0
+popup/item_1/text = "Medium"
+popup/item_1/id = 1
+popup/item_2/text = "High"
+popup/item_2/id = 2
+
+[node name="FullscreenLabel" type="Label" parent="Settings/Box/Tabs/Graphics" unique_id=1764207544]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Fullscreen"
+
+[node name="Fullscreen" type="CheckButton" parent="Settings/Box/Tabs/Graphics" unique_id=1226661513]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="VSyncLabel" type="Label" parent="Settings/Box/Tabs/Graphics" unique_id=352099783]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "V-Sync"
+
+[node name="VSync" type="CheckButton" parent="Settings/Box/Tabs/Graphics" unique_id=1687429557]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Smoother picture, may add input delay."
+
+[node name="Audio" type="GridContainer" parent="Settings/Box/Tabs" unique_id=400773325]
+visible = false
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 1
+
+[node name="VolumeLabel" type="Label" parent="Settings/Box/Tabs/Audio" unique_id=1730962545]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Master volume"
+
+[node name="VolumeRow" type="HBoxContainer" parent="Settings/Box/Tabs/Audio" unique_id=1122647471]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 4
+
+[node name="Volume" type="HSlider" parent="Settings/Box/Tabs/Audio/VolumeRow" unique_id=1394887851]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="VolumeValue" type="Label" parent="Settings/Box/Tabs/Audio/VolumeRow" unique_id=775314694 node_paths=PackedStringArray("source")]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "100"
+horizontal_alignment = 2
+script = ExtResource("2")
+source = NodePath("../Volume")
+
+[node name="Percent" type="Label" parent="Settings/Box/Tabs/Audio/VolumeRow" unique_id=1864691599]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "%"
+
+[node name="Gameplay" type="GridContainer" parent="Settings/Box/Tabs" unique_id=2098408614]
+visible = false
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 2
+
+[node name="BloodLabel" type="Label" parent="Settings/Box/Tabs/Gameplay" unique_id=2050880732]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Blood"
+
+[node name="Blood" type="CheckButton" parent="Settings/Box/Tabs/Gameplay" unique_id=1437309152]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Blood spray, stains and wounds."
+
+[node name="DismemberLabel" type="Label" parent="Settings/Box/Tabs/Gameplay" unique_id=971859611]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Dismemberment"
+
+[node name="Dismember" type="CheckButton" parent="Settings/Box/Tabs/Gameplay" unique_id=1174193177]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Limbs and heads can be shot off."
+
+[node name="EffectsLabel" type="Label" parent="Settings/Box/Tabs/Gameplay" unique_id=479543949]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Screen effects"
+
+[node name="EffectsRow" type="HBoxContainer" parent="Settings/Box/Tabs/Gameplay" unique_id=954013592]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 4
+
+[node name="Effects" type="HSlider" parent="Settings/Box/Tabs/Gameplay/EffectsRow" unique_id=1548970927]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.5
+step = 0.05
+value = 1.0
+
+[node name="EffectsValue" type="Label" parent="Settings/Box/Tabs/Gameplay/EffectsRow" unique_id=376449527 node_paths=PackedStringArray("source")]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "100"
+horizontal_alignment = 2
+script = ExtResource("2")
+source = NodePath("../Effects")
+
+[node name="Percent" type="Label" parent="Settings/Box/Tabs/Gameplay/EffectsRow" unique_id=1147249841]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "%"
+
+[node name="IndicatorsLabel" type="Label" parent="Settings/Box/Tabs/Gameplay" unique_id=1159135498]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Off-screen enemy markers"
+
+[node name="Indicators" type="CheckButton" parent="Settings/Box/Tabs/Gameplay" unique_id=2075956211]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+tooltip_text = "Show where alerted enemies are when they are off screen."
+
+[node name="Fill" type="Control" parent="Settings/Box" unique_id=2144223878]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Footer" type="HBoxContainer" parent="Settings/Box" unique_id=1257230526]
+layout_mode = 2
+
+[node name="SettingsBack" type="Button" parent="Settings/Box/Footer" unique_id=28225798]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Back"

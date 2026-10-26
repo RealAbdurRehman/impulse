@@ -6,6 +6,7 @@ class Follow:
 	var x := 0.0
 	var v := 0.0
 
+
 	func step(goal: float, omega: float, delta: float) -> float:
 		var shift := x - goal
 		var carry := v + omega * shift
@@ -281,7 +282,6 @@ func _ready() -> void:
 	add_child(_screen)
 
 
-
 func add_trauma(amount: float) -> void:
 	_trauma = minf(_trauma + amount, 1.0)
 
@@ -327,9 +327,21 @@ func _physics_process(delta: float) -> void:
 	var power := _shown_trauma * _shown_trauma
 	var shake_omega := TAU * shake_smoothing_hz
 	var shake := Vector3(
-		_shake_x.step(_noise.get_noise_2d(_clock, 0.0) * power if power > 0.0 else 0.0, shake_omega, delta),
-		_shake_y.step(_noise.get_noise_2d(_clock, 31.7) * power if power > 0.0 else 0.0, shake_omega, delta),
-		_shake_roll.step(_noise.get_noise_2d(_clock, 63.1) * power if power > 0.0 else 0.0, shake_omega, delta),
+		_shake_x.step(
+			_noise.get_noise_2d(_clock, 0.0) * power if power > 0.0 else 0.0,
+			shake_omega,
+			delta,
+		),
+		_shake_y.step(
+			_noise.get_noise_2d(_clock, 31.7) * power if power > 0.0 else 0.0,
+			shake_omega,
+			delta,
+		),
+		_shake_roll.step(
+			_noise.get_noise_2d(_clock, 63.1) * power if power > 0.0 else 0.0,
+			shake_omega,
+			delta,
+		),
 	)
 
 	var run := smoothstep(target.walk_speed, target.run_speed, speed)
@@ -339,7 +351,9 @@ func _physics_process(delta: float) -> void:
 	var sprint := _sprint.step(run * (1.0 - aim), 9.0, delta)
 
 	var bob := walk_bob.lerp(run_bob, run) * moving
-	bob *= lerpf(1.0, crouch_bob_scale, crouch) * lerpf(1.0, ads_bob_scale, aim) * (1.0 + winded_bob_boost * _tired)
+	bob *= lerpf(1.0, crouch_bob_scale, crouch) * lerpf(1.0, ads_bob_scale, aim) * (
+		1.0 + winded_bob_boost * _tired
+	)
 
 	if grounded:
 		var before := floori(_stride)
@@ -357,7 +371,11 @@ func _physics_process(delta: float) -> void:
 	var banking := _lean.step(clampf(accel / lean_accel, -1.0, 1.0), 12.0, delta)
 
 	var drained := smoothstep(tired_below, 0.0, _stamina.fraction())
-	_tired = lerpf(_tired, maxf(drained, 0.85 if _stamina.exhausted else 0.0), 1.0 - exp(-2.5 * delta))
+	_tired = lerpf(
+		_tired,
+		maxf(drained, 0.85 if _stamina.exhausted else 0.0),
+		1.0 - exp(-2.5 * delta),
+	)
 	if _stamina.exhausted != _was_exhausted:
 		_was_exhausted = _stamina.exhausted
 		if _was_exhausted:
@@ -372,7 +390,11 @@ func _physics_process(delta: float) -> void:
 	var breath := breath_rest.lerp(breath_winded, _tired)
 	_breath += breath.y * delta
 
-	var calm := lerpf(1.0, breath_moving_scale, moving * (1.0 - _tired)) * lerpf(1.0, breath_ads_scale, aim * (1.0 - _tired))
+	var calm := lerpf(1.0, breath_moving_scale, moving * (1.0 - _tired)) * lerpf(
+		1.0,
+		breath_ads_scale,
+		aim * (1.0 - _tired),
+	)
 	var inhale := sin(TAU * _breath - 0.5 * sin(TAU * _breath))
 	var gulp := 0.5 + 0.5 * inhale
 	var breath_y := breath.x * calm * inhale
@@ -381,8 +403,16 @@ func _physics_process(delta: float) -> void:
 	_update_air(delta, grounded)
 
 	var slow := 0.0 if _dead else _slow_motion.amount
-	var hurt := 0.0 if _dead else 1.0 - smoothstep(0.0, hurt_below, _health.current / _health.max_health)
-	_bleed = lerpf(_bleed, 0.0 if _dead else clampf(_healing.bleed_rate() / bleed_full, 0.0, 1.0), 1.0 - exp(-2.0 * delta))
+	var hurt := 0.0 if _dead else 1.0 - smoothstep(
+		0.0,
+		hurt_below,
+		_health.current / _health.max_health,
+	)
+	_bleed = lerpf(
+		_bleed,
+		0.0 if _dead else clampf(_healing.bleed_rate() / bleed_full, 0.0, 1.0),
+		1.0 - exp(-2.0 * delta),
+	)
 	_tick_bleeding(delta)
 	_beat += lerpf(heartbeat_rest, heartbeat_hurt, hurt) * delta
 	var beat := pow(maxf(sin(TAU * _beat), 0.0), 8.0)
@@ -404,11 +434,17 @@ func _physics_process(delta: float) -> void:
 
 	offset = Vector2(
 		shake.x * shake_move.x + jolt.x + bob_x + breath_x,
-		shake.y * shake_move.y + jolt.y + bob_y + breath_y - crouch_drop * crouch - winded_sag * _tired + _lead.x,
+		shake.y * shake_move.y + jolt.y + bob_y + breath_y
+		- crouch_drop * crouch - winded_sag * _tired
+		+ _lead.x,
 	) * intensity
 
 	var lean := -banking * lean_degrees - signf(target.velocity.x) * sprint * sprint_lean_degrees
-	var tilt := shake.z * shake_roll_degrees + bob_roll + lean + lerpf(breath_roll_degrees.x, breath_roll_degrees.y, _tired) * calm * inhale
+	var tilt := shake.z * shake_roll_degrees + bob_roll + lean + lerpf(
+		breath_roll_degrees.x,
+		breath_roll_degrees.y,
+		_tired,
+	) * calm * inhale
 	roll = intensity * (jolt_roll + deg_to_rad(tilt + _dead_side * death_roll_degrees * death))
 
 	var zoom := jolt_zoom + sprint_fov * sprint + fall_fov * _fall_amount.x - slow_zoom * slow
@@ -417,16 +453,10 @@ func _physics_process(delta: float) -> void:
 
 	var scope := clampf((target.aim_look - 1.0) / 3.5, 0.0, 1.0)
 	_screen.vignette = (
-		land_vignette * _slam * _slam
-		+ bleed_vignette * _bleed
-		+ bleed_pulse * _ooze
-		+ winded_vignette * _tired * (0.55 + 0.45 * gulp)
-		+ 0.2 * _gasp
-		+ suppress_vignette * _suppress
-		+ slow_vignette * slow
-		+ hurt_vignette * hurt * (1.0 + 0.8 * pulse)
-		+ 0.06 * _hit
-		+ death_vignette * death
+		land_vignette * _slam * _slam + bleed_vignette * _bleed + bleed_pulse * _ooze
+		+ winded_vignette * _tired * (0.55 + 0.45 * gulp) + 0.2 * _gasp
+		+ suppress_vignette * _suppress + slow_vignette * slow
+		+ hurt_vignette * hurt * (1.0 + 0.8 * pulse) + 0.06 * _hit + death_vignette * death
 	)
 	_screen.aberration = hit_aberration * _hit + slow_aberration * slow + 0.004 * power + 0.004 * pulse
 	_screen.aberration += land_aberration * _slam * _slam + ads_aberration * _snap
@@ -436,11 +466,18 @@ func _physics_process(delta: float) -> void:
 	_screen.scope = (ads_vignette * aim + ads_snap * _snap) * lerpf(0.7, 1.3, scope)
 	_screen.scope_dir = _aim_direction(aim)
 	_screen.desaturate = slow_desaturate * slow + hurt_desaturate * hurt + bleed_desaturate * _bleed + winded_desaturate * _tired + suppress_desaturate * _suppress + death_desaturate * death
-	_screen.blood = clampf(0.6 * _hit + 0.5 * hurt + 0.25 * _bleed + 0.9 * _ooze + 0.6 * death, 0.0, 1.0)
+	_screen.blood = clampf(
+		0.6 * _hit + 0.5 * hurt + 0.25 * _bleed + 0.9 * _ooze + 0.6 * death,
+		0.0,
+		1.0,
+	) * float(GameSettings.current.blood)
 	_intro = maxf(_intro - real / intro_time, 0.0)
 	_screen.fade = smoothstep(0.0, 1.0, _intro)
 	if _dead and _death.restart_delay > 0.0:
-		_screen.fade = maxf(_screen.fade, 1.0 - clampf((_death.restart_delay - _dead_time) / death_fade_time, 0.0, 1.0))
+		_screen.fade = maxf(
+			_screen.fade,
+			1.0 - clampf((_death.restart_delay - _dead_time) / death_fade_time, 0.0, 1.0),
+		)
 
 
 func _update_air(delta: float, grounded: bool) -> void:
@@ -455,7 +492,9 @@ func _update_air(delta: float, grounded: bool) -> void:
 			if impact > 0.0:
 				_land.kick(-land_dip * impact)
 				_punch.kick(-land_punch * impact)
-				_roll.kick(deg_to_rad(land_roll_degrees) * impact * (1.0 if randf() < 0.5 else -1.0))
+				_roll.kick(
+					deg_to_rad(land_roll_degrees) * impact * (1.0 if randf() < 0.5 else -1.0)
+				)
 				add_trauma(land_shake * impact)
 				_slam = maxf(_slam, impact)
 
@@ -493,7 +532,9 @@ func _tick_bleeding(delta: float) -> void:
 func _aim_direction(aim: float) -> Vector2:
 	var viewport := get_viewport()
 	var camera := viewport.get_camera_3d()
-	var from := camera.unproject_position(target.global_position + Vector3.UP * target.aim_origin_height)
+	var from := camera.unproject_position(
+		target.global_position + Vector3.UP * target.aim_origin_height
+	)
 	_screen.scope_anchor = from / viewport.get_visible_rect().size
 
 	if aim < 0.01:
@@ -635,7 +676,9 @@ func _on_damaged(amount: float, point: Vector3, direction: Vector3, _bone: Physi
 func _streak(point: Vector3, travel: Vector2, strength: float) -> void:
 	var viewport := get_viewport()
 	var size := viewport.get_visible_rect().size
-	var from := (viewport.get_camera_3d().unproject_position(point) / size).clamp(Vector2.ZERO, Vector2.ONE)
+	var from := (
+		viewport.get_camera_3d().unproject_position(point) / size
+	).clamp(Vector2.ZERO, Vector2.ONE)
 
 	var inward := Vector2(travel.x, -travel.y)
 	var back := from * size

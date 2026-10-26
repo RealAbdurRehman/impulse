@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://rq12wk87f4we" path="res://scripts/world/level.gd" id="1_hurg6"]
 [ext_resource type="PackedScene" uid="uid://cshu45hurwms2" path="res://scenes/world/chunk_start.tscn" id="2_jlhui"]
-[ext_resource type="Script" uid="uid://daw4yxeigcdn2" path="res://scripts/world/level_settings.gd" id="2_rcri0"]
 [ext_resource type="PackedScene" uid="uid://4g83by4tbewp" path="res://scenes/world/chunk_end.tscn" id="4_pxjyy"]
 [ext_resource type="PackedScene" uid="uid://cfx8xalky4vhb" path="res://scenes/world/chunk_middle1.tscn" id="4_sw6eo"]
 [ext_resource type="PackedScene" uid="uid://bvkyv848tpbyp" path="res://scenes/world/chunk_middle2.tscn" id="5_ru6hu"]
@@ -11,10 +10,6 @@
 [ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="6_ru6hu"]
 [ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="7_pqovr"]
 [ext_resource type="PackedScene" uid="uid://bka7bkmdymle1" path="res://scenes/ui/level_flow.tscn" id="11_sw6eo"]
-
-[sub_resource type="Resource" id="Resource_36ogw"]
-script = ExtResource("2_rcri0")
-metadata/_custom_type_script = "uid://daw4yxeigcdn2"
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.4196, 0.4784, 0.5412, 1)
@@ -35,12 +30,11 @@ tonemap_white = 8.0
 
 [node name="Level" type="Node3D" unique_id=1204838125 node_paths=PackedStringArray("player", "flow")]
 script = ExtResource("1_hurg6")
-settings = SubResource("Resource_36ogw")
 start_chunk = ExtResource("2_jlhui")
 middle_chunks = Array[PackedScene]([ExtResource("4_sw6eo"), ExtResource("5_ru6hu"), ExtResource("6_pqovr")])
 end_chunk = ExtResource("4_pxjyy")
-player = NodePath("Player")
 enemy_scene = ExtResource("5_sw6eo")
+player = NodePath("Player")
 flow = NodePath("LevelFlow")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1464273609]

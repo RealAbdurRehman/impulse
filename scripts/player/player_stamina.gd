@@ -5,6 +5,7 @@ extends Node
 @export var input: ActorInput
 @export var health: Health
 
+@export var infinite := false
 @export var max_stamina := 100.0
 @export var sprint_drain := 12.0
 @export var jump_cost := 10.0
@@ -60,11 +61,8 @@ func _physics_process(delta: float) -> void:
 
 func _sprinting() -> bool:
 	return (
-		input.sprint
-		and movement.grounded
-		and not movement.crouching
-		and not movement.moving_backward
-		and movement.aim_amount < 0.1
+		input.sprint and movement.grounded and not movement.crouching
+		and not movement.moving_backward and movement.aim_amount < 0.1
 		and movement.move_speed > movement.walk_speed + 0.05
 	)
 
@@ -74,6 +72,9 @@ func _on_jumped() -> void:
 
 
 func _spend(amount: float) -> void:
+	if infinite:
+		return
+
 	current = maxf(current - amount, 0.0)
 	_rest = regen_delay
 	if current <= 0.0:

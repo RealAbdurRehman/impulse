@@ -34,13 +34,5 @@ func spawns() -> Array[ChunkSpawn]:
 	return found
 
 
-func loot() -> Array[Marker3D]:
-	var found: Array[Marker3D] = []
-	for child in $Loot.get_children():
-		found.append(child)
-
-	return found
-
-
 func objective() -> Marker3D:
-	return get_node_or_null("Objective") as Marker3D
+	return $Objective

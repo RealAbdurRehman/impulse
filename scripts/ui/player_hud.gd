@@ -100,10 +100,22 @@ func _paint_vitals(c: Control, view: Vector2) -> void:
 			tint,
 		)
 
-	var x := area.end.x - 18.0
-	for i in healing.bandages:
-		_paint_roll(c, Vector2(x, area.position.y + 76.0))
-		x -= 22.0
+	var roll := Vector2(area.end.x - 18.0, area.position.y + 76.0)
+	_paint_roll(c, roll)
+
+	var count := "%d×" % healing.bandages
+	var count_width := font.get_string_size(count, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15).x
+	c.draw_string(
+		font,
+		roll + Vector2(-16.0 - count_width, 5.0),
+		count,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		15,
+		INK if healing.bandages > 0 else DIM,
+	)
+
+	var x := roll.x - 24.0 - count_width
 
 	if healing.bandages > 0 and healing.open_wounds() > 0 and not healing.is_applying():
 		c.draw_string(

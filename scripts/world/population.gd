@@ -57,6 +57,7 @@ static func fill(chunks: Array[Chunk], settings: LevelSettings, rng: RandomNumbe
 
 		for spawn in keep:
 			spawn.skill_range = skill
+			spawn.hostile = not settings.peaceful_enemies
 			spawn.random_seed = rng.randi_range(1, 0x7fffffff)
 
 		_clear(chunk.spawns(), keep)

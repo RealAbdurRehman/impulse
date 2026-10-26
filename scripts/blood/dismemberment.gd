@@ -57,7 +57,7 @@ func _on_corpse_struck(
 
 
 func _strike(amount: float, direction: Vector3, bone: PhysicalBone3D, corpse: bool) -> void:
-	if not enabled:
+	if not enabled or not GameSettings.current.dismemberment:
 		return
 
 	var part := StumpCap.part_of(bone)

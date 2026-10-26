@@ -1,3 +1,4 @@
+class_name FollowCamera
 extends Camera3D
 
 @export var target: CharacterMovement
