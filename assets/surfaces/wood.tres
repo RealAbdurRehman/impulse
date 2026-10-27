@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="SurfaceStyle" format=3]
+[gd_resource type="Resource" script_class="SurfaceStyle" format=3 uid="uid://brgfry2epqg2q"]
 
-[ext_resource type="Script" path="res://scripts/impacts/surface_style.gd" id="1_378ry"]
+[ext_resource type="Script" uid="uid://dgw0w7haq4tc4" path="res://scripts/impacts/surface_style.gd" id="1_378ry"]
 
 [resource]
 script = ExtResource("1_378ry")
@@ -22,6 +22,6 @@ debris_shape = Vector3(1, 0.12, 0.12)
 debris_speed = Vector2(1, 4.5)
 debris_bounce = 0.25
 spark_speed = Vector2(1.125, 3.6)
-mark_color = Color(0.82, 0.68, 0.46, 1)
 mark = 3
 mark_size = 0.09
+mark_color = Color(0.82, 0.68, 0.46, 1)

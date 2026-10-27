@@ -76,8 +76,5 @@ func _apply_rules() -> void:
 	var loot := PlayerLoot.new()
 	loot.name = &"PlayerLoot"
 	player.add_child(loot)
-	var ammo_hud := AmmoHud.new()
-	ammo_hud.loot = loot
-	add_child(ammo_hud)
 	(player.get_node("PlayerStamina") as PlayerStamina).infinite = infinite_stamina
 	player.health.immortal = god_mode

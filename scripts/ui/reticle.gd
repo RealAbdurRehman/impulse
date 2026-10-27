@@ -50,6 +50,8 @@ class Canvas extends Control:
 @export var ring_radius := 12.0
 @export var ring_show_time := 1.6
 @export_range(0.0, 1.0) var low_ammo := 0.3
+@export var reserve_size := 15.0
+@export var gain_show_time := 1.4
 
 @export_group("Barrel")
 @export var min_gap := 5.5
@@ -85,6 +87,9 @@ var _flash := 0.0
 var _bandaging := 0.0
 var _ring_time := 0.0
 var _reload_elapsed := 0.0
+var _reserve_seen := 0
+var _gain := 0
+var _gain_time := 0.0
 
 var _mark := Mark.NONE
 var _mark_age := 0.0
@@ -144,6 +149,11 @@ func _on_player_died() -> void:
 
 func _bind(weapon: Weapon) -> void:
 	_weapon = weapon
+	_reserve_seen = _reserve()
+	_ring_time = ring_show_time
+	if weapon.pouch != null and not weapon.pouch.changed.is_connected(_on_pouch_changed):
+		weapon.pouch.changed.connect(_on_pouch_changed)
+
 	weapon.fired.connect(_on_fired)
 	weapon.dry_fired.connect(_on_dry_fired)
 	weapon.bullet_traced.connect(_on_traced)
@@ -167,6 +177,30 @@ func _on_reload_started() -> void:
 
 
 func _on_ammo_changed(_current: int, _capacity: int) -> void:
+	_ring_time = ring_show_time
+
+
+func _limited() -> bool:
+	return _weapon.pouch != null and not _weapon.infinite_ammo
+
+
+func _reserve() -> int:
+	return _weapon.pouch.count(_weapon.stats.ammo_type) if _limited() else 0
+
+
+func _on_pouch_changed() -> void:
+	if not is_instance_valid(_weapon):
+		return
+
+	var now := _reserve()
+	if now == _reserve_seen:
+		return
+
+	if now > _reserve_seen:
+		_gain = (_gain if _gain_time > 0.0 else 0) + now - _reserve_seen
+		_gain_time = gain_show_time
+
+	_reserve_seen = now
 	_ring_time = ring_show_time
 
 
@@ -278,6 +312,7 @@ func _process(delta: float) -> void:
 	_flash = maxf(_flash - 5.0 * real, 0.0)
 	_bandaging = lerpf(_bandaging, 1.0 if _healing.is_applying() else 0.0, 1.0 - exp(-10.0 * real))
 	_ring_time = maxf(_ring_time - real, 0.0)
+	_gain_time = maxf(_gain_time - real, 0.0)
 	_mark_age += real
 	_was_armed = _armed
 
@@ -306,6 +341,7 @@ func paint(c: Control) -> void:
 		_connector(c, mouse, bullet, k)
 
 	_paint_ring(c, mouse, k)
+	_paint_reserve(c, mouse, k)
 	_paint_bandage(c, mouse, k)
 	_paint_cursor(c, mouse, k)
 	_paint_barrel(c, bullet, k, tone)
@@ -358,10 +394,7 @@ func _paint_ring(c: Control, at: Vector2, k: float) -> void:
 	var low := fraction <= low_ammo
 	var reloading := _weapon.is_reloading()
 
-	var visibility := clampf(_ring_time / 0.4, 0.0, 1.0)
-	if low or reloading:
-		visibility = 1.0
-
+	var visibility := _ring_visibility()
 	if visibility <= 0.01:
 		return
 
@@ -399,6 +432,45 @@ func _paint_ring(c: Control, at: Vector2, k: float) -> void:
 		var from := -PI * 0.5 + step * float(i) + gap_angle
 		var to := -PI * 0.5 + step * float(i + 1) - gap_angle
 		c.draw_arc(at, radius, from, to, points, lit_color if i < lit else dim_color, 1.6 * k, true)
+
+
+func _ring_visibility() -> float:
+	var fraction := float(_weapon.ammo) / float(_weapon.stats.magazine_size)
+	if _weapon.is_reloading() or fraction <= low_ammo:
+		return 1.0
+
+	return clampf(_ring_time / 0.4, 0.0, 1.0)
+
+
+func _paint_reserve(c: Control, at: Vector2, k: float) -> void:
+	var visibility := _ring_visibility()
+	if visibility <= 0.01:
+		return
+
+	var text := "∞"
+	var tone := INK
+	if _limited():
+		var reserve := _reserve()
+		text = str(reserve)
+		if reserve == 0:
+			tone = HOT
+		elif reserve <= _weapon.stats.magazine_size:
+			tone = AMBER
+
+	var font := ThemeDB.fallback_font
+	var size := int(reserve_size * k)
+	var from := at + Vector2(ring_radius + 7.0, ring_radius + 12.0) * k
+	_text(c, from, text, size, Color(tone, 0.9 * visibility * _alpha), k)
+	if _gain_time > 0.0:
+		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
+		var fade := clampf(_gain_time / 0.5, 0.0, 1.0)
+		_text(c, from + Vector2(width + 6.0 * k, 0.0), "+%d" % _gain, int(reserve_size * 0.8 * k), Color(AMBER, fade * _alpha), k)
+
+
+func _text(c: Control, at: Vector2, text: String, size: int, color: Color, k: float) -> void:
+	var font := ThemeDB.fallback_font
+	c.draw_string(font, at + Vector2.ONE * k, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, Color(SHADOW, SHADOW.a * color.a))
+	c.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, color)
 
 
 func _paint_bandage(c: Control, at: Vector2, k: float) -> void:

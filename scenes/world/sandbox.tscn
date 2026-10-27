@@ -1,65 +1,157 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://dbndc77wdvcgy"]
 
-[ext_resource type="Script" path="res://scripts/world/sandbox.gd" id="1_sandbox"]
+[ext_resource type="Script" uid="uid://xax1uktg36am" path="res://scripts/world/sandbox.gd" id="1_sandbox"]
 [ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="3_camera"]
-[ext_resource type="Texture2D" path="res://assets/urban/textures/t_concrete_asphalt_basecolor.png" id="5_texture"]
+[ext_resource type="Texture2D" uid="uid://ctn35oujhgcft" path="res://assets/urban/textures/t_concrete_asphalt_basecolor.png" id="5_texture"]
+[ext_resource type="Shader" uid="uid://hsw85g4da3tg" path="res://scripts/world/shaders/stage_floor.gdshader" id="6_floor"]
+[ext_resource type="Shader" uid="uid://vpvvpvg7k6s0" path="res://scripts/world/shaders/stage_wall.gdshader" id="7_wall"]
+[ext_resource type="Script" uid="uid://davyyjro4dxwh" path="res://scripts/world/stage_lights.gd" id="8_lights"]
 
-[sub_resource type="ProceduralSkyMaterial" id="Sky_material"]
-sky_top_color = Color(0.38, 0.55, 0.8, 1)
-sky_horizon_color = Color(0.68, 0.74, 0.82, 1)
-ground_bottom_color = Color(0.2, 0.19, 0.19, 1)
-ground_horizon_color = Color(0.68, 0.7, 0.72, 1)
-
-[sub_resource type="Sky" id="Sky_resource"]
-sky_material = SubResource("Sky_material")
-
-[sub_resource type="Environment" id="Environment_sandbox"]
-background_mode = 2
-sky = SubResource("Sky_resource")
-ambient_light_source = 3
-ambient_light_sky_contribution = 0.7
-reflected_light_source = 2
-tonemap_mode = 2
-tonemap_white = 6.0
-fog_enabled = true
-fog_light_color = Color(0.68, 0.72, 0.78, 1)
-fog_density = 0.003
-
-[sub_resource type="StandardMaterial3D" id="Material_baseplate"]
-albedo_texture = ExtResource("5_texture")
-albedo_color = Color(0.62, 0.62, 0.66, 1)
-roughness = 1.0
-uv1_scale = Vector3(0.18, 0.18, 0.18)
-uv1_triplanar = true
+[sub_resource type="ShaderMaterial" id="Material_floor"]
+render_priority = 0
+shader = ExtResource("6_floor")
+shader_parameter/grain = ExtResource("5_texture")
 
 [sub_resource type="BoxMesh" id="Mesh_baseplate"]
-material = SubResource("Material_baseplate")
-size = Vector3(400, 1, 12)
+material = SubResource("Material_floor")
+size = Vector3(400, 40, 20)
 
 [sub_resource type="BoxShape3D" id="Shape_baseplate"]
-size = Vector3(400, 1, 12)
+size = Vector3(400, 40, 20)
+
+[sub_resource type="ShaderMaterial" id="Material_wall"]
+render_priority = 0
+shader = ExtResource("7_wall")
+
+[sub_resource type="BoxMesh" id="Mesh_back"]
+material = SubResource("Material_wall")
+size = Vector3(400, 31, 1)
+
+[sub_resource type="BoxShape3D" id="Shape_back"]
+size = Vector3(400, 31, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_end"]
+material = SubResource("Material_wall")
+size = Vector3(1, 31, 15)
+
+[sub_resource type="BoxShape3D" id="Shape_end"]
+size = Vector3(1, 31, 15)
+
+[sub_resource type="StandardMaterial3D" id="Material_trim"]
+albedo_color = Color(0.26, 0.26, 0.29, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="Material_ceiling"]
+albedo_color = Color(0.02, 0.02, 0.025, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_ceiling"]
+material = SubResource("Material_ceiling")
+size = Vector3(400, 1, 21)
+
+[sub_resource type="BoxShape3D" id="Shape_ceiling"]
+size = Vector3(400, 1, 21)
+
+[sub_resource type="BoxMesh" id="Mesh_skirting"]
+material = SubResource("Material_trim")
+size = Vector3(400, 0.22, 0.1)
+
+[sub_resource type="Environment" id="Environment_sandbox"]
+background_mode = 1
+ambient_light_source = 2
+ambient_light_color = Color(0.24, 0.24, 0.255, 1)
+reflected_light_source = 1
+tonemap_mode = 3
+tonemap_white = 6.0
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.04
+fog_enabled = true
+fog_light_color = Color(0.02, 0.02, 0.025, 1)
+fog_density = 0.004
+adjustment_enabled = true
+adjustment_contrast = 1.05
+adjustment_saturation = 0.9
 
 [node name="Sandbox" type="Node3D" unique_id=1 node_paths=PackedStringArray("player")]
 script = ExtResource("1_sandbox")
 player = NodePath("Player")
 
 [node name="Baseplate" type="StaticBody3D" parent="." unique_id=2]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 3.8)
 metadata/surface = &"concrete"
 
 [node name="Mesh" type="MeshInstance3D" parent="Baseplate" unique_id=3]
+layers = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0044174194, 0, -0.02545309)
+cast_shadow = 0
 mesh = SubResource("Mesh_baseplate")
 
 [node name="Shape" type="CollisionShape3D" parent="Baseplate" unique_id=4]
 shape = SubResource("Shape_baseplate")
 
+[node name="BackWall" type="StaticBody3D" parent="." unique_id=9]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14.5, -6.5)
+metadata/surface = &"concrete"
+
+[node name="Mesh" type="MeshInstance3D" parent="BackWall" unique_id=10]
+layers = 2
+cast_shadow = 0
+mesh = SubResource("Mesh_back")
+
+[node name="Shape" type="CollisionShape3D" parent="BackWall" unique_id=11]
+shape = SubResource("Shape_back")
+
+[node name="WestWall" type="StaticBody3D" parent="." unique_id=12]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200.5, 14.5, 0.5)
+metadata/surface = &"concrete"
+
+[node name="Mesh" type="MeshInstance3D" parent="WestWall" unique_id=13]
+layers = 2
+cast_shadow = 0
+mesh = SubResource("Mesh_end")
+
+[node name="Shape" type="CollisionShape3D" parent="WestWall" unique_id=14]
+shape = SubResource("Shape_end")
+
+[node name="EastWall" type="StaticBody3D" parent="." unique_id=15]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200.5, 14.5, 0.5)
+metadata/surface = &"concrete"
+
+[node name="Mesh" type="MeshInstance3D" parent="EastWall" unique_id=16]
+layers = 2
+cast_shadow = 0
+mesh = SubResource("Mesh_end")
+
+[node name="Shape" type="CollisionShape3D" parent="EastWall" unique_id=17]
+shape = SubResource("Shape_end")
+
+[node name="Ceiling" type="StaticBody3D" parent="." unique_id=21]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 30.5, 3.5)
+metadata/surface = &"concrete"
+
+[node name="Mesh" type="MeshInstance3D" parent="Ceiling" unique_id=22]
+layers = 2
+cast_shadow = 0
+mesh = SubResource("Mesh_ceiling")
+
+[node name="Shape" type="CollisionShape3D" parent="Ceiling" unique_id=23]
+shape = SubResource("Shape_ceiling")
+
+[node name="Skirting" type="MeshInstance3D" parent="." unique_id=19]
+layers = 2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, -5.95)
+cast_shadow = 0
+mesh = SubResource("Mesh_skirting")
+
+[node name="StageLights" type="Node3D" parent="." unique_id=20]
+script = ExtResource("8_lights")
+
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=5]
 transform = Transform3D(0.7880108, -0.4575257, 0.41195792, 0, 0.66913056, 0.74314487, -0.6156615, -0.58560616, 0.5272821, 0, 0, 0)
-light_color = Color(1, 0.96, 0.88, 1)
-light_energy = 1.2
+light_energy = 0.6
 light_angular_distance = 0.5
-light_specular = 0.4
+light_specular = 0.3
 shadow_enabled = true
 shadow_blur = 2.0
 directional_shadow_mode = 0

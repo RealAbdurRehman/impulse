@@ -47,8 +47,15 @@ func _ready() -> void:
 	_panel.add_child(collider)
 
 	var leaf := (load("res://assets/urban/%s.glb" % model) as PackedScene).instantiate() as Node3D
-	leaf.scale = Vector3(-width, 1.0, 1.0)
-	Weathering.fix(leaf)
+	leaf.scale = Vector3(width, 1.0, 1.0)
+	leaf.rotation.y = PI
+	for node in leaf.find_children("*", "MeshInstance3D", true, false):
+		var mesh := (node as MeshInstance3D).mesh
+		for i in mesh.get_surface_count():
+			var material := mesh.surface_get_material(i) as BaseMaterial3D
+			material.vertex_color_use_as_albedo = false
+			material.metallic = 0.0
+
 	_panel.add_child(leaf)
 	_panel.marks = ImpactMarks.new()
 	_panel.marks.capacity = 24

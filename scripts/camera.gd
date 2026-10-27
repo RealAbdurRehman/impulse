@@ -14,6 +14,7 @@ extends Camera3D
 
 @export var z_distance: float = 10.0
 @export var field_of_view: float = 35.0
+@export var min_height: float = 0.6
 
 var height_offset: float = 1.0
 
@@ -73,7 +74,7 @@ func _physics_process(delta: float) -> void:
 
 	var desired_pos := Vector3(
 		target_pos.x + look_offset_x + _lead,
-		target_pos.y + look_offset_y + height_offset,
+		maxf(target_pos.y + look_offset_y + height_offset, min_height),
 		target_pos.z + z_distance,
 	)
 
