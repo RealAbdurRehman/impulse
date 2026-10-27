@@ -26,7 +26,11 @@ func _ready() -> void:
 
 	var kit := MeshKit.new()
 	kit.add(housing, MeshKit.box(Vector3(2.6, 0.3, 1.4), 0.06, 2))
-	kit.add(lens, MeshKit.box(Vector3(2.2, 0.04, 1.0), 0.015, 1), Transform3D(Basis.IDENTITY, Vector3(0.0, -0.16, 0.0)))
+	kit.add(
+		lens,
+		MeshKit.box(Vector3(2.2, 0.04, 1.0), 0.015, 1),
+		Transform3D(Basis.IDENTITY, Vector3(0.0, -0.16, 0.0)),
+	)
 
 	var count := int(half_length / spacing) * 2 + 1
 	var multi := MultiMesh.new()
@@ -36,8 +40,11 @@ func _ready() -> void:
 
 	var down := Basis(Vector3.RIGHT, -PI * 0.5)
 	for i in count:
-		var x := (i - count / 2) * spacing
-		multi.set_instance_transform(i, Transform3D(Basis.IDENTITY, Vector3(x, height - 0.15, lane_z)))
+		var x := (i - count / 2.0) * spacing
+		multi.set_instance_transform(
+			i,
+			Transform3D(Basis.IDENTITY, Vector3(x, height - 0.15, lane_z)),
+		)
 
 		var spot := SpotLight3D.new()
 		spot.light_color = color

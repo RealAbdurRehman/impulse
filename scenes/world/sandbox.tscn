@@ -7,12 +7,29 @@
 [ext_resource type="Shader" uid="uid://hsw85g4da3tg" path="res://scripts/world/shaders/stage_floor.gdshader" id="6_floor"]
 [ext_resource type="Shader" uid="uid://vpvvpvg7k6s0" path="res://scripts/world/shaders/stage_wall.gdshader" id="7_wall"]
 [ext_resource type="Script" uid="uid://davyyjro4dxwh" path="res://scripts/world/stage_lights.gd" id="8_lights"]
+[ext_resource type="PackedScene" path="res://scenes/ui/squad_call.tscn" id="98_call"]
 [ext_resource type="PackedScene" path="res://scenes/ui/spawn_menu.tscn" id="99_spawn"]
 
 [sub_resource type="ShaderMaterial" id="Material_floor"]
 render_priority = 0
 shader = ExtResource("6_floor")
+shader_parameter/lamp_spacing = 28.0
+shader_parameter/lamp_z = 1.0
+shader_parameter/wall_z = -6.0
+shader_parameter/floor_radius = 16.0
+shader_parameter/wall_radius = 11.0
+shader_parameter/wall_rise = 10.0
+shader_parameter/floor_min = 0.45
+shader_parameter/wall_min = 0.3
 shader_parameter/grain = ExtResource("5_texture")
+shader_parameter/tint = Color(0.3, 0.3, 0.32, 1)
+shader_parameter/glow = Color(0.9, 0.92, 1, 1)
+shader_parameter/grain_scale = 0.18
+shader_parameter/lines = 0.5
+shader_parameter/lit = 1.1
+shader_parameter/gloss = 0.7
+shader_parameter/mirror_base = 0.04
+shader_parameter/mirror_gain = 0.3
 
 [sub_resource type="BoxMesh" id="Mesh_baseplate"]
 material = SubResource("Material_floor")
@@ -24,6 +41,18 @@ size = Vector3(400, 40, 20)
 [sub_resource type="ShaderMaterial" id="Material_wall"]
 render_priority = 0
 shader = ExtResource("7_wall")
+shader_parameter/lamp_spacing = 28.0
+shader_parameter/lamp_z = 1.0
+shader_parameter/wall_z = -6.0
+shader_parameter/floor_radius = 16.0
+shader_parameter/wall_radius = 11.0
+shader_parameter/wall_rise = 10.0
+shader_parameter/floor_min = 0.45
+shader_parameter/wall_min = 0.3
+shader_parameter/tint = Color(0.36, 0.36, 0.38, 1)
+shader_parameter/glow = Color(0.88, 0.9, 1, 1)
+shader_parameter/panel = Vector2(4, 3)
+shader_parameter/wash = 1.6
 
 [sub_resource type="BoxMesh" id="Mesh_back"]
 material = SubResource("Material_wall")
@@ -39,10 +68,6 @@ size = Vector3(1, 31, 15)
 [sub_resource type="BoxShape3D" id="Shape_end"]
 size = Vector3(1, 31, 15)
 
-[sub_resource type="StandardMaterial3D" id="Material_trim"]
-albedo_color = Color(0.26, 0.26, 0.29, 1)
-roughness = 0.6
-
 [sub_resource type="StandardMaterial3D" id="Material_ceiling"]
 albedo_color = Color(0.02, 0.02, 0.025, 1)
 
@@ -52,6 +77,10 @@ size = Vector3(400, 1, 21)
 
 [sub_resource type="BoxShape3D" id="Shape_ceiling"]
 size = Vector3(400, 1, 21)
+
+[sub_resource type="StandardMaterial3D" id="Material_trim"]
+albedo_color = Color(0.26, 0.26, 0.29, 1)
+roughness = 0.6
 
 [sub_resource type="BoxMesh" id="Mesh_skirting"]
 material = SubResource("Material_trim")
@@ -83,8 +112,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -20, 3.8)
 metadata/surface = &"concrete"
 
 [node name="Mesh" type="MeshInstance3D" parent="Baseplate" unique_id=3]
-layers = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0044174194, 0, -0.02545309)
+layers = 2
 cast_shadow = 0
 mesh = SubResource("Mesh_baseplate")
 
@@ -140,8 +169,8 @@ mesh = SubResource("Mesh_ceiling")
 shape = SubResource("Shape_ceiling")
 
 [node name="Skirting" type="MeshInstance3D" parent="." unique_id=19]
-layers = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, -5.95)
+layers = 2
 cast_shadow = 0
 mesh = SubResource("Mesh_skirting")
 
@@ -171,3 +200,5 @@ target = NodePath("../Player")
 
 [node name="SpawnMenu" parent="." unique_id=2400 node_paths=PackedStringArray("player") instance=ExtResource("99_spawn")]
 player = NodePath("../Player")
+
+[node name="SquadCall" parent="." unique_id=2401 instance=ExtResource("98_call")]

@@ -50,6 +50,12 @@ const SEARCH_AHEAD := 4.0
 const SEARCH_BEHIND := 3.0
 const CORPSE_STANDOFF := 1.8
 const CLEARED_RANGE := 15.0
+const ESCORT_GAP := 2.2
+const ESCORT_SPACING := 1.5
+const ESCORT_DEAD := 0.35
+const ESCORT_START := 0.9
+const ESCORT_LEAD := 0.35
+const ESCORT_CLOSE := 3.5
 
 @export var target: CharacterMovement
 @export var carrier: WeaponCarrier
@@ -96,6 +102,8 @@ var traits: EnemyTraits
 var engaged := false
 
 var hostile := true
+
+var leader: CharacterMovement
 
 var awareness := 0.0
 
@@ -171,6 +179,11 @@ var _approaching := false
 var _cleared_left := 0.0
 var _corpse: Node3D
 var _stalled := 0.0
+var _slot := 0.0
+var _slot_left := 0.0
+var _lead_dir := 1.0
+var _lead_moving := false
+var _escorting := false
 
 var _route_goal := Vector2(NAN, NAN)
 var _route_left := 0.0
@@ -284,8 +297,66 @@ func retarget(next: CharacterMovement) -> void:
 		awareness = 0.0
 
 
-func follow(point: Vector3) -> void:
-	_home = point
+func _escort(delta: float) -> void:
+	_slot_left -= delta
+	if _slot_left <= 0.0:
+		_slot_left = 0.3
+		_slot = _pick_slot()
+
+	var me := _body.global_position
+	var there := leader.global_position
+	var pace := absf(leader.velocity.x)
+	var gap := there.x + leader.velocity.x * ESCORT_LEAD + _slot - me.x
+
+	if absf(there.y - me.y) > LEVEL_GAP * 0.5 or absf(gap) > ESCORT_CLOSE + pace:
+		_travel(Vector2(there.x + _slot, there.y), absf(gap) > ESCORT_CLOSE, delta)
+		return
+
+	_look_toward(_lead_dir)
+	if absf(gap) < (ESCORT_DEAD if _escorting else ESCORT_START):
+		_escorting = false
+		_stand(delta)
+		return
+
+	_escorting = true
+
+	var want := minf(pace + absf(gap) * 1.2, _body.run_speed)
+	var run := want > _body.walk_speed * 1.1
+	_pilot.walk(signf(gap), run, delta)
+	if not _pilot.committed:
+		move = signf(gap) * clampf(want / (_body.run_speed if run else _body.walk_speed), 0.15, 1.0)
+
+
+func _pick_slot() -> float:
+	var peers: Array[EnemyInput] = []
+	for node in get_tree().get_nodes_in_group(&"enemies"):
+		var other := node as EnemyInput
+		if other.leader == leader and other.health.alive:
+			peers.append(other)
+
+	peers.sort_custom(
+		func(a: EnemyInput, b: EnemyInput) -> bool:
+			return a._body.global_position.x < b._body.global_position.x,
+	)
+
+	var pace := leader.velocity.x
+	if absf(pace) > 0.6:
+		_lead_moving = true
+		_lead_dir = signf(pace)
+	elif absf(pace) < 0.2:
+		_lead_moving = false
+
+	var offsets: Array[float] = []
+	for k in peers.size():
+		if _lead_moving:
+			offsets.append(-_lead_dir * (ESCORT_GAP + k * ESCORT_SPACING))
+		else:
+			offsets.append(
+				(-1.0 if k % 2 == 0 else 1.0) * (ESCORT_GAP * 0.7 + (k / 2.0) * ESCORT_SPACING)
+			)
+
+	offsets.sort()
+	return offsets[maxi(peers.find(self), 0)]
 
 
 func is_calm() -> bool:
@@ -341,7 +412,7 @@ func poll() -> void:
 
 	_reload(delta)
 
-	if not sprint:
+	if not sprint and leader == null:
 		move *= traits.pace
 
 	if _laser != null and not _painting:
@@ -743,6 +814,10 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 
 
 func _patrol(delta: float) -> void:
+	if leader != null:
+		_escort(delta)
+		return
+
 	if _wait_left > 0.0:
 		_wait_left -= delta
 		_idle_look(delta, Vector2(2.5, 6.0))

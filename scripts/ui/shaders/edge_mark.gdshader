@@ -6,6 +6,7 @@ uniform float bang = 0.0;
 uniform float age = 9.0;
 uniform float seed = 0.0;
 uniform float marked = 1.0;
+uniform vec4 recolor : source_color = vec4(0.0);
 uniform vec2 direction = vec2(-1.0, 0.0);
 
 const float EXTENT = 1.1;
@@ -85,6 +86,7 @@ void fragment() {
 	float level = mix(gauge, 1.0, bang);
 	vec3 tint = level < 0.5 ? mix(CALM, WARM, level * 2.0) : mix(WARM, HOT, (level - 0.5) * 2.0);
 	tint = mix(tint, FLASH, bang * step(age, 0.1));
+	tint = mix(tint, recolor.rgb, recolor.a);
 
 	vec2 way = normalize(vec2(direction.x, -direction.y));
 	vec2 side = vec2(-way.y, way.x);

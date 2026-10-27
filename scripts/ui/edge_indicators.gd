@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const SHADER := preload("res://scripts/ui/shaders/edge_mark.gdshader")
 const WARM_FRAMES := 4
+const ALLY_COLOR := Color(0.55, 0.88, 0.5)
 
 
 class Tag:
@@ -30,6 +31,8 @@ class Tag:
 @export var fade_distance := 40.0
 @export var max_per_side := 3
 @export var max_calm_per_side := 2
+@export var ally_reach := 40.0
+@export var max_ally_per_side := 4
 @export_range(0.0, 1.0) var quiet := 0.55
 @export_range(0.0, 1.0) var strength := 0.85
 
@@ -72,7 +75,11 @@ func _process(delta: float) -> void:
 		if not brain.health.alive:
 			continue
 
-		var level := brain.warning()
+		var ally := brain.health.team == SpawnMenu.ALLY_TEAM
+		if ally and not (Targeter.following and Targeter.squad.has(brain)):
+			continue
+
+		var level := 0.0 if ally else brain.warning()
 		var aware := level >= EnemyMark.FROM
 		var world := (brain.get_parent() as Node3D).get_global_transform_interpolated().origin + Vector3.UP * 1.6
 		if camera.is_position_behind(world):
@@ -92,35 +99,39 @@ func _process(delta: float) -> void:
 			maxf(-point.x, point.x - size.x) / maxf(per_metre.x, 1.0),
 			maxf(-point.y, point.y - size.y) / maxf(per_metre.y, 1.0),
 		)
-		if beyond > (reach if aware else calm_reach) * (1.15 if known else 1.0):
+		if beyond > (ally_reach if ally else (reach if aware else calm_reach)) * (1.15 if known else 1.0):
 			continue
 
 		var rank := 1.0 - beyond * 0.01
-		if aware:
+		if ally:
+			rank = 1.5 - beyond * 0.001
+		elif aware:
 			rank = 2.0 + level + (1.0 if brain.alarmed() else 0.0) - beyond * 0.001
 
-		found.append({ "brain": brain, "level": level, "aware": aware, "beyond": beyond, "point": point, "outside": outside, "rank": rank })
+		found.append({ "brain": brain, "level": level, "aware": aware, "beyond": beyond, "point": point, "outside": outside, "rank": rank, "ally": ally })
 
 	found.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.rank > b.rank)
 
 	var seen := { }
-	var taken := [[0, 0, 0], [0, 0, 0]]
+	var taken := [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 	for entry in found:
 		var point: Vector2 = entry.point
 		var edge := Vector2(clampf(point.x, inset, size.x - inset), clampf(point.y, inset, size.y - inset))
 		var column := 0 if point.x < 0.0 else (1 if point.x > size.x else 2)
 		var aware: bool = entry.aware
-		if taken[int(aware)][column] >= (max_per_side if aware else max_calm_per_side):
+		var ally: bool = entry.ally
+		var bucket := 2 if ally else int(aware)
+		if taken[bucket][column] >= (max_ally_per_side if ally else (max_per_side if aware else max_calm_per_side)):
 			continue
 
-		taken[int(aware)][column] += 1
+		taken[bucket][column] += 1
 		var brain: EnemyInput = entry.brain
 		var id := brain.get_instance_id()
 		seen[id] = true
 
 		var tag: Tag = _tags.get(id)
 		if tag == null:
-			tag = _make_tag(float(id % 97))
+			tag = _make_tag(float(id % 97), ally)
 			tag.position = edge
 			_tags[id] = tag
 
@@ -130,10 +141,10 @@ func _process(delta: float) -> void:
 		tag.position = tag.position.lerp(edge, follow)
 		tag.shown = lerpf(tag.shown, clampf(float(entry.outside) / (fade_distance * _scale), 0.0, 1.0), follow)
 		tag.level = lerpf(tag.level, entry.level, 1.0 - exp(-8.0 * delta))
-		tag.fade = 1.0 - 0.5 * smoothstep(0.4, 1.0, float(entry.beyond) / (reach if aware else calm_reach))
+		tag.fade = 1.0 - 0.5 * smoothstep(0.4, 1.0, float(entry.beyond) / (ally_reach if ally else (reach if aware else calm_reach)))
 		tag.mark = lerpf(tag.mark, 1.0 if aware else 0.0, 1.0 - exp(-8.0 * delta))
 		tag.span = lerpf(0.55, 1.0, tag.mark)
-		var alarm := brain.alarmed()
+		var alarm := not ally and brain.alarmed()
 		if alarm and not tag.alarmed:
 			tag.age = 0.0
 
@@ -161,10 +172,13 @@ func _process(delta: float) -> void:
 		_place(tag, half)
 
 
-func _make_tag(variation: float) -> Tag:
+func _make_tag(variation: float, ally: bool) -> Tag:
 	var tag := Tag.new()
 	tag.variation = variation
 	tag.material = _material()
+	if ally:
+		tag.material.set_shader_parameter(&"recolor", Color(ALLY_COLOR, 1.0))
+
 	tag.rect.material = tag.material
 	tag.rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(tag.rect)
