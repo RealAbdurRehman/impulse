@@ -41,17 +41,17 @@ func warm(on: bool) -> void:
 
 
 func mark(point: Vector3, normal: Vector3, dir: Vector3, style: SurfaceStyle, size: float) -> void:
-	var radius := randf_range(style.mark_radius.x, style.mark_radius.y) * size
+	var span := style.mark_size * randf_range(0.85, 1.15) * clampf(sqrt(size), 0.8, 1.3)
 	var glance := 1.0 - absf(dir.dot(normal))
 	var along := dir - normal * dir.dot(normal)
 	if along.length_squared() < 0.0001:
 		along = normal.cross(Vector3.UP if absf(normal.y) < 0.9 else Vector3.RIGHT).rotated(normal, randf() * TAU)
 
 	along = along.normalized()
-	var stretch := 1.0 + glance * glance * 2.5
+	var stretch := 1.0 + glance * glance * 1.5
 	var depth := lerpf(floor_depth, 1.0, absf(normal.z))
-	var x := along * radius * 2.0 * stretch
-	var y := normal.cross(along) * radius * 2.0
+	var x := along * span * stretch
+	var y := normal.cross(along) * span
 	x.z *= depth
 	y.z *= depth
 
