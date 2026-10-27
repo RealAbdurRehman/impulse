@@ -1,0 +1,77 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/sandbox.gd" id="1_sandbox"]
+[ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="3_camera"]
+[ext_resource type="Texture2D" path="res://assets/urban/textures/t_concrete_asphalt_basecolor.png" id="5_texture"]
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_material"]
+sky_top_color = Color(0.38, 0.55, 0.8, 1)
+sky_horizon_color = Color(0.68, 0.74, 0.82, 1)
+ground_bottom_color = Color(0.2, 0.19, 0.19, 1)
+ground_horizon_color = Color(0.68, 0.7, 0.72, 1)
+
+[sub_resource type="Sky" id="Sky_resource"]
+sky_material = SubResource("Sky_material")
+
+[sub_resource type="Environment" id="Environment_sandbox"]
+background_mode = 2
+sky = SubResource("Sky_resource")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.7
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+fog_enabled = true
+fog_light_color = Color(0.68, 0.72, 0.78, 1)
+fog_density = 0.003
+
+[sub_resource type="StandardMaterial3D" id="Material_baseplate"]
+albedo_texture = ExtResource("5_texture")
+albedo_color = Color(0.62, 0.62, 0.66, 1)
+roughness = 1.0
+uv1_scale = Vector3(0.18, 0.18, 0.18)
+uv1_triplanar = true
+
+[sub_resource type="BoxMesh" id="Mesh_baseplate"]
+material = SubResource("Material_baseplate")
+size = Vector3(400, 1, 12)
+
+[sub_resource type="BoxShape3D" id="Shape_baseplate"]
+size = Vector3(400, 1, 12)
+
+[node name="Sandbox" type="Node3D" unique_id=1 node_paths=PackedStringArray("player")]
+script = ExtResource("1_sandbox")
+player = NodePath("Player")
+
+[node name="Baseplate" type="StaticBody3D" parent="." unique_id=2]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+metadata/surface = &"concrete"
+
+[node name="Mesh" type="MeshInstance3D" parent="Baseplate" unique_id=3]
+mesh = SubResource("Mesh_baseplate")
+
+[node name="Shape" type="CollisionShape3D" parent="Baseplate" unique_id=4]
+shape = SubResource("Shape_baseplate")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=5]
+transform = Transform3D(0.7880108, -0.4575257, 0.41195792, 0, 0.66913056, 0.74314487, -0.6156615, -0.58560616, 0.5272821, 0, 0, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.2
+light_angular_distance = 0.5
+light_specular = 0.4
+shadow_enabled = true
+shadow_blur = 2.0
+directional_shadow_mode = 0
+directional_shadow_max_distance = 80.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=6]
+environment = SubResource("Environment_sandbox")
+
+[node name="Player" parent="." unique_id=7 instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+
+[node name="Camera" type="Camera3D" parent="." unique_id=8 node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8)
+script = ExtResource("3_camera")
+target = NodePath("../Player")

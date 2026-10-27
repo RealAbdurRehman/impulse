@@ -2,8 +2,8 @@ class_name Boot
 extends CanvasLayer
 
 const MENU := "res://scenes/ui/menu.tscn"
-const LEVEL := "res://scenes/world/level.tscn"
-const PATHS := [MENU, LEVEL]
+const SANDBOX := "res://scenes/world/sandbox.tscn"
+const PATHS := [MENU, SANDBOX]
 const LOAD_SHARE := 0.6
 const WARM_TIME := 2.0
 
@@ -39,18 +39,11 @@ func _load_all() -> void:
 
 
 func _warm_up() -> void:
-	var kept := LevelSettings.current
-	var run := LevelSettings.new()
-	run.god_mode = true
-	run.peaceful_enemies = true
-	LevelSettings.current = run
-
-	var level := (_kept[1] as PackedScene).instantiate()
-	add_child(level)
+	var sandbox := (_kept[1] as PackedScene).instantiate()
+	add_child(sandbox)
 	var tween := create_tween()
 	tween.tween_property(_progress, "value", 1.0, WARM_TIME)
 	await tween.finished
 
-	level.queue_free()
+	sandbox.queue_free()
 	await get_tree().process_frame
-	LevelSettings.current = kept

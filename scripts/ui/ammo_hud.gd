@@ -37,6 +37,7 @@ func _ready() -> void:
 	add_child(canvas)
 	_canvas = canvas
 	loot.collected.connect(_on_collected)
+	loot.tree_exited.connect(queue_free)
 
 
 func _process(delta: float) -> void:

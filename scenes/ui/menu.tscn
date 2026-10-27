@@ -44,7 +44,7 @@ text = "IMPULSE"
 [node name="Tagline" type="Label" parent="Main/Box" unique_id=118866788]
 layout_mode = 2
 theme_type_variation = &"TaglineLabel"
-text = "Reach the exit. Make it out alive."
+text = "Build it. Break it."
 
 [node name="Gap" type="Control" parent="Main/Box" unique_id=979881125]
 custom_minimum_size = Vector2(0, 42)
@@ -55,11 +55,11 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_type_variation = &"ButtonColumn"
 
-[node name="NewGameButton" type="Button" parent="Main/Box/Buttons" unique_id=1065408299]
+[node name="Play" type="Button" parent="Main/Box/Buttons" unique_id=1065408299]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
-text = "New game"
+text = "Play"
 alignment = 0
 
 [node name="SettingsButton" type="Button" parent="Main/Box/Buttons" unique_id=1204682884]
@@ -75,175 +75,6 @@ custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 text = "Quit"
 alignment = 0
-
-[node name="NewGame" type="MarginContainer" parent="." unique_id=2007679849]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_type_variation = &"PageMargin"
-
-[node name="Box" type="VBoxContainer" parent="NewGame" unique_id=105224312]
-layout_mode = 2
-theme_type_variation = &"PageBox"
-
-[node name="Heading" type="Label" parent="NewGame/Box" unique_id=551449486]
-layout_mode = 2
-theme_type_variation = &"HeadingLabel"
-text = "NEW GAME"
-
-[node name="Columns" type="HBoxContainer" parent="NewGame/Box" unique_id=650554920]
-layout_mode = 2
-
-[node name="LevelPanel" type="PanelContainer" parent="NewGame/Box/Columns" unique_id=1070121964]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 0
-
-[node name="Level" type="VBoxContainer" parent="NewGame/Box/Columns/LevelPanel" unique_id=1060720522]
-layout_mode = 2
-
-[node name="Heading" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level" unique_id=1025018536]
-layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "LEVEL"
-
-[node name="Grid" type="GridContainer" parent="NewGame/Box/Columns/LevelPanel/Level" unique_id=144221832]
-layout_mode = 2
-columns = 2
-
-[node name="DifficultyLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=280438121]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Difficulty"
-
-[node name="Difficulty" type="OptionButton" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1001759268]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-tooltip_text = "Enemy skill, weapons and how many can attack at once."
-selected = 1
-item_count = 3
-popup/item_0/text = "Easy"
-popup/item_0/id = 0
-popup/item_1/text = "Normal"
-popup/item_1/id = 1
-popup/item_2/text = "Hard"
-popup/item_2/id = 2
-
-[node name="RulesPanel" type="PanelContainer" parent="NewGame/Box/Columns" unique_id=509945765]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 0
-
-[node name="Rules" type="VBoxContainer" parent="NewGame/Box/Columns/RulesPanel" unique_id=918333949]
-layout_mode = 2
-
-[node name="Heading" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules" unique_id=204760158]
-layout_mode = 2
-theme_type_variation = &"SectionLabel"
-text = "RULES"
-
-[node name="Grid" type="GridContainer" parent="NewGame/Box/Columns/RulesPanel/Rules" unique_id=256629502]
-layout_mode = 2
-columns = 2
-
-[node name="BandagesLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1202109069]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Starting bandages"
-
-[node name="Bandages" type="SpinBox" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=191722816]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-min_value = 3.0
-max_value = 10.0
-value = 4.0
-rounded = true
-
-[node name="MagazinesLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Starting magazines"
-
-[node name="Magazines" type="SpinBox" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-max_value = 6.0
-value = 2.0
-rounded = true
-
-[node name="GodLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1563284849]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "God mode"
-
-[node name="God" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1806799585]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 8
-tooltip_text = "You cannot die."
-
-[node name="InfiniteAmmoLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=516015570]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Infinite ammo"
-
-[node name="InfiniteAmmo" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=2100054608]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 8
-tooltip_text = "Magazines never run dry."
-
-[node name="InfiniteStaminaLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=488213073]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Infinite stamina"
-
-[node name="InfiniteStamina" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1706346401]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 8
-tooltip_text = "Sprint and jump without getting winded."
-
-[node name="PeacefulLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1063268194]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Enemies ignore you"
-
-[node name="Peaceful" type="CheckButton" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1764384757]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 8
-tooltip_text = "Enemies never notice you. Good for exploring."
-
-[node name="Fill" type="Control" parent="NewGame/Box" unique_id=2120282004]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="Footer" type="HBoxContainer" parent="NewGame/Box" unique_id=1197791371]
-layout_mode = 2
-
-[node name="NewBack" type="Button" parent="NewGame/Box/Footer" unique_id=1395821201]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-text = "Back"
-
-[node name="Spacer" type="Control" parent="NewGame/Box/Footer" unique_id=23231870]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="Start" type="Button" parent="NewGame/Box/Footer" unique_id=2107664771]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 0)
-layout_mode = 2
-text = "Start"
 
 [node name="Settings" type="MarginContainer" parent="." unique_id=474659508]
 unique_name_in_owner = true

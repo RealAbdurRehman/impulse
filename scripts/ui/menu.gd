@@ -1,7 +1,7 @@
 class_name Menu
 extends Control
 
-const LEVEL := "res://scenes/world/level.tscn"
+const SANDBOX := "res://scenes/world/sandbox.tscn"
 const GAME := {
 	&"Quality": &"quality",
 	&"Fullscreen": &"fullscreen",
@@ -12,17 +12,8 @@ const GAME := {
 	&"Effects": &"effects",
 	&"Indicators": &"indicators",
 }
-const RUN := {
-	&"Difficulty": &"difficulty",
-	&"Bandages": &"start_bandages",
-	&"Magazines": &"start_magazines",
-	&"God": &"god_mode",
-	&"InfiniteAmmo": &"infinite_ammo",
-	&"InfiniteStamina": &"infinite_stamina",
-	&"Peaceful": &"peaceful_enemies",
-}
 
-@onready var _pages: Array[Control] = [%Main, %NewGame, %Settings]
+@onready var _pages: Array[Control] = [%Main, %Settings]
 
 
 func _ready() -> void:
@@ -32,16 +23,13 @@ func _ready() -> void:
 
 	%Quit.visible = not OS.has_feature("web")
 	_fill(GAME, GameSettings.current)
-	_fill(RUN, LevelSettings.current)
 	for key in GAME:
 		_changed(get_node("%" + key)).connect(_on_game_changed.unbind(1))
 
-	%NewGameButton.pressed.connect(_open.bind(%NewGame))
+	%Play.pressed.connect(_start)
 	%SettingsButton.pressed.connect(_open.bind(%Settings))
 	%Quit.pressed.connect(get_tree().quit)
-	%NewBack.pressed.connect(_open.bind(%Main))
 	%SettingsBack.pressed.connect(_open.bind(%Main))
-	%Start.pressed.connect(_start)
 	_open(%Main)
 
 
@@ -91,7 +79,4 @@ func _on_game_changed() -> void:
 
 
 func _start() -> void:
-	_store(RUN, LevelSettings.current)
-	LevelSettings.current.save()
-
-	Transition.go(get_tree(), LEVEL)
+	Transition.go(get_tree(), SANDBOX)

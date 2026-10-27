@@ -9,9 +9,13 @@ signal collected(type: StringName, amount: int)
 @onready var _carrier := get_parent().get_node("WeaponCarrier") as WeaponCarrier
 
 
+func _ready() -> void:
+	_movement.health.died.connect(queue_free)
+
+
 func _physics_process(_delta: float) -> void:
 	var pouch := _carrier.weapon.pouch
-	if pouch == null or not _movement.health.alive:
+	if pouch == null:
 		return
 
 	var feet := _movement.global_position
