@@ -48,7 +48,7 @@ func shot(from: Vector3, dir: Vector3, reach: float, target: Health, friendly_fi
 
 func _is_friend(collider: Object) -> bool:
 	var other := Health.of(collider)
-	return other != null and other.team != &"" and other.team == health.team
+	return other != null and other.alive and other.team != &"" and other.team == health.team
 
 
 func beam(from: Vector3, dir: Vector3, reach: float) -> float:

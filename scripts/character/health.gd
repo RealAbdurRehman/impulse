@@ -21,6 +21,7 @@ signal corpse_struck(amount: float, point: Vector3, direction: Vector3, bone: Ph
 var current := 0.0
 var alive := true
 var immortal := false
+var accident := false
 var bleeding: Bleeding
 var dismemberment: Dismemberment
 

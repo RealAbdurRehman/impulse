@@ -756,7 +756,7 @@ func _on_damaged(
 	_direction: Vector3,
 	_bone: PhysicalBone3D,
 ) -> void:
-	if not hostile or not _target_health.alive:
+	if health.accident or not hostile or not _target_health.alive:
 		return
 
 	if _mode != Mode.COMBAT:

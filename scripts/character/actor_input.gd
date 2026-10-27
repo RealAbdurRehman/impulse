@@ -69,3 +69,10 @@ func release() -> void:
 	fire_mode = false
 	interact = false
 	heal = false
+	jump_pressed = false
+	jump_released = false
+	fire_pressed = false
+	reload_pressed = false
+	fire_mode_pressed = false
+	interact_pressed = false
+	heal_pressed = false

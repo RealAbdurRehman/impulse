@@ -4,6 +4,7 @@ extends Node3D
 const GROUP := &"characters"
 
 signal jumped
+signal landed(speed: float)
 
 @export var input: ActorInput
 @export var health: Health
@@ -79,6 +80,7 @@ var grounded := true
 var velocity := Vector3.ZERO
 
 var plane_z := 0.0
+var speed_scale := 1.0
 
 var push := 0.0
 
@@ -102,6 +104,7 @@ var _shove_left := 0.0
 
 
 func _ready() -> void:
+	add_child(FallDamage.new())
 	add_to_group(GROUP)
 	plane_z = global_position.z
 	facing = 1 if sin(rotation.y) >= 0.0 else -1
@@ -168,7 +171,7 @@ func _physics_process(delta: float) -> void:
 	elif input.sprint and aim_amount < 0.1:
 		speed = run_speed
 
-	speed *= aim_speed_scale
+	speed *= aim_speed_scale * speed_scale
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
 	var blocked := want_dir != 0 and _world_blocked(want_dir)
@@ -283,9 +286,11 @@ func _update_air(delta: float) -> void:
 	if _vy <= 0.0:
 		var hit := _ray(Vector3(p.x, old.y + 0.4, p.z), Vector3(p.x, p.y - 0.02, p.z))
 		if not hit.is_empty():
+			var impact := -_vy
 			p.y = (hit.position as Vector3).y
 			_vy = 0.0
 			grounded = true
+			landed.emit(impact)
 	else:
 		var bump := _ray(Vector3(p.x, old.y + head_clearance - 0.1, p.z), Vector3(p.x, p.y + head_clearance + 0.02, p.z))
 		if not bump.is_empty():

@@ -374,7 +374,7 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 func _is_friend(collider: Object) -> bool:
 	var other := Health.of(collider)
 	return (
-		not friendly_fire and other != null and other.team != &""
+		not friendly_fire and other != null and other.alive and other.team != &""
 		and other.team == character.health.team
 	)
 

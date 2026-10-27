@@ -29,7 +29,7 @@ func _ready() -> void:
 
 
 func _on_damaged(amount: float, point: Vector3, direction: Vector3, bone: PhysicalBone3D) -> void:
-	if not health.alive:
+	if not health.alive or health.accident:
 		return
 
 	var weight := clampf(amount / 25.0, 0.4, 2.5)
