@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("1_stats")
+ammo_type = &"shotgun"
 scene = ExtResource("2_scene")
 slide_parts = Array[StringName]([&"Pump", &"Bolt"])
 barrel_parts = Array[StringName]([])

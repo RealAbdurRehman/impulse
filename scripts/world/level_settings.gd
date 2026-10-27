@@ -17,12 +17,11 @@ const ATTACKERS := { Difficulty.EASY: 2, Difficulty.NORMAL: 3, Difficulty.HARD: 
 
 static var current := _load()
 
-@export_range(2, 20) var chunk_count := 3
-@export_range(0, 6) var enemies_per_chunk := 2
 @export var difficulty := Difficulty.NORMAL
 
 @export_group("Rules")
 @export_range(3, 10) var start_bandages := 4
+@export_range(0, 6) var start_magazines := 2
 @export var god_mode := false
 @export var infinite_ammo := false
 @export var infinite_stamina := false

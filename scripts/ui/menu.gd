@@ -13,10 +13,9 @@ const GAME := {
 	&"Indicators": &"indicators",
 }
 const RUN := {
-	&"Chunks": &"chunk_count",
-	&"Enemies": &"enemies_per_chunk",
 	&"Difficulty": &"difficulty",
 	&"Bandages": &"start_bandages",
+	&"Magazines": &"start_magazines",
 	&"God": &"god_mode",
 	&"InfiniteAmmo": &"infinite_ammo",
 	&"InfiniteStamina": &"infinite_stamina",

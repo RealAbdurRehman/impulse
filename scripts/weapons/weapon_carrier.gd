@@ -30,6 +30,7 @@ func swap(stats: WeaponStats, ammo: int) -> void:
 	weapon.character = old_weapon.character
 	weapon.volume_db = old_weapon.volume_db
 	weapon.infinite_ammo = old_weapon.infinite_ammo
+	weapon.pouch = old_weapon.pouch
 	holder.weapon = weapon
 
 	var parent := old_weapon.get_parent()

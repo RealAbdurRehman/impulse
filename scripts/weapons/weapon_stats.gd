@@ -66,6 +66,7 @@ extends Resource
 
 @export var reload_time := 2.4
 @export var magazine_size := 17
+@export var ammo_type: StringName = &"pistol"
 @export var trigger_buffer := 0.12
 
 @export_range(30.0, 1500.0, 1.0) var rounds_per_minute := 300.0

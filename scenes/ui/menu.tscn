@@ -207,6 +207,19 @@ max_value = 10.0
 value = 4.0
 rounded = true
 
+[node name="MagazinesLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Starting magazines"
+
+[node name="Magazines" type="SpinBox" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+max_value = 6.0
+value = 2.0
+rounded = true
+
 [node name="GodLabel" type="Label" parent="NewGame/Box/Columns/RulesPanel/Rules/Grid" unique_id=1563284849]
 layout_mode = 2
 size_flags_horizontal = 3

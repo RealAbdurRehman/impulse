@@ -26,6 +26,7 @@ var audio: WeaponAudio
 
 var ammo := 0
 var infinite_ammo := false
+var pouch: AmmoPouch
 var automatic := true
 var recoil: WeaponRecoil
 
@@ -88,12 +89,19 @@ func reload() -> void:
 	if _reload_left > 0.0 or ammo >= stats.magazine_size:
 		return
 
+	var reserve := _reserve()
+	if reserve == 0:
+		return
+
 	if _cycling:
 		_reload_queued = true
 		return
 
 	if stats.reload_by_shell:
 		reload_shells = stats.magazine_size - ammo
+		if reserve > 0:
+			reload_shells = mini(reload_shells, reserve)
+
 		reload_total = float(reload_shells) * stats.shell_time + stats.shell_return_time
 	else:
 		reload_total = stats.reload_time
@@ -133,7 +141,7 @@ func _physics_process(delta: float) -> void:
 		_reload_left -= delta
 		if _reload_left <= 0.0:
 			if not stats.reload_by_shell:
-				ammo = stats.magazine_size
+				ammo += _draw_rounds(stats.magazine_size - ammo)
 				ammo_changed.emit(ammo, stats.magazine_size)
 
 			reload_finished.emit()
@@ -224,8 +232,22 @@ func _on_cycle_finished() -> void:
 
 func _on_reload_cue(cue: WeaponReload.Cue) -> void:
 	if stats.reload_by_shell and cue == WeaponReload.Cue.SEAT:
-		ammo = mini(ammo + 1, stats.magazine_size)
+		ammo = mini(ammo + _draw_rounds(1), stats.magazine_size)
 		ammo_changed.emit(ammo, stats.magazine_size)
+
+
+func _reserve() -> int:
+	if pouch == null or infinite_ammo:
+		return -1
+
+	return pouch.count(stats.ammo_type)
+
+
+func _draw_rounds(wanted: int) -> int:
+	if pouch == null or infinite_ammo:
+		return wanted
+
+	return pouch.take(stats.ammo_type, wanted)
 
 
 func _update_aim(delta: float) -> void:
