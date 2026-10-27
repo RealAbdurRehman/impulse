@@ -1,11 +1,13 @@
 class_name Targeter
 extends Node
 
+const GROUP := &"targeters"
 const INTERVAL := 0.4
 const SWITCH_RATIO := 0.6
 const ENGAGE_RANGE := 16.0
 const SQUAD_SIZE := 4
 
+static var player_team: StringName = &"player"
 static var following := false
 static var squad: Array[EnemyInput] = []
 
@@ -18,6 +20,10 @@ static func call_squad(on: bool) -> void:
 @export var player: CharacterMovement
 
 var _left := randf() * INTERVAL
+
+
+func _ready() -> void:
+	add_to_group(GROUP)
 
 
 func _physics_process(delta: float) -> void:

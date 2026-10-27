@@ -1,7 +1,7 @@
 class_name Sandbox
 extends Node3D
 
-const MENU := "res://scenes/ui/menu.tscn"
+const PAUSE := preload("res://scenes/ui/pause_screen.tscn")
 
 @export var player: CharacterMovement
 @export var death_delay := 5.0
@@ -9,6 +9,8 @@ const MENU := "res://scenes/ui/menu.tscn"
 @export var start_magazines := 4
 @export var god_mode := false
 @export var infinite_stamina := false
+
+var _lod: EnemyLod
 
 
 func _ready() -> void:
@@ -18,37 +20,57 @@ func _ready() -> void:
 		sun.shadow_enabled = game.shadows()
 
 	(get_node("Camera") as FollowCamera).fx.intensity = game.effects
-	_apply_rules()
 
 	if game.indicators:
 		add_child(EdgeIndicators.new())
 
-	player.add_child(VisibilityMark.new())
-	player.add_child(PlayerStairs.new())
+	_lod = EnemyLod.new()
+	add_child(_lod)
+	_equip(player)
 	EnemyNav.reset()
 	for bone: PhysicalBone3D in player.find_children("*", "PhysicalBone3D", true, false):
 		Door.exempt(bone)
 
 	get_tree().node_added.connect(_on_node_added)
 
-	var lod := EnemyLod.new()
-	lod.target = player
-	add_child(lod)
 	add_child(Grade.new())
-
-	player.health.died.connect(_on_died)
+	add_child(PAUSE.instantiate())
 	Transition.reveal(get_tree())
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key != null and key.pressed and not key.echo and key.keycode == KEY_ESCAPE:
-		Transition.go(get_tree(), MENU)
+func take_over(next: CharacterMovement) -> void:
+	var bandages := (player.get_node("PlayerHealing") as PlayerHealing).bandages
+	var had := player.get_node("AmmoPouch") as AmmoPouch
+	_equip(next)
+
+	(next.get_node("PlayerHealing") as PlayerHealing).bandages = bandages
+	var pouch := next.get_node("AmmoPouch") as AmmoPouch
+	for type: StringName in had.counts:
+		pouch.counts[type] = maxi(pouch.count(type), had.count(type))
+
+	var camera := get_node("Camera") as FollowCamera
+	camera.bind(next)
+	camera.fx.intensity = GameSettings.current.effects
+
+
+func _equip(body: CharacterMovement) -> void:
+	player = body
+	Targeter.player_team = body.health.team
+	_apply_rules()
+	body.add_child(VisibilityMark.new())
+	body.add_child(PlayerStairs.new())
+	_lod.target = body
+	body.health.died.connect(_on_died)
 
 
 func _on_died() -> void:
+	var editor := get_node("SpawnMenu") as SpawnMenu
+	if editor.visible:
+		editor.mourn()
+		return
+
 	await get_tree().create_timer(death_delay, true, false, true).timeout
-	Transition.go(get_tree(), MENU)
+	await Transition.dip(get_tree(), editor.open)
 
 
 func _on_node_added(node: Node) -> void:

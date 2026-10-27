@@ -2,6 +2,7 @@ class_name CharacterMovement
 extends Node3D
 
 const DOOR_REACH := 1.8
+const GROUP := &"characters"
 
 signal jumped
 
@@ -111,6 +112,7 @@ var _shove_left := 0.0
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	plane_z = global_position.z
 	facing = 1 if sin(rotation.y) >= 0.0 else -1
 	_target_yaw = PI * 0.5 * float(facing)

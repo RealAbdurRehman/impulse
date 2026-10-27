@@ -15,6 +15,13 @@ static func go(tree: SceneTree, path: String) -> void:
 	tree.change_scene_to_file(path)
 
 
+static func dip(tree: SceneTree, action: Callable) -> void:
+	await _of(tree)._fade(1.0)
+	action.call()
+	await tree.create_timer(SETTLE * 0.3, true, false, true).timeout
+	await _of(tree)._fade(0.0)
+
+
 static func reveal(tree: SceneTree, settle := SETTLE) -> void:
 	await tree.create_timer(settle, true, false, true).timeout
 	_of(tree)._fade(0.0)

@@ -75,7 +75,7 @@ func _process(delta: float) -> void:
 		if not brain.health.alive:
 			continue
 
-		var ally := brain.health.team == SpawnMenu.ALLY_TEAM
+		var ally := brain.health.team == Targeter.player_team
 		if ally and not (Targeter.following and Targeter.squad.has(brain)):
 			continue
 

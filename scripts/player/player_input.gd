@@ -3,6 +3,8 @@ extends ActorInput
 
 @export var hide_system_cursor := false
 
+var suspended := false
+
 @onready var _body := get_parent() as Node3D
 
 
@@ -12,6 +14,10 @@ func _ready() -> void:
 
 
 func poll() -> void:
+	if suspended:
+		release()
+		return
+
 	move = Input.get_axis("move_left", "move_right")
 	crouch = Input.is_action_pressed("crouch")
 	sprint = Input.is_action_pressed("sprint")

@@ -56,3 +56,16 @@ func _physics_process(_delta: float) -> void:
 
 func poll() -> void:
 	pass
+
+
+func release() -> void:
+	move = 0.0
+	crouch = false
+	sprint = false
+	jump = false
+	fire = false
+	aim = false
+	reload = false
+	fire_mode = false
+	interact = false
+	heal = false

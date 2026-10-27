@@ -20,6 +20,7 @@ var height_offset: float = 1.0
 
 var fx: CameraFx
 
+var _reticle: Reticle
 var _lead := 0.0
 var _rig := Vector3.ZERO
 var _fov := 0.0
@@ -31,16 +32,33 @@ func _ready() -> void:
 	_fov = field_of_view
 	_fov_before = field_of_view
 	_rig = global_position
+	bind(target)
+
+
+func bind(next: CharacterMovement) -> void:
+	if fx != null:
+		fx.free()
+		_reticle.free()
+
+	target = next
 
 	fx = CameraFx.new()
 	fx.name = &"CameraFx"
 	fx.target = target
 	add_child(fx)
 
-	var reticle := Reticle.new()
-	reticle.name = &"Reticle"
-	reticle.target = target
-	add_child(reticle)
+	_reticle = Reticle.new()
+	_reticle.name = &"Reticle"
+	_reticle.target = target
+	add_child(_reticle)
+
+
+func set_reticle(shown: bool) -> void:
+	_reticle.visible = shown
+
+
+func set_screen_effects(shown: bool) -> void:
+	fx.get_node("ScreenFx").visible = shown
 
 
 func _physics_process(delta: float) -> void:

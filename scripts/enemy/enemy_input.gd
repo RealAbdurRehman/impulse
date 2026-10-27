@@ -297,6 +297,17 @@ func retarget(next: CharacterMovement) -> void:
 		awareness = 0.0
 
 
+func forget(gone: CharacterMovement, fallback: CharacterMovement) -> void:
+	if is_instance_valid(_corpse) and gone.is_ancestor_of(_corpse):
+		_corpse = null
+		_mode = Mode.PATROL
+		_goal = _body.global_position
+
+	if target == gone:
+		hostile = false
+		retarget(fallback)
+
+
 func _escort(delta: float) -> void:
 	_slot_left -= delta
 	if _slot_left <= 0.0:
@@ -699,7 +710,7 @@ func _shout(at: Vector3, body := 0) -> void:
 
 func _look_screen() -> void:
 	var cam := get_viewport().get_camera_3d()
-	_fair_on = fair_play and target.health.team == &"player"
+	_fair_on = fair_play and target.health.team == Targeter.player_team and not (cam is EditorCamera)
 	if not _fair_on:
 		_on_screen = true
 		_view_reach = INF

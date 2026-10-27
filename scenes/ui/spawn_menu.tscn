@@ -55,6 +55,16 @@ ally_look = ExtResource("3_look")
 kinds = Array[ExtResource("8_kind")]([SubResource("Kind_grunt"), SubResource("Kind_rusher"), SubResource("Kind_gunner"), SubResource("Kind_flanker"), SubResource("Kind_hunter"), SubResource("Kind_sniper")])
 weapons = Array[Resource]([ExtResource("4_g17"), ExtResource("5_m4a1"), ExtResource("6_rem870"), ExtResource("7_l96a1")])
 
+[node name="Marker" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 1
 anchor_left = 1.0
@@ -78,7 +88,22 @@ layout_mode = 2
 [node name="Heading" type="Label" parent="Panel/Margin/Box"]
 layout_mode = 2
 theme_type_variation = &"HeadingLabel"
-text = "SPAWN"
+text = "EDIT"
+
+[node name="Run" type="Button" parent="Panel/Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+text = "World frozen (Space)"
+
+[node name="Notice" type="Label" parent="Panel/Margin/Box"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "You died. Place someone, then possess them to keep playing."
+autowrap_mode = 3
 
 [node name="Tabs" type="TabContainer" parent="Panel/Margin/Box"]
 custom_minimum_size = Vector2(480, 0)
@@ -105,6 +130,36 @@ layout_mode = 2
 columns = 2
 metadata/_tab_index = 2
 
+[node name="RemoveLabel" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "REMOVE"
+
+[node name="Tools" type="HBoxContainer" parent="Panel/Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Clears" type="HBoxContainer" parent="Panel/Margin/Box"]
+layout_mode = 2
+
+[node name="ClearEnemies" type="Button" parent="Panel/Margin/Box/Clears"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Clear enemies"
+
+[node name="ClearAllies" type="Button" parent="Panel/Margin/Box/Clears"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Clear allies"
+
+[node name="ClearWeapons" type="Button" parent="Panel/Margin/Box/Clears"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Clear weapons"
+
 [node name="Armed" type="Label" parent="Panel/Margin/Box"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -113,5 +168,5 @@ theme_type_variation = &"SectionLabel"
 [node name="Hint" type="Label" parent="Panel/Margin/Box"]
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
-text = "Pick one, then click in the world to place it. Right click stops placing. Tab or Esc closes."
+text = "Pick one, then click in the world to place it. Right click stops. X deletes, P takes control of a character. Space runs or freezes the world. WASD or middle drag pans, + and - zoom, F finds the player. Tab closes, Esc pauses."
 autowrap_mode = 3

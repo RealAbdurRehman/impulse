@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_screen.gd" id="1_pause"]
+
+[node name="PauseScreen" type="CanvasLayer"]
+process_mode = 3
+layer = 60
+visible = false
+script = ExtResource("1_pause")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.03, 0.035, 0.04, 0.72)
+
+[node name="Main" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"MainMargin"
+
+[node name="Box" type="VBoxContainer" parent="Main"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="Main/Box"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "PAUSED"
+
+[node name="Gap" type="Control" parent="Main/Box"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+
+[node name="Buttons" type="VBoxContainer" parent="Main/Box"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"ButtonColumn"
+
+[node name="Resume" type="Button" parent="Main/Box/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Resume"
+alignment = 0
+
+[node name="Restart" type="Button" parent="Main/Box/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Restart"
+alignment = 0
+
+[node name="MainMenu" type="Button" parent="Main/Box/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Main menu"
+alignment = 0

@@ -63,10 +63,10 @@ size = Vector3(400, 31, 1)
 
 [sub_resource type="BoxMesh" id="Mesh_end"]
 material = SubResource("Material_wall")
-size = Vector3(1, 31, 15)
+size = Vector3(1, 31, 20)
 
 [sub_resource type="BoxShape3D" id="Shape_end"]
-size = Vector3(1, 31, 15)
+size = Vector3(1, 31, 20)
 
 [sub_resource type="StandardMaterial3D" id="Material_ceiling"]
 albedo_color = Color(0.02, 0.02, 0.025, 1)
@@ -133,7 +133,7 @@ mesh = SubResource("Mesh_back")
 shape = SubResource("Shape_back")
 
 [node name="WestWall" type="StaticBody3D" parent="." unique_id=12]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200.5, 14.5, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -200.5, 14.5, 3.8)
 metadata/surface = &"concrete"
 
 [node name="Mesh" type="MeshInstance3D" parent="WestWall" unique_id=13]
@@ -145,7 +145,7 @@ mesh = SubResource("Mesh_end")
 shape = SubResource("Shape_end")
 
 [node name="EastWall" type="StaticBody3D" parent="." unique_id=15]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200.5, 14.5, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200.5, 14.5, 3.8)
 metadata/surface = &"concrete"
 
 [node name="Mesh" type="MeshInstance3D" parent="EastWall" unique_id=16]
@@ -198,7 +198,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8)
 script = ExtResource("3_camera")
 target = NodePath("../Player")
 
-[node name="SpawnMenu" parent="." unique_id=2400 node_paths=PackedStringArray("player") instance=ExtResource("99_spawn")]
-player = NodePath("../Player")
+[node name="SpawnMenu" parent="." unique_id=2400 instance=ExtResource("99_spawn")]
 
 [node name="SquadCall" parent="." unique_id=2401 instance=ExtResource("98_call")]
