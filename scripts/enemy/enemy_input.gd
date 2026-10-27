@@ -33,6 +33,8 @@ const SHOUT_RANGE := 22.0
 const WARY_TIME := 40.0
 const WARY_SIGHT := 1.6
 const BODY_STANDOFF := 1.0
+const LEVEL_GAP := 2.0
+const STAIR_ROAM := 0.25
 const CONCEALED := 0.2
 const CONCEALED_REACH := 2.5
 const FADE_TIME := 1.2
@@ -109,6 +111,7 @@ var _strafe := 1.0
 var _rng := RandomNumberGenerator.new()
 var _body: CharacterMovement
 var _pilot: EnemyPilot
+var _climber: StairClimber
 var _senses: EnemySenses
 var _gunner: EnemyGunner
 var _cover: EnemyCover
@@ -226,9 +229,13 @@ func _ready() -> void:
 
 	traits = EnemyTraits.roll(_rng, archetype, carrier.weapon.stats, skill_range)
 
+	_climber = StairClimber.new()
+	_body.add_child.call_deferred(_climber)
+
 	_pilot = EnemyPilot.new()
 	_pilot.body = _body
 	_pilot.input = self
+	_pilot.climber = _climber
 
 	_senses = EnemySenses.new()
 	_senses.body = _body
@@ -678,6 +685,10 @@ func _leave_combat() -> void:
 
 
 func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -> bool:
+	if _pilot.is_climbing():
+		_travel_failed = false
+		return false
+
 	var me := _body.global_position
 	_route_left -= delta
 	_travel_failed = false
@@ -738,6 +749,16 @@ func _roam_spot() -> Vector3:
 		return _body.global_position
 
 	var id := spots[_rng.randi() % spots.size()]
+	for _try in 6:
+		var level := absf(_nav.ys[id] - _home.y) < LEVEL_GAP
+		if level or (not _is_sniper() and _rng.randf() < STAIR_ROAM):
+			break
+
+		id = spots[_rng.randi() % spots.size()]
+
+	if _is_sniper() and absf(_nav.ys[id] - _home.y) >= LEVEL_GAP:
+		return _body.global_position
+
 	return Vector3(_nav.xs[id], _nav.ys[id], 0.0)
 
 
@@ -1195,10 +1216,14 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 		band.y * lerpf(2.0, 1.15, traits.aggression),
 		_lane(band) + 1.0 + 3.0 * traits.rush,
 	)
-	match _tactic:
+	var apart := _levels_apart()
+	var tactic := Tactic.ADVANCE if apart and not _visible else _tactic
+	match tactic:
 		Tactic.ADVANCE:
 			if not _visible:
 				_chase(delta, run)
+			elif apart:
+				_stand(delta, toward if distance < band.x * 0.9 else 0.0)
 			elif _walks_in() and _side_full and distance > CLOSE_ENOUGH:
 				_stand(delta)
 			elif distance <= _lane(band) and (not _walks_in() or distance < CLOSE_ENOUGH):
@@ -1232,6 +1257,10 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 			_start_search()
 	else:
 		_stalled = 0.0
+
+
+func _levels_apart() -> bool:
+	return absf(_last_seen.y - _body.global_position.y) > LEVEL_GAP
 
 
 func _holds_low(weapon: Weapon, distance: float, band: Vector2) -> bool:

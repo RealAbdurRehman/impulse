@@ -319,7 +319,13 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 	var space := holder.gun.get_world_3d().direct_space_state
 	var best := { }
 	var nearest := INF
-	for z in FAN:
+	var lanes: Array[float] = FAN.duplicate()
+	for rider in StairClimber.off_lane:
+		var gap := rider.plane_z - character.plane_z
+		if rider != character and absf(gap) > 0.3:
+			lanes.append(gap)
+
+	for z in lanes:
 		var query := PhysicsRayQueryParameters3D.create(
 			origin + Vector3(0.0, 0.0, z),
 			end + Vector3(0.0, 0.0, z),
@@ -329,6 +335,9 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 		query.collide_with_areas = true
 
 		var hit := space.intersect_ray(query)
+		if not hit.is_empty() and not FAN.has(z) and Health.of(hit.collider) == null:
+			continue
+
 		var skipped := exclude
 		while not hit.is_empty() and _is_friend(hit.collider):
 			if skipped.size() == exclude.size():

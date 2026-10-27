@@ -1,7 +1,7 @@
 class_name EnemyNav
 extends RefCounted
 
-enum Kind { WALK, JUMP, DROP }
+enum Kind { WALK, JUMP, DROP, STAIR }
 
 const STEP := 0.25
 const TOP := 14.0
@@ -12,6 +12,11 @@ const JUMP_UP := 0.9
 const JUMP_GAP := 1.7
 const MAX_DROP := 4.0
 const WALL_TOP := 1.4
+const WALL_REACH := 4.5
+const WALL_LIMIT := 3.15
+const STAIR_COST := 12.0
+const BIG_DROP := 2.5
+const BIG_DROP_COST := 16.0
 
 static var _maps := { }
 
@@ -35,6 +40,7 @@ static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	if not _maps.has(key):
 		var nav := EnemyNav.new()
 		nav._build(node.get_world_3d().direct_space_state, mask, node.global_position, extent)
+		nav._link_stairs(node.get_tree())
 		_maps[key] = nav
 
 	return _maps[key]
@@ -114,10 +120,26 @@ func length(path: PackedVector3Array, from_x: float) -> float:
 	var total := 0.0
 	var x := from_x
 	for point in path:
-		total += absf(point.x - x) + (1.5 if int(point.z) != Kind.WALK else 0.0)
+		total += absf(point.x - x) + _extra(int(point.z))
 		x = point.x
 
 	return total
+
+
+func _extra(kind: int) -> float:
+	if kind == Kind.STAIR:
+		return STAIR_COST
+
+	return 1.5 if kind != Kind.WALK else 0.0
+
+
+func _link_stairs(tree: SceneTree) -> void:
+	for node in tree.get_nodes_in_group(StairLink.GROUP):
+		var stair := node as StairLink
+		var from_id := nearest(stair.global_position.x, stair.global_position.y, 0.4)
+		var to_id := nearest(stair.goal_x(), stair.goal_y(), 0.4)
+		if from_id >= 0 and to_id >= 0:
+			_add(from_id, to_id, Kind.STAIR, STAIR_COST)
 
 
 func _estimate(a: int, b: int) -> float:
@@ -203,8 +225,12 @@ func _link(id: int) -> void:
 
 		var landing := -1
 		var ground_beside := false
+		var wall_ahead := false
 		for other: int in _columns[next_column]:
 			var dy := ys[other] - y
+			if dy > JUMP_UP + EPS and dy < WALL_REACH:
+				wall_ahead = true
+
 			if absf(dy) <= MAX_STEP + EPS:
 				_add(id, other, Kind.WALK, STEP + absf(dy) * 0.5)
 			elif dy > MAX_STEP and dy <= JUMP_UP + EPS:
@@ -215,17 +241,18 @@ func _link(id: int) -> void:
 			elif dy < -MAX_STEP and dy >= -MAX_DROP and (landing < 0 or ys[other] > ys[landing]):
 				landing = other
 
-		if ground_beside:
+		if ground_beside or wall_ahead:
 			landing = -1
 
-		if landing < 0 and _gap_between(column, column + dir * 2, y) and next_column + dir < _columns.size() and next_column + dir >= 0:
+		if landing < 0 and not wall_ahead and _gap_between(column, column + dir * 2, y) and next_column + dir < _columns.size() and next_column + dir >= 0:
 			for other: int in _columns[next_column + dir]:
 				var dy := ys[other] - y
 				if dy < -MAX_STEP and dy >= -MAX_DROP and (landing < 0 or ys[other] > ys[landing]):
 					landing = other
 
 		if landing >= 0:
-			_add(id, landing, Kind.DROP, STEP + 1.0 + absf(ys[landing] - y) * 0.5)
+			var fall := y - ys[landing]
+			_add(id, landing, Kind.DROP, STEP + 1.0 + fall * 0.5 + (BIG_DROP_COST if fall > BIG_DROP else 0.0))
 
 		for reach in range(2, int(JUMP_GAP / STEP) + 1):
 			var far: int = column + dir * reach
@@ -253,7 +280,7 @@ func _link(id: int) -> void:
 func _gap_between(a: int, b: int, y: float) -> bool:
 	for c in range(mini(a, b) + 1, maxi(a, b)):
 		for other: int in _columns[c]:
-			if ys[other] > y - 1.0 and ys[other] < y + WALL_TOP:
+			if ys[other] > y - 1.0 and ys[other] < y + WALL_LIMIT:
 				return false
 
 	return true
