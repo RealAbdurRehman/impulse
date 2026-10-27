@@ -341,13 +341,7 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 	var space := holder.gun.get_world_3d().direct_space_state
 	var best := { }
 	var nearest := INF
-	var lanes: Array[float] = FAN.duplicate()
-	for rider in StairClimber.off_lane:
-		var gap := rider.plane_z - character.plane_z
-		if rider != character and absf(gap) > 0.3:
-			lanes.append(gap)
-
-	for z in lanes:
+	for z in FAN:
 		var query := PhysicsRayQueryParameters3D.create(
 			origin + Vector3(0.0, 0.0, z),
 			end + Vector3(0.0, 0.0, z),
@@ -357,9 +351,6 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 		query.collide_with_areas = true
 
 		var hit := space.intersect_ray(query)
-		if not hit.is_empty() and not FAN.has(z) and Health.of(hit.collider) == null:
-			continue
-
 		var skipped := exclude
 		while not hit.is_empty() and _is_friend(hit.collider):
 			if skipped.size() == exclude.size():
@@ -418,7 +409,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		var surface := Surfaces.of(hit.collider)
 		var resistance := Surfaces.style(surface).resistance
 		var size := clampf(sqrt(stats.damage * power / REFERENCE_DAMAGE), 0.5, 2.2)
-		world.strike(hit.position, hit.normal, dir, surface, size, false, _marks_of(hit.collider))
+		world.strike(hit.position, hit.normal, dir, surface, size)
 
 		var depth := reach / resistance
 		var exit := _exit(hit, dir, depth, skip)
@@ -428,7 +419,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 			end = hit.position + dir * depth
 			break
 
-		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true, _marks_of(exit.collider))
+		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true)
 
 		reach -= hit.position.distance_to(exit.position) * resistance
 		from = exit.position + dir * 0.01
@@ -471,10 +462,6 @@ func _pass_through(hit: Dictionary, skip: Array[RID]) -> void:
 	for child in bone.get_children():
 		if child is Area3D:
 			skip.append(child.get_rid())
-
-
-func _marks_of(collider: Object) -> ImpactMarks:
-	return (collider as DoorPanel).marks if collider is DoorPanel else null
 
 
 func _apply_hit(hit: Dictionary, dir: Vector3, distance: float, power: float) -> void:

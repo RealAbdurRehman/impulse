@@ -28,11 +28,6 @@ func _ready() -> void:
 	add_child(_lod)
 	_equip(player)
 	EnemyNav.reset()
-	for bone: PhysicalBone3D in player.find_children("*", "PhysicalBone3D", true, false):
-		Door.exempt(bone)
-
-	get_tree().node_added.connect(_on_node_added)
-
 	add_child(Grade.new())
 	add_child(PAUSE.instantiate())
 	Transition.reveal(get_tree())
@@ -58,7 +53,6 @@ func _equip(body: CharacterMovement) -> void:
 	Targeter.player_team = body.health.team
 	_apply_rules()
 	body.add_child(VisibilityMark.new())
-	body.add_child(PlayerStairs.new())
 	_lod.target = body
 	body.health.died.connect(_on_died)
 
@@ -71,11 +65,6 @@ func _on_died() -> void:
 
 	await get_tree().create_timer(death_delay, true, false, true).timeout
 	await Transition.dip(get_tree(), editor.open)
-
-
-func _on_node_added(node: Node) -> void:
-	if node is PhysicalBone3D:
-		Door.exempt(node)
 
 
 func _physics_process(_delta: float) -> void:

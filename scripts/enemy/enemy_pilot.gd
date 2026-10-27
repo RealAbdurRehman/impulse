@@ -16,7 +16,6 @@ const RUN_UP := 2.0
 
 var body: CharacterMovement
 var input: ActorInput
-var climber: StairClimber
 
 var jump_height := 0.9
 var max_drop := DEFAULT_DROP
@@ -69,11 +68,6 @@ func has_route() -> bool:
 
 
 func follow(run: bool, delta: float) -> bool:
-	if is_climbing():
-		committed = true
-		blocked = false
-		return false
-
 	var here := body.global_position
 	_catch_up(here)
 	while _next < route.size() and absf(route[_next].x - here.x) < ARRIVE and _reached(_next, here):
@@ -85,9 +79,6 @@ func follow(run: bool, delta: float) -> bool:
 		return true
 
 	var goal := route[_next]
-	if int(goal.z) == EnemyNav.Kind.STAIR:
-		return _stairs(goal, delta)
-
 	max_drop = ROUTE_DROP if int(goal.z) == EnemyNav.Kind.DROP else DEFAULT_DROP
 
 	var dx := goal.x - here.x
@@ -96,49 +87,6 @@ func follow(run: bool, delta: float) -> bool:
 
 	walk(_heading, run, delta)
 	return false
-
-
-func is_climbing() -> bool:
-	return climber != null and climber.climbing()
-
-
-func _stairs(goal: Vector3, delta: float) -> bool:
-	var link := _flight_to(goal)
-	if link == null:
-		blocked = true
-		stop()
-		return false
-
-	var here := body.global_position
-	var dx := link.global_position.x - here.x
-	if absf(dx) < 0.3 and absf(link.global_position.y - here.y) < 0.6:
-		if climber.begin(link):
-			return false
-
-		stop()
-		blocked = false
-		return false
-
-	_heading = signf(dx)
-	walk(_heading, false, delta, false)
-	return false
-
-
-func _flight_to(goal: Vector3) -> StairLink:
-	var here := body.global_position
-	var best: StairLink = null
-	var best_gap := INF
-	for node in body.get_tree().get_nodes_in_group(StairLink.GROUP):
-		var link := node as StairLink
-		if absf(link.goal_x() - goal.x) > 0.5 or absf(link.goal_y() - goal.y) > 0.6:
-			continue
-
-		var gap := absf(link.global_position.x - here.x) + absf(link.global_position.y - here.y)
-		if gap < best_gap:
-			best_gap = gap
-			best = link
-
-	return best
 
 
 func _catch_up(here: Vector3) -> void:

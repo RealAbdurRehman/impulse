@@ -119,7 +119,6 @@ var _strafe := 1.0
 var _rng := RandomNumberGenerator.new()
 var _body: CharacterMovement
 var _pilot: EnemyPilot
-var _climber: StairClimber
 var _senses: EnemySenses
 var _gunner: EnemyGunner
 var _cover: EnemyCover
@@ -242,13 +241,9 @@ func _ready() -> void:
 
 	traits = EnemyTraits.roll(_rng, archetype, carrier.weapon.stats, skill_range)
 
-	_climber = StairClimber.new()
-	_body.add_child.call_deferred(_climber)
-
 	_pilot = EnemyPilot.new()
 	_pilot.body = _body
 	_pilot.input = self
-	_pilot.climber = _climber
 
 	_senses = EnemySenses.new()
 	_senses.body = _body
@@ -791,10 +786,6 @@ func _leave_combat() -> void:
 
 
 func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -> bool:
-	if _pilot.is_climbing():
-		_travel_failed = false
-		return false
-
 	var me := _body.global_position
 	_route_left -= delta
 	_travel_failed = false

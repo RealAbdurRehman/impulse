@@ -1,7 +1,7 @@
 class_name EnemyNav
 extends RefCounted
 
-enum Kind { WALK, JUMP, DROP, STAIR }
+enum Kind { WALK, JUMP, DROP }
 
 const STEP := 0.25
 const TOP := 14.0
@@ -14,7 +14,6 @@ const MAX_DROP := 4.0
 const WALL_TOP := 1.4
 const WALL_REACH := 4.5
 const WALL_LIMIT := 3.15
-const STAIR_COST := 12.0
 const BIG_DROP := 2.5
 const BIG_DROP_COST := 16.0
 
@@ -40,7 +39,6 @@ static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	if not _maps.has(key):
 		var nav := EnemyNav.new()
 		nav._build(node.get_world_3d().direct_space_state, mask, node.global_position, extent)
-		nav._link_stairs(node.get_tree())
 		_maps[key] = nav
 
 	return _maps[key]
@@ -127,19 +125,7 @@ func length(path: PackedVector3Array, from_x: float) -> float:
 
 
 func _extra(kind: int) -> float:
-	if kind == Kind.STAIR:
-		return STAIR_COST
-
 	return 1.5 if kind != Kind.WALK else 0.0
-
-
-func _link_stairs(tree: SceneTree) -> void:
-	for node in tree.get_nodes_in_group(StairLink.GROUP):
-		var stair := node as StairLink
-		var from_id := nearest(stair.global_position.x, stair.global_position.y, 0.4)
-		var to_id := nearest(stair.goal_x(), stair.goal_y(), 0.4)
-		if from_id >= 0 and to_id >= 0:
-			_add(from_id, to_id, Kind.STAIR, STAIR_COST)
 
 
 func _estimate(a: int, b: int) -> float:
@@ -291,7 +277,7 @@ func _add(from_id: int, to_id: int, kind: int, cost: float) -> void:
 
 
 func _down(x: float, y: float) -> Dictionary:
-	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y, _z), Vector3(x, BOTTOM, _z), _mask, Door.bodies)
+	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y, _z), Vector3(x, BOTTOM, _z), _mask)
 	return _space.intersect_ray(query)
 
 
@@ -302,6 +288,5 @@ func _room(x: float, y: float) -> bool:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = body_shape
 	query.collision_mask = _mask
-	query.exclude = Door.bodies
 	query.transform = Transform3D(Basis.IDENTITY, Vector3(x, y + 0.9, _z))
 	return _space.intersect_shape(query, 1).is_empty()

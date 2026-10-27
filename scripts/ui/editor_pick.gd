@@ -40,10 +40,10 @@ static func corners(node: Node3D) -> PackedVector3Array:
 	var points := PackedVector3Array()
 	if node is CharacterMovement:
 		for bone in _bones(node as CharacterMovement):
-			var at := (bone as Node3D).global_position
+			var spot := (bone as Node3D).global_position
 			for sx in [-1.0, 1.0]:
 				for sy in [-1.0, 1.0]:
-					points.append(at + Vector3(sx, sy, 0.0) * BONE_RADIUS)
+					points.append(spot + Vector3(sx, sy, 0.0) * BONE_RADIUS)
 
 		return points
 
@@ -68,8 +68,8 @@ static func _bones(body: CharacterMovement) -> Array[Node]:
 static func _bone_gap(body: CharacterMovement, point: Vector3) -> float:
 	var gap := INF
 	for bone in _bones(body):
-		var at := (bone as Node3D).global_position
-		gap = minf(gap, Vector2(at.x - point.x, at.y - point.y).length() - BONE_RADIUS)
+		var spot := (bone as Node3D).global_position
+		gap = minf(gap, Vector2(spot.x - point.x, spot.y - point.y).length() - BONE_RADIUS)
 
 	return gap
 

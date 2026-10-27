@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://xax1uktg36am" path="res://scripts/world/sandbox.gd" id="1_sandbox"]
 [ext_resource type="PackedScene" uid="uid://nt1s84byfu6q" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://x113kopqxhe4" path="res://scripts/camera.gd" id="3_camera"]
-[ext_resource type="Texture2D" uid="uid://ctn35oujhgcft" path="res://assets/urban/textures/t_concrete_asphalt_basecolor.png" id="5_texture"]
+[ext_resource type="Texture2D" uid="uid://ctn35oujhgcft" path="res://assets/textures/t_concrete_asphalt_basecolor.png" id="5_texture"]
 [ext_resource type="Shader" uid="uid://hsw85g4da3tg" path="res://scripts/world/shaders/stage_floor.gdshader" id="6_floor"]
 [ext_resource type="Shader" uid="uid://vpvvpvg7k6s0" path="res://scripts/world/shaders/stage_wall.gdshader" id="7_wall"]
 [ext_resource type="Script" uid="uid://davyyjro4dxwh" path="res://scripts/world/stage_lights.gd" id="8_lights"]

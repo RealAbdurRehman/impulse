@@ -55,7 +55,7 @@ func _warm_up() -> void:
 	debris.warm(false)
 
 
-func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, size: float, exiting := false, on: ImpactMarks = null) -> void:
+func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, size: float, exiting := false) -> void:
 	var style := Surfaces.style(surface)
 	if style.sound != null:
 		audio.play(style.sound, point, 0.0)
@@ -94,7 +94,7 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 		debris.flash(point + normal * 0.02, style.spark_color.lightened(0.4), 0.07 * style.flash * punch)
 
 	if style.mark != SurfaceStyle.Mark.NONE:
-		(on if on != null else marks).mark(point, normal, dir, style, size * (1.3 if exiting else 1.0))
+		marks.mark(point, normal, dir, style, size * (1.3 if exiting else 1.0))
 
 
 func _count(amount: float) -> int:

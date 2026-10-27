@@ -1,7 +1,6 @@
 class_name CharacterMovement
 extends Node3D
 
-const DOOR_REACH := 1.8
 const GROUP := &"characters"
 
 signal jumped
@@ -42,12 +41,6 @@ signal jumped
 @export var fall_off_height := 0.9
 @export var blocked_brake := 12.0
 
-@export_group("Stairs")
-@export var stairs_speed := 1.4
-
-@export var stairs_slope := 0.2
-@export var stairs_probe := 0.5
-
 @export_group("Jump")
 @export var gravity := 9.6
 @export var jump_velocity := 4.4
@@ -86,8 +79,6 @@ var grounded := true
 var velocity := Vector3.ZERO
 
 var plane_z := 0.0
-var _door: Door
-var _door_at := Vector3.ZERO
 
 var push := 0.0
 
@@ -101,7 +92,6 @@ var aim_speed_scale := 1.0
 var aim_zoom := 1.0
 var aim_look := 1.0
 
-var _stairs_amt := 0.0
 var _target_yaw := 0.0
 var _coyote := 0.0
 var _jump_buffer := 0.0
@@ -182,9 +172,6 @@ func _physics_process(delta: float) -> void:
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
 	var blocked := want_dir != 0 and _world_blocked(want_dir)
-	if want_dir != 0 and _door != null:
-		_door.shove(_door_at, Vector3.RIGHT * float(want_dir) * maxf(speed, walk_speed))
-
 	if want_dir != 0 and not blocked:
 		var ahead := _character_ahead(want_dir)
 		if ahead != null:
@@ -193,9 +180,6 @@ func _physics_process(delta: float) -> void:
 				ahead.shove(want_dir)
 			else:
 				blocked = true
-
-	_update_stairs(want_dir, delta)
-	speed = lerpf(speed, minf(speed, stairs_speed), _stairs_amt)
 
 	if blocked:
 		desired_dir = 0.0
@@ -271,23 +255,6 @@ func _ramp_intent(want_dir: int, target: float, blocked: bool, delta: float) -> 
 		rate = maxf(rate, blocked_brake)
 
 	move_speed = move_toward(move_speed, target, rate * delta)
-
-
-func _update_stairs(dir: int, delta: float) -> void:
-	var target := 0.0
-
-	if grounded and dir != 0:
-		var step := Vector3.RIGHT * float(dir) * stairs_probe
-		var from := global_position + Vector3.UP * 1.0
-
-		var here := _ray(from, from + Vector3.DOWN * 2.0)
-		var ahead := _ray(from + step, from + step + Vector3.DOWN * 2.0)
-
-		if not here.is_empty() and not ahead.is_empty():
-			var rise := absf((ahead.position as Vector3).y - (here.position as Vector3).y)
-			target = 1.0 if rise / maxf(stairs_probe, 0.05) > stairs_slope else 0.0
-
-	_stairs_amt = move_toward(_stairs_amt, target, 4.0 * delta)
 
 
 func _check_fall_off() -> void:
@@ -370,7 +337,6 @@ func _head_height() -> float:
 
 
 func _world_blocked(dir: int) -> bool:
-	_door = null
 	if dir == 0:
 		return false
 
@@ -380,23 +346,8 @@ func _world_blocked(dir: int) -> bool:
 	var heights: Array[float] = [max_step_up + 0.1, _head_height()]
 	for h in heights:
 		var from: Vector3 = o + Vector3.UP * h
-		var hit := _ray(from, from + d * DOOR_REACH)
-		if hit.is_empty():
-			continue
-
-		var panel := hit.collider as DoorPanel
-		var near := absf(hit.position.x - o.x) <= wall_check_distance
-		if panel == null:
-			if near:
-				return true
-
-			continue
-
-		if near and panel.door.resists(hit.position, Vector3.RIGHT * float(dir)):
+		if not _ray(from, from + d).is_empty():
 			return true
-
-		_door = panel.door
-		_door_at = hit.position
 
 	return false
 
