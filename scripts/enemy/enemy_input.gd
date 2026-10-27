@@ -264,6 +264,30 @@ func _ready() -> void:
 	carrier.weapon.bullet_traced.connect(_on_traced)
 
 
+func retarget(next: CharacterMovement) -> void:
+	if next == target:
+		return
+
+	if is_instance_valid(_noise):
+		_noise.bang.disconnect(_on_bang)
+
+	target = next
+	_target_health = target.get_node("Health") as Health
+	_noise = NoiseSource.of(target)
+	_noise.bang.connect(_on_bang)
+	if _mode == Mode.COMBAT:
+		_last_seen = target.global_position
+		_since_seen = 0.0
+	else:
+		_known = false
+		_visible = false
+		awareness = 0.0
+
+
+func follow(point: Vector3) -> void:
+	_home = point
+
+
 func is_calm() -> bool:
 	return _mode == Mode.PATROL and awareness < 0.01 and health.alive
 

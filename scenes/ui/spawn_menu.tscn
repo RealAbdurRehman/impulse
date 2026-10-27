@@ -1,0 +1,117 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/spawn_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" uid="uid://scyfrg3do5k0" path="res://scenes/enemy.tscn" id="2_enemy"]
+[ext_resource type="Resource" path="res://scenes/looks/operator.tres" id="3_look"]
+[ext_resource type="Resource" path="res://scenes/weapons/g17_stats.tres" id="4_g17"]
+[ext_resource type="Resource" path="res://scenes/weapons/m4a1_stats.tres" id="5_m4a1"]
+[ext_resource type="Resource" path="res://scenes/weapons/rem870_stats.tres" id="6_rem870"]
+[ext_resource type="Resource" path="res://scenes/weapons/l96a1_stats.tres" id="7_l96a1"]
+[ext_resource type="Script" path="res://scripts/ui/spawn_kind.gd" id="8_kind"]
+
+[sub_resource type="Resource" id="Kind_grunt"]
+script = ExtResource("8_kind")
+label = "Grunt"
+weapon = ExtResource("4_g17")
+archetype = 1
+
+[sub_resource type="Resource" id="Kind_rusher"]
+script = ExtResource("8_kind")
+label = "Rusher"
+weapon = ExtResource("6_rem870")
+archetype = 2
+
+[sub_resource type="Resource" id="Kind_gunner"]
+script = ExtResource("8_kind")
+label = "Gunner"
+weapon = ExtResource("5_m4a1")
+archetype = 3
+
+[sub_resource type="Resource" id="Kind_flanker"]
+script = ExtResource("8_kind")
+label = "Flanker"
+weapon = ExtResource("5_m4a1")
+archetype = 6
+
+[sub_resource type="Resource" id="Kind_hunter"]
+script = ExtResource("8_kind")
+label = "Hunter"
+weapon = ExtResource("5_m4a1")
+archetype = 7
+
+[sub_resource type="Resource" id="Kind_sniper"]
+script = ExtResource("8_kind")
+label = "Sniper"
+weapon = ExtResource("7_l96a1")
+archetype = 5
+
+[node name="SpawnMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 30
+visible = false
+script = ExtResource("1_menu")
+enemy_scene = ExtResource("2_enemy")
+ally_look = ExtResource("3_look")
+kinds = Array[ExtResource("8_kind")]([SubResource("Kind_grunt"), SubResource("Kind_rusher"), SubResource("Kind_gunner"), SubResource("Kind_flanker"), SubResource("Kind_hunter"), SubResource("Kind_sniper")])
+weapons = Array[Resource]([ExtResource("4_g17"), ExtResource("5_m4a1"), ExtResource("6_rem870"), ExtResource("7_l96a1")])
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -464.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = 24.0
+grow_horizontal = 0
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Box" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_type_variation = &"HeadingLabel"
+text = "SPAWN"
+
+[node name="Tabs" type="TabContainer" parent="Panel/Margin/Box"]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+current_tab = 0
+
+[node name="Enemies" type="GridContainer" parent="Panel/Margin/Box/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 0
+
+[node name="Allies" type="GridContainer" parent="Panel/Margin/Box/Tabs"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 1
+
+[node name="Weapons" type="GridContainer" parent="Panel/Margin/Box/Tabs"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+columns = 2
+metadata/_tab_index = 2
+
+[node name="Armed" type="Label" parent="Panel/Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+
+[node name="Hint" type="Label" parent="Panel/Margin/Box"]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "Pick one, then click in the world to place it. Right click stops placing. Tab or Esc closes."
+autowrap_mode = 3

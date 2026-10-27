@@ -7,6 +7,7 @@
 [ext_resource type="Shader" uid="uid://hsw85g4da3tg" path="res://scripts/world/shaders/stage_floor.gdshader" id="6_floor"]
 [ext_resource type="Shader" uid="uid://vpvvpvg7k6s0" path="res://scripts/world/shaders/stage_wall.gdshader" id="7_wall"]
 [ext_resource type="Script" uid="uid://davyyjro4dxwh" path="res://scripts/world/stage_lights.gd" id="8_lights"]
+[ext_resource type="PackedScene" path="res://scenes/ui/spawn_menu.tscn" id="99_spawn"]
 
 [sub_resource type="ShaderMaterial" id="Material_floor"]
 render_priority = 0
@@ -167,3 +168,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 8)
 script = ExtResource("3_camera")
 target = NodePath("../Player")
+
+[node name="SpawnMenu" parent="." unique_id=2400 node_paths=PackedStringArray("player") instance=ExtResource("99_spawn")]
+player = NodePath("../Player")
