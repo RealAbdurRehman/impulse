@@ -23,7 +23,6 @@ const RUN := {
 }
 
 @onready var _pages: Array[Control] = [%Main, %NewGame, %Settings]
-@onready var _seed: LineEdit = %SeedField
 
 
 func _ready() -> void:
@@ -94,11 +93,5 @@ func _on_game_changed() -> void:
 func _start() -> void:
 	_store(RUN, LevelSettings.current)
 	LevelSettings.current.save()
-
-	var word := _seed.text.strip_edges()
-	if word.is_empty():
-		Level.new_seed()
-	else:
-		Level.run_seed = maxi(1, word.hash() & 0x7fffffff)
 
 	Transition.go(get_tree(), LEVEL)

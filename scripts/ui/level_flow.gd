@@ -20,7 +20,6 @@ var _target: CharacterMovement
 @onready var _extraction: Control = %Extraction
 @onready var _progress: ProgressBar = %Progress
 @onready var _screens: Control = %Screens
-@onready var _seed: Label = %SeedValue
 @onready var _pages := {
 	State.PAUSED: %Pause,
 	State.DEAD: %Failed,
@@ -33,10 +32,9 @@ func _ready() -> void:
 	_screens.hide()
 
 
-func start(target: CharacterMovement, zone: ExitZone, level_seed: int) -> void:
+func start(target: CharacterMovement, zone: ExitZone) -> void:
 	_target = target
 	_zone = zone
-	_seed.text = str(level_seed)
 	target.health.died.connect(_on_died)
 	zone.completed.connect(_show.bind(State.WON, true))
 
@@ -68,9 +66,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_M:
 			Transition.go(get_tree(), MENU)
 		KEY_ENTER, KEY_KP_ENTER:
-			Transition.go(get_tree(), get_tree().current_scene.scene_file_path)
-		KEY_N:
-			Level.new_seed()
 			Transition.go(get_tree(), get_tree().current_scene.scene_file_path)
 
 

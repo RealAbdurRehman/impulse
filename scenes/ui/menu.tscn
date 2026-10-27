@@ -115,35 +115,6 @@ text = "LEVEL"
 layout_mode = 2
 columns = 2
 
-[node name="ChunksLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1793051611]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Middle chunks"
-
-[node name="Chunks" type="SpinBox" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1251940471]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-tooltip_text = "How long the level is. A start and an end chunk are always added."
-min_value = 2.0
-max_value = 20.0
-value = 3.0
-rounded = true
-
-[node name="EnemiesLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=1337648277]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Enemies per chunk"
-
-[node name="Enemies" type="SpinBox" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=807909549]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-tooltip_text = "Limited by how many enemy spots each chunk has."
-max_value = 6.0
-value = 2.0
-rounded = true
-
 [node name="DifficultyLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=280438121]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -162,19 +133,6 @@ popup/item_1/text = "Normal"
 popup/item_1/id = 1
 popup/item_2/text = "Hard"
 popup/item_2/id = 2
-
-[node name="SeedFieldLabel" type="Label" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=18468669]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Seed"
-
-[node name="SeedField" type="LineEdit" parent="NewGame/Box/Columns/LevelPanel/Level/Grid" unique_id=172570649]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-tooltip_text = "Same seed, same level. Leave empty for a random one. Words work too."
-placeholder_text = "Random"
-max_length = 24
 
 [node name="RulesPanel" type="PanelContainer" parent="NewGame/Box/Columns" unique_id=509945765]
 layout_mode = 2

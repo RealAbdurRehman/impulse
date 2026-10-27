@@ -11,6 +11,7 @@ var held := 0.0
 
 
 func _ready() -> void:
+	add_to_group(&"exit_zone")
 	_add_slab(size, size.y * 0.5, 0.07)
 	_add_slab(Vector3(size.x, 0.03, size.z), 0.02, 0.3)
 
@@ -33,7 +34,7 @@ func _add_slab(extent: Vector3, height: float, alpha: float) -> void:
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.albedo_color = Color(0.93, 0.93, 0.9, alpha)
+	material.albedo_color = Color(0.95, 0.78, 0.45, alpha * 0.7)
 
 	var mesh := BoxMesh.new()
 	mesh.size = extent

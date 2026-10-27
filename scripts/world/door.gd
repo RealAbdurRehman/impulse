@@ -46,7 +46,10 @@ func _ready() -> void:
 	collider.position = Vector3(width * 0.5, height * 0.5, 0.0)
 	_panel.add_child(collider)
 
-	Kit.urban(_panel, model, Vector3.ZERO, 0.0, Vector3(-width, 1.0, 1.0))
+	var leaf := (load("res://assets/urban/%s.glb" % model) as PackedScene).instantiate() as Node3D
+	leaf.scale = Vector3(-width, 1.0, 1.0)
+	Weathering.fix(leaf)
+	_panel.add_child(leaf)
 	_panel.marks = ImpactMarks.new()
 	_panel.marks.capacity = 24
 	_panel.marks.follow = _panel

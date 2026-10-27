@@ -11,6 +11,7 @@ extends Marker3D
 @export var random_seed := 0
 @export var spawn_on_ready := true
 @export var spawn_range := 60.0
+@export_enum("Easy", "Normal", "Hard") var min_difficulty := 0
 
 var enemy: CharacterMovement
 
@@ -25,6 +26,14 @@ func _ready() -> void:
 			spawn()
 		else:
 			set_physics_process(true)
+
+
+func arm(who: CharacterMovement, scene: PackedScene) -> void:
+	target = who
+	if enemy_scene == null:
+		enemy_scene = scene
+
+	set_physics_process(true)
 
 
 func _physics_process(delta: float) -> void:

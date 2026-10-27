@@ -1,22 +1,11 @@
 class_name Level
 extends Node3D
 
-static var run_seed := randi_range(1, 0x7fffffff)
-
-@export var start_chunk: PackedScene
-@export var middle_chunks: Array[PackedScene] = []
-@export var end_chunk: PackedScene
 @export var player: CharacterMovement
 @export var enemy_scene: PackedScene
 @export var flow: LevelFlow
 @export var exit_hold := 5.0
 @export var death_delay := 5.0
-
-var built: Array[Chunk] = []
-
-
-static func new_seed() -> void:
-	run_seed = randi_range(1, 0x7fffffff)
 
 
 func _ready() -> void:
@@ -45,24 +34,20 @@ func _ready() -> void:
 	lod.target = player
 	add_child(lod)
 
-	var rng := RandomNumberGenerator.new()
-	rng.seed = run_seed
-	_assemble(run, rng)
-	Population.fill(built, run, rng)
+	Weathering.fix(get_node("Map"))
+	StaticBatch.run(get_node("Map"))
+	add_child(Grade.new())
 
-	player.global_position = built[0].entry_point() + Vector3(1.5, 0.1, 0.0)
+	var start := get_tree().get_first_node_in_group(&"player_start") as Node3D
+	player.global_position = start.global_position + Vector3(0.0, 0.1, 0.0)
 	player.velocity = Vector3.ZERO
 
-	for chunk in built:
-		for spawn in chunk.spawns():
-			spawn.arm(player, enemy_scene)
+	_arm_enemies(run)
 
-	var zone := ExitZone.new()
+	var zone := get_tree().get_first_node_in_group(&"exit_zone") as ExitZone
 	zone.target = player
 	zone.hold_time = exit_hold
-	zone.position = built[-1].objective().global_position
-	add_child(zone)
-	flow.start(player, zone, run_seed)
+	flow.start(player, zone)
 	Transition.reveal(get_tree())
 
 
@@ -76,38 +61,37 @@ func _physics_process(_delta: float) -> void:
 		player.health.current = player.health.max_health
 
 
+func _arm_enemies(run: LevelSettings) -> void:
+	var skill: Vector2 = LevelSettings.SKILL[run.difficulty]
+	for node in get_tree().get_nodes_in_group(&"enemy_spawns"):
+		var spawn := node as EnemySpawn
+		if spawn.min_difficulty > run.difficulty:
+			spawn.queue_free()
+			continue
+
+		spawn.skill_range = skill
+		spawn.hostile = not run.peaceful_enemies
+		spawn.arm(player, enemy_scene)
+
+
 func _apply_rules(run: LevelSettings) -> void:
 	var death := player.get_node("PlayerDeath") as PlayerDeath
 	death.restart_delay = death_delay
 	death.auto_restart = false
 
 	(player.get_node("PlayerHealing") as PlayerHealing).bandages = run.start_bandages
-	(player.get_node("Weapon") as Weapon).infinite_ammo = run.infinite_ammo
+	var weapon := player.get_node("Weapon") as Weapon
+	weapon.infinite_ammo = run.infinite_ammo
+	var pouch := AmmoPouch.new()
+	pouch.name = &"AmmoPouch"
+	player.add_child(pouch)
+	weapon.pouch = pouch
+	pouch.add(weapon.stats.ammo_type, run.start_magazines * weapon.stats.magazine_size)
+	var loot := PlayerLoot.new()
+	loot.name = &"PlayerLoot"
+	player.add_child(loot)
+	var ammo_hud := AmmoHud.new()
+	ammo_hud.loot = loot
+	add_child(ammo_hud)
 	(player.get_node("PlayerStamina") as PlayerStamina).infinite = run.infinite_stamina
 	player.health.immortal = run.god_mode
-
-
-func _assemble(run: LevelSettings, rng: RandomNumberGenerator) -> void:
-	var order: Array[PackedScene] = [start_chunk]
-	for i in run.chunk_count:
-		var index := rng.randi_range(0, middle_chunks.size() - 1)
-		for _step in middle_chunks.size():
-			if middle_chunks[index] != order[-1]:
-				break
-
-			index = (index + 1) % middle_chunks.size()
-
-		order.append(middle_chunks[index])
-
-	order.append(end_chunk)
-	for scene in order:
-		var chunk := scene.instantiate() as Chunk
-		chunk.build(rng)
-		if not built.is_empty():
-			chunk.place_after(built[-1])
-
-		add_child(chunk)
-
-		built.append(chunk)
-
-	Backdrop.build(self, built[0].entry_point().x, built[-1].exit_point().x, rng)

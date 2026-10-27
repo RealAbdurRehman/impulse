@@ -41,8 +41,6 @@ func _load_all() -> void:
 func _warm_up() -> void:
 	var kept := LevelSettings.current
 	var run := LevelSettings.new()
-	run.chunk_count = 2
-	run.enemies_per_chunk = 1
 	run.god_mode = true
 	run.peaceful_enemies = true
 	LevelSettings.current = run
