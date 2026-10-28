@@ -407,9 +407,11 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		_apply_hit(hit, dir, origin.distance_to(hit.position), power)
 
 		var surface := Surfaces.of(hit.collider)
-		var resistance := Surfaces.style(surface).resistance
+		var style := Surfaces.style(surface)
+		var resistance := style.resistance
+		var tint := Surfaces.tint_of(hit.collider) if style.tinted else Color.WHITE
 		var size := clampf(sqrt(stats.damage * power / REFERENCE_DAMAGE), 0.5, 2.2)
-		world.strike(hit.position, hit.normal, dir, surface, size)
+		world.strike(hit.position, hit.normal, dir, surface, size, false, tint)
 
 		var depth := reach / resistance
 		var exit := _exit(hit, dir, depth, skip)
@@ -419,7 +421,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 			end = hit.position + dir * depth
 			break
 
-		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true)
+		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true, tint)
 
 		reach -= hit.position.distance_to(exit.position) * resistance
 		from = exit.position + dir * 0.01

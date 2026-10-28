@@ -72,7 +72,7 @@ func warm(on: bool) -> void:
 		layer.multi.visible_instance_count = 1 if on else 0
 
 
-func chip(pos: Vector3, vel: Vector3, style: SurfaceStyle, glass: bool) -> void:
+func chip(pos: Vector3, vel: Vector3, style: SurfaceStyle, glass: bool, colors: Array[Color]) -> void:
 	var layer := _shards if glass else _chips
 	var b := _take(layer)
 	var scale_to := randf_range(style.debris_size.x, style.debris_size.y)
@@ -81,7 +81,7 @@ func chip(pos: Vector3, vel: Vector3, style: SurfaceStyle, glass: bool) -> void:
 	b.axes = Basis(Quaternion(Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized(), randf() * TAU))
 	b.spin = Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * randf_range(6.0, 22.0)
 	b.size = style.debris_shape * scale_to
-	b.color = style.debris_colors[randi() % style.debris_colors.size()].srgb_to_linear()
+	b.color = colors[randi() % colors.size()].srgb_to_linear()
 	if glass:
 		b.color.a = 0.55
 

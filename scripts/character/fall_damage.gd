@@ -110,4 +110,4 @@ func _puff(speed: float) -> void:
 	var feet := _movement.global_position + Vector3(0.0, 0.05, 0.0)
 	for i in puffs:
 		var side := -1.0 if i % 2 == 0 else 1.0
-		dust.puff(feet, Vector3(side * randf_range(1.0, 3.2) * size, randf_range(0.2, 0.8), 0.0), style, size)
+		dust.puff(feet, Vector3(side * randf_range(1.0, 3.2) * size, randf_range(0.2, 0.8), 0.0), style, size, style.dust_color)

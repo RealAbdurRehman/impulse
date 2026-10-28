@@ -40,7 +40,7 @@ func warm(on: bool) -> void:
 	_multi.visible_instance_count = 1 if on else _used
 
 
-func mark(point: Vector3, normal: Vector3, dir: Vector3, style: SurfaceStyle, size: float) -> void:
+func mark(point: Vector3, normal: Vector3, dir: Vector3, style: SurfaceStyle, size: float, color: Color) -> void:
 	var span := style.mark_size * randf_range(0.85, 1.15) * clampf(sqrt(size), 0.8, 1.3)
 	var glance := 1.0 - absf(dir.dot(normal))
 	var along := dir - normal * dir.dot(normal)
@@ -60,7 +60,7 @@ func mark(point: Vector3, normal: Vector3, dir: Vector3, style: SurfaceStyle, si
 		xf = follow.global_transform.affine_inverse() * xf
 
 	_multi.set_instance_transform(_next, xf)
-	_multi.set_instance_color(_next, style.mark_color.srgb_to_linear())
+	_multi.set_instance_color(_next, color.srgb_to_linear())
 	_multi.set_instance_custom_data(_next, Color(randf() * 10.0, float(style.mark), glance, 0.0))
 	_used = maxi(_used, _next + 1)
 	_multi.visible_instance_count = _used

@@ -1,7 +1,7 @@
 class_name SurfaceStyle
 extends Resource
 
-enum Mark { NONE, CONCRETE, METAL, WOOD, GLASS }
+enum Mark { NONE, CONCRETE, METAL, WOOD, GLASS, PLASTIC }
 
 @export var resistance := 1.0
 
@@ -37,6 +37,9 @@ enum Mark { NONE, CONCRETE, METAL, WOOD, GLASS }
 @export var mark := Mark.NONE
 @export var mark_size := 0.1
 @export var mark_color := Color(0.8, 0.8, 0.78)
+
+@export_group("Tint")
+@export var tinted := false
 
 @export_group("Sound")
 @export var sound: SoundSet

@@ -71,6 +71,12 @@ void fragment() {
 		float line = (1.0 - smoothstep(width * 0.5, width, d)) * (1.0 - smoothstep(reach - 0.15, reach, r));
 		float tiny = 1.0 - smoothstep(0.04, 0.08, rw);
 		a = max(line * 0.85, (1.0 - smoothstep(0.0, 0.25, r)) * 0.3) * (1.0 - tiny);
+	} else if (kind == 5) {
+		float rim = smoothstep(0.2, 0.28, rw) * (1.0 - smoothstep(0.3, 0.42, rw));
+		float ang = atan(p.y, p.x);
+		float stress = (1.0 - smoothstep(0.3, 0.5 + 0.3 * ray, rw)) * smoothstep(0.45, 0.85, noise2(vec2(ang * 3.0, seed * 5.0)));
+		col = mix(spall, vec3(0.02), hole);
+		a = max(max(rim * 0.85, stress * 0.4), hole);
 	}
 
 	a *= 1.0 - smoothstep(0.85, 1.0, r);

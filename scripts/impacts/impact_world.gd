@@ -55,8 +55,16 @@ func _warm_up() -> void:
 	debris.warm(false)
 
 
-func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, size: float, exiting := false) -> void:
+func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, size: float, exiting := false, tint := Color.WHITE) -> void:
 	var style := Surfaces.style(surface)
+	var dust_color := style.dust_color
+	var chip_colors := style.debris_colors
+	var mark_color := style.mark_color
+	if style.tinted:
+		dust_color = tint.lerp(Color.WHITE, 0.4)
+		chip_colors = [tint, tint.darkened(0.12), tint.lightened(0.12)]
+		mark_color = tint
+
 	if style.sound != null:
 		audio.play(style.sound, point, 0.0)
 
@@ -73,12 +81,12 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 		d.z = 0.0
 		d = d.normalized()
 		var speed := randf_range(style.dust_speed.x, style.dust_speed.y) * punch
-		dust.puff(point - normal * 0.01, d * speed + dir * carried * speed, style, punch)
+		dust.puff(point - normal * 0.01, d * speed + dir * carried * speed, style, punch, dust_color)
 
 	for i in _count(style.debris_count * size):
 		var d := _cone((spray + dir * carried).normalized(), chip_cone)
 		var speed := randf_range(style.debris_speed.x, style.debris_speed.y) * punch
-		debris.chip(point + normal * 0.012, d * speed, style, style.debris_glass)
+		debris.chip(point + normal * 0.012, d * speed, style, style.debris_glass, chip_colors)
 
 	var sparks := style.spark_count * size
 	if ricochet:
@@ -94,7 +102,7 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 		debris.flash(point + normal * 0.02, style.spark_color.lightened(0.4), 0.07 * style.flash * punch)
 
 	if style.mark != SurfaceStyle.Mark.NONE:
-		marks.mark(point, normal, dir, style, size * (1.3 if exiting else 1.0))
+		marks.mark(point, normal, dir, style, size * (1.3 if exiting else 1.0), mark_color)
 
 
 func _count(amount: float) -> int:

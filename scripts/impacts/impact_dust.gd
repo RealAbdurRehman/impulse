@@ -61,7 +61,7 @@ func warm(on: bool) -> void:
 	_multi.visible_instance_count = 1 if on else 0
 
 
-func puff(pos: Vector3, vel: Vector3, style: SurfaceStyle, size: float) -> void:
+func puff(pos: Vector3, vel: Vector3, style: SurfaceStyle, size: float, color: Color) -> void:
 	var p := _puffs[_next]
 	_next = (_next + 1) % capacity
 	p.pos = pos
@@ -76,7 +76,7 @@ func puff(pos: Vector3, vel: Vector3, style: SurfaceStyle, size: float) -> void:
 	p.rise = style.dust_rise
 	p.grain = style.dust_grain
 	p.salt = Vector2(randf(), randf()) * 4.0
-	p.tint = style.dust_color.srgb_to_linear()
+	p.tint = color.srgb_to_linear()
 	p.live = true
 	set_process(true)
 

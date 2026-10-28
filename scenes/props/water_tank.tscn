@@ -206,7 +206,8 @@ mass = 146.60556
 physics_material_override = SubResource("PhysicsMaterial_h300p")
 linear_damp = 0.1
 angular_damp = 0.2
-metadata/surface = &"wood"
+metadata/surface = &"plastic"
+metadata/tint = Color(0.86, 0.87, 0.88, 1)
 metadata/pick_box = AABB(-0.53740156, 0, -0.5392617, 1.0748031, 1.0539274, 1.0785234)
 
 [node name="@MeshInstance3D@27700" type="MeshInstance3D" parent="." unique_id=185913655]
