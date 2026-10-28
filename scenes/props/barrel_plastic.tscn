@@ -128,7 +128,7 @@ shadow_mesh = SubResource("ArrayMesh_ec3ho")
 [sub_resource type="BoxShape3D" id="BoxShape3D_awbkh"]
 size = Vector3(0.5593869, 0.95680517, 0.56229335)
 
-[node name="barrel_plastic" type="RigidBody3D" unique_id=1042977363 groups=["props"]]
+[node name="barrel_plastic" type="RigidBody3D" unique_id=281578269 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -137,21 +137,21 @@ physics_material_override = SubResource("PhysicsMaterial_d82ct")
 linear_damp = 0.1
 angular_damp = 0.2
 metadata/surface = &"plastic"
-metadata/tint = Color(0.12, 0.28, 0.85, 1)
 metadata/pick_box = AABB(-0.27969345, 0, -0.28114668, 0.5593869, 0.95680517, 0.56229335)
+metadata/tint = Color(0.12, 0.28, 0.85, 1)
 
-[node name="@MeshInstance3D@27696" type="MeshInstance3D" parent="." unique_id=1503065455]
+[node name="@MeshInstance3D@29050" type="MeshInstance3D" parent="." unique_id=446706885]
 transform = Transform3D(0.01, 0, 0, 0, 0.01, -4.371139e-10, 0, 4.371139e-10, 0.01, 1.4901161e-07, -0.0023715876, -1.1920929e-07)
 mesh = SubResource("ArrayMesh_qyqec")
 
-[node name="@MeshInstance3D@27697" type="MeshInstance3D" parent="." unique_id=1388417160]
+[node name="@MeshInstance3D@29051" type="MeshInstance3D" parent="." unique_id=312645227]
 transform = Transform3D(0.01, 0, 0, 0, 0.01, -4.371139e-10, 0, 4.371139e-10, 0.01, 1.4901161e-07, -0.0023715876, -1.1920929e-07)
 mesh = SubResource("ArrayMesh_m3owy")
 
-[node name="@MeshInstance3D@27698" type="MeshInstance3D" parent="." unique_id=1192965977]
+[node name="@MeshInstance3D@29052" type="MeshInstance3D" parent="." unique_id=1120615827]
 transform = Transform3D(0.01, 0, 0, 0, 0.01, -4.371139e-10, 0, 4.371139e-10, 0.01, 1.4901161e-07, -0.0023715876, -1.1920929e-07)
 mesh = SubResource("ArrayMesh_g1pow")
 
-[node name="@CollisionShape3D@27699" type="CollisionShape3D" parent="." unique_id=1535649262]
+[node name="@CollisionShape3D@29053" type="CollisionShape3D" parent="." unique_id=1068560182]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.47840258, 0)
 shape = SubResource("BoxShape3D_awbkh")

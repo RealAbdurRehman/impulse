@@ -203,41 +203,41 @@ backface_collision = true
 [sub_resource type="BoxShape3D" id="BoxShape3D_vf6co"]
 size = Vector3(0.06, 2, 2)
 
-[node name="window_wall_panes" type="Node3D" unique_id=283734793 groups=["props"]]
+[node name="window_wall_panes" type="Node3D" unique_id=605469659 groups=["props"]]
 metadata/surface = &"concrete"
 metadata/pick_box = AABB(-0.062405705, 0, -1.25, 0.12481141, 2.5, 2.5)
 
-[node name="@MeshInstance3D@27758" type="MeshInstance3D" parent="." unique_id=1879586017]
+[node name="@MeshInstance3D@29112" type="MeshInstance3D" parent="." unique_id=248255040]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_ins22")
 
-[node name="@MeshInstance3D@27759" type="MeshInstance3D" parent="." unique_id=1173478809]
+[node name="@MeshInstance3D@29113" type="MeshInstance3D" parent="." unique_id=1589057245]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_h11vl")
 
-[node name="@MeshInstance3D@27760" type="MeshInstance3D" parent="." unique_id=223319229]
+[node name="@MeshInstance3D@29114" type="MeshInstance3D" parent="." unique_id=1785281283]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_6ts7e")
 
-[node name="@MeshInstance3D@27761" type="MeshInstance3D" parent="." unique_id=239310803]
+[node name="@MeshInstance3D@29115" type="MeshInstance3D" parent="." unique_id=1241744312]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_2xdr0")
 
-[node name="Concrete" type="StaticBody3D" parent="." unique_id=1915329166]
+[node name="Concrete" type="StaticBody3D" parent="." unique_id=885951012]
 metadata/surface = &"concrete"
 
-[node name="@CollisionShape3D@27762" type="CollisionShape3D" parent="Concrete" unique_id=1135291696]
+[node name="@CollisionShape3D@29116" type="CollisionShape3D" parent="Concrete" unique_id=1036857877]
 shape = SubResource("ConcavePolygonShape3D_4m60h")
 
-[node name="Metal" type="StaticBody3D" parent="." unique_id=603253058]
+[node name="Metal" type="StaticBody3D" parent="." unique_id=1617984363]
 metadata/surface = &"metal"
 
-[node name="@CollisionShape3D@27763" type="CollisionShape3D" parent="Metal" unique_id=1710379182]
+[node name="@CollisionShape3D@29117" type="CollisionShape3D" parent="Metal" unique_id=1409860885]
 shape = SubResource("ConcavePolygonShape3D_ttoa4")
 
-[node name="Glass" type="StaticBody3D" parent="." unique_id=634202462]
+[node name="Glass" type="StaticBody3D" parent="." unique_id=1433502176]
 metadata/surface = &"glass"
 
-[node name="@CollisionShape3D@27764" type="CollisionShape3D" parent="Glass" unique_id=427620983]
+[node name="@CollisionShape3D@29118" type="CollisionShape3D" parent="Glass" unique_id=580321112]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
 shape = SubResource("BoxShape3D_vf6co")

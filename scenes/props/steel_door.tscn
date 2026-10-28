@@ -1,11 +1,16 @@
 [gd_scene format=4 uid="uid://bwnr31k6d5qn8"]
 
+[ext_resource type="Script" uid="uid://bd6soohmetjud" path="res://scripts/world/door.gd" id="1_lnup7"]
 [ext_resource type="Texture2D" uid="uid://i7xev5rbwp82" path="res://assets/props/factory_12.png" id="1_qw5ov"]
+[ext_resource type="Script" uid="uid://gsqdckjxrv6v" path="res://scripts/world/door_leaf.gd" id="2_228qe"]
 [ext_resource type="Texture2D" uid="uid://ty4kyqr6as4i" path="res://assets/props/factory_13.png" id="2_lnup7"]
 [ext_resource type="Texture2D" uid="uid://8xoo7ay3wix8" path="res://assets/props/factory_14.png" id="3_228qe"]
 [ext_resource type="Texture2D" uid="uid://b1nlexskfhnuj" path="res://assets/props/factory_6.png" id="4_nypww"]
 [ext_resource type="Texture2D" uid="uid://b2ejo5chjhm8t" path="res://assets/props/factory_7.png" id="5_1pyxi"]
 [ext_resource type="Texture2D" uid="uid://cbt2x4bfinldn" path="res://assets/props/factory_8.png" id="6_7wfmo"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nypww"]
+size = Vector3(0.13577175, 2.1, 0.95000076)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_elpsl"]
 resource_name = "door_01"
@@ -99,24 +104,24 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_hncil")
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_qw5ov"]
-size = Vector3(0.13577175, 2.1, 0.95000076)
-
-[node name="steel_door" type="Node3D" unique_id=1846030918 groups=["props"]]
+[node name="steel_door" type="Node3D" unique_id=688301403 groups=["props"]]
+script = ExtResource("1_lnup7")
 metadata/surface = &"metal"
 metadata/pick_box = AABB(-0.067885876, 0, -0.47500038, 0.13577175, 2.1, 0.95000076)
 
-[node name="@MeshInstance3D@27765" type="MeshInstance3D" parent="." unique_id=1714324953]
-transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0.013999462, 1.0500001, -0.47500038)
-mesh = SubResource("ArrayMesh_1pc4w")
-
-[node name="@MeshInstance3D@27766" type="MeshInstance3D" parent="." unique_id=732722614]
-transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0.013999462, 1.0500001, -0.47500038)
-mesh = SubResource("ArrayMesh_f3st6")
-
-[node name="@StaticBody3D@27768" type="StaticBody3D" parent="." unique_id=1607647732]
+[node name="Leaf" type="AnimatableBody3D" parent="." unique_id=1799099180]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.47500038)
+script = ExtResource("2_228qe")
 metadata/surface = &"metal"
 
-[node name="@CollisionShape3D@27767" type="CollisionShape3D" parent="@StaticBody3D@27768" unique_id=1031394118]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
-shape = SubResource("BoxShape3D_qw5ov")
+[node name="@CollisionShape3D@29119" type="CollisionShape3D" parent="Leaf" unique_id=1735709505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.47500038)
+shape = SubResource("BoxShape3D_nypww")
+
+[node name="@MeshInstance3D@29120" type="MeshInstance3D" parent="Leaf" unique_id=701524028]
+transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0.013999462, 1.0500001, 0)
+mesh = SubResource("ArrayMesh_1pc4w")
+
+[node name="@MeshInstance3D@29121" type="MeshInstance3D" parent="Leaf" unique_id=350677809]
+transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0.013999462, 1.0500001, 0)
+mesh = SubResource("ArrayMesh_f3st6")

@@ -65,7 +65,7 @@ shadow_mesh = SubResource("ArrayMesh_t0owl")
 [sub_resource type="BoxShape3D" id="BoxShape3D_3d14e"]
 size = Vector3(0.551646, 0.9158838, 0.55164623)
 
-[node name="barrel_steel" type="RigidBody3D" unique_id=1599741064 groups=["props"]]
+[node name="barrel_steel" type="RigidBody3D" unique_id=1453674924 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -76,10 +76,10 @@ angular_damp = 0.2
 metadata/surface = &"metal"
 metadata/pick_box = AABB(-0.275823, 0, -0.27582312, 0.551646, 0.9158838, 0.55164623)
 
-[node name="@MeshInstance3D@27694" type="MeshInstance3D" parent="." unique_id=270719389]
+[node name="@MeshInstance3D@29048" type="MeshInstance3D" parent="." unique_id=68604230]
 transform = Transform3D(0.0041282256, 0, 0, 0, -5.497065e-10, 0.0041282256, 0, -0.0041282256, -5.497065e-10, -0.014681075, 0.49577618, 0.00010697119)
 mesh = SubResource("ArrayMesh_y4x3p")
 
-[node name="@CollisionShape3D@27695" type="CollisionShape3D" parent="." unique_id=954735546]
+[node name="@CollisionShape3D@29049" type="CollisionShape3D" parent="." unique_id=1011496815]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4579419, 0)
 shape = SubResource("BoxShape3D_3d14e")

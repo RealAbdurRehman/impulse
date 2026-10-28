@@ -60,7 +60,7 @@ shadow_mesh = SubResource("ArrayMesh_lkjwn")
 [sub_resource type="BoxShape3D" id="BoxShape3D_aolq2"]
 size = Vector3(0.65, 0.65, 0.65)
 
-[node name="crate_small" type="RigidBody3D" unique_id=520006252 groups=["props"]]
+[node name="crate_small" type="RigidBody3D" unique_id=833495086 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -71,10 +71,10 @@ angular_damp = 0.2
 metadata/surface = &"wood"
 metadata/pick_box = AABB(-0.325, 0, -0.325, 0.65, 0.65, 0.65)
 
-[node name="@MeshInstance3D@27677" type="MeshInstance3D" parent="." unique_id=225086451]
+[node name="@MeshInstance3D@29031" type="MeshInstance3D" parent="." unique_id=210986556]
 transform = Transform3D(0.024999999, 0, 0, 0, 0.024999999, -5.5511148e-18, 0, 5.5511148e-18, 0.024999999, 0, 8.940696e-09, 0)
 mesh = SubResource("ArrayMesh_qs81h")
 
-[node name="@CollisionShape3D@27678" type="CollisionShape3D" parent="." unique_id=662656228]
+[node name="@CollisionShape3D@29032" type="CollisionShape3D" parent="." unique_id=129243115]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.325, 0)
 shape = SubResource("BoxShape3D_aolq2")

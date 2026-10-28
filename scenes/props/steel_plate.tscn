@@ -27,16 +27,16 @@ size = Vector3(3, 0.1, 1.5)
 data = PackedVector3Array(-1.5, 0.1, 0.75, 1.5, 0.1, 0.75, -1.5, 0, 0.75, 1.5, 0.1, 0.75, 1.5, 0, 0.75, -1.5, 0, 0.75, 1.5, 0.1, -0.75, -1.5, 0.1, -0.75, 1.5, 0, -0.75, -1.5, 0.1, -0.75, -1.5, 0, -0.75, 1.5, 0, -0.75, 1.5, 0.1, 0.75, 1.5, 0.1, -0.75, 1.5, 0, 0.75, 1.5, 0.1, -0.75, 1.5, 0, -0.75, 1.5, 0, 0.75, -1.5, 0.1, -0.75, -1.5, 0.1, 0.75, -1.5, 0, -0.75, -1.5, 0.1, 0.75, -1.5, 0, 0.75, -1.5, 0, -0.75, 1.5, 0.1, 0.75, -1.5, 0.1, 0.75, 1.5, 0.1, -0.75, -1.5, 0.1, 0.75, -1.5, 0.1, -0.75, 1.5, 0.1, -0.75, -1.5, 0, 0.75, 1.5, 0, 0.75, -1.5, 0, -0.75, 1.5, 0, 0.75, 1.5, 0, -0.75, -1.5, 0, -0.75)
 backface_collision = true
 
-[node name="steel_plate" type="Node3D" unique_id=150949315 groups=["props"]]
+[node name="steel_plate" type="Node3D" unique_id=1119683693 groups=["props"]]
 metadata/surface = &"metal"
 metadata/pick_box = AABB(-1.5, 0, -0.75, 3, 0.1, 1.5)
 
-[node name="@MeshInstance3D@27841" type="MeshInstance3D" parent="." unique_id=1118797590]
+[node name="@MeshInstance3D@29194" type="MeshInstance3D" parent="." unique_id=342115096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 mesh = SubResource("BoxMesh_jpcxq")
 
-[node name="Metal" type="StaticBody3D" parent="." unique_id=740858953]
+[node name="Metal" type="StaticBody3D" parent="." unique_id=1340832624]
 metadata/surface = &"metal"
 
-[node name="@CollisionShape3D@27842" type="CollisionShape3D" parent="Metal" unique_id=1289196470]
+[node name="@CollisionShape3D@29195" type="CollisionShape3D" parent="Metal" unique_id=667562886]
 shape = SubResource("ConcavePolygonShape3D_8c0ii")

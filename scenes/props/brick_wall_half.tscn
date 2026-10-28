@@ -52,16 +52,16 @@ shadow_mesh = SubResource("ArrayMesh_0lo5i")
 data = PackedVector3Array(0.062405705, 2.5, -0.625, -0.062405705, 2.5, -0.625, -0.062405705, 0, -0.625, 0.062405705, 2.5, -0.625, -0.062405705, 0, -0.625, 0.062403798, 0, -0.625, -0.062405705, 2.5, 0.625, 0.062405705, 2.5, 0.625, 0.062403798, 0, 0.625, -0.062405705, 2.5, 0.625, 0.062403798, 0, 0.625, -0.062405705, 0, 0.625, 0.062405705, 2.5, 0.625, 0.062405705, 2.5, -0.625, 0.062403798, 0, -0.625, 0.062405705, 2.5, 0.625, 0.062403798, 0, -0.625, 0.062403798, 0, 0.625, 0.062403798, 0, 0.625, 0.062403798, 0, -0.625, -0.062405705, 0, -0.625, 0.062403798, 0, 0.625, -0.062405705, 0, -0.625, -0.062405705, 0, 0.625, -0.062405705, 0, -0.625, -0.062405705, 2.5, -0.625, -0.062405705, 2.5, 0.625, -0.062405705, 0, -0.625, -0.062405705, 2.5, 0.625, -0.062405705, 0, 0.625, -0.062405705, 2.5, -0.625, 0.062405705, 2.5, -0.625, 0.062405705, 2.5, 0.625, -0.062405705, 2.5, -0.625, 0.062405705, 2.5, 0.625, -0.062405705, 2.5, 0.625)
 backface_collision = true
 
-[node name="brick_wall_half" type="Node3D" unique_id=2051390368 groups=["props"]]
+[node name="brick_wall_half" type="Node3D" unique_id=1714700460 groups=["props"]]
 metadata/surface = &"concrete"
 metadata/pick_box = AABB(-0.062405705, 0, -0.625, 0.12481141, 2.5, 1.25)
 
-[node name="@MeshInstance3D@27748" type="MeshInstance3D" parent="." unique_id=1755412700]
+[node name="@MeshInstance3D@29102" type="MeshInstance3D" parent="." unique_id=914158736]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
 mesh = SubResource("ArrayMesh_lmox7")
 
-[node name="Concrete" type="StaticBody3D" parent="." unique_id=2030950134]
+[node name="Concrete" type="StaticBody3D" parent="." unique_id=1393940254]
 metadata/surface = &"concrete"
 
-[node name="@CollisionShape3D@27749" type="CollisionShape3D" parent="Concrete" unique_id=383540987]
+[node name="@CollisionShape3D@29103" type="CollisionShape3D" parent="Concrete" unique_id=1892227761]
 shape = SubResource("ConcavePolygonShape3D_k767m")

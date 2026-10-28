@@ -198,7 +198,7 @@ shadow_mesh = SubResource("ArrayMesh_ut7ke")
 [sub_resource type="BoxShape3D" id="BoxShape3D_ennt2"]
 size = Vector3(1.0748031, 1.0539274, 1.0785234)
 
-[node name="water_tank" type="RigidBody3D" unique_id=897010664 groups=["props"]]
+[node name="water_tank" type="RigidBody3D" unique_id=229318721 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -207,29 +207,29 @@ physics_material_override = SubResource("PhysicsMaterial_h300p")
 linear_damp = 0.1
 angular_damp = 0.2
 metadata/surface = &"plastic"
-metadata/tint = Color(0.86, 0.87, 0.88, 1)
 metadata/pick_box = AABB(-0.53740156, 0, -0.5392617, 1.0748031, 1.0539274, 1.0785234)
+metadata/tint = Color(0.86, 0.87, 0.88, 1)
 
-[node name="@MeshInstance3D@27700" type="MeshInstance3D" parent="." unique_id=185913655]
+[node name="@MeshInstance3D@29054" type="MeshInstance3D" parent="." unique_id=1740953269]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_4ns10")
 
-[node name="@MeshInstance3D@27701" type="MeshInstance3D" parent="." unique_id=173627701]
+[node name="@MeshInstance3D@29055" type="MeshInstance3D" parent="." unique_id=877660937]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_5fgpq")
 
-[node name="@MeshInstance3D@27702" type="MeshInstance3D" parent="." unique_id=851411084]
+[node name="@MeshInstance3D@29056" type="MeshInstance3D" parent="." unique_id=633139630]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_sm1gm")
 
-[node name="@MeshInstance3D@27703" type="MeshInstance3D" parent="." unique_id=783053982]
+[node name="@MeshInstance3D@29057" type="MeshInstance3D" parent="." unique_id=279792240]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_6ywno")
 
-[node name="@MeshInstance3D@27704" type="MeshInstance3D" parent="." unique_id=2017565148]
+[node name="@MeshInstance3D@29058" type="MeshInstance3D" parent="." unique_id=1182788611]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_sbjuc")
 
-[node name="@CollisionShape3D@27705" type="CollisionShape3D" parent="." unique_id=1822869069]
+[node name="@CollisionShape3D@29059" type="CollisionShape3D" parent="." unique_id=1096136458]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5269637, 0)
 shape = SubResource("BoxShape3D_ennt2")

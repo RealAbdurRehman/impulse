@@ -58,7 +58,7 @@ shadow_mesh = SubResource("ArrayMesh_drnug")
 [sub_resource type="BoxShape3D" id="BoxShape3D_7u0jx"]
 size = Vector3(1.9426672, 1.4176953, 1.1397511)
 
-[node name="dumpster" type="RigidBody3D" unique_id=1261907685 groups=["props"]]
+[node name="dumpster" type="RigidBody3D" unique_id=1595551531 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -69,10 +69,10 @@ angular_damp = 0.2
 metadata/surface = &"metal"
 metadata/pick_box = AABB(-0.9713336, 0, -0.56987554, 1.9426672, 1.4176953, 1.1397511)
 
-[node name="@MeshInstance3D@27727" type="MeshInstance3D" parent="." unique_id=315692679]
+[node name="@MeshInstance3D@29081" type="MeshInstance3D" parent="." unique_id=342585285]
 transform = Transform3D(-2.1855694e-10, 1.110223e-18, 0.005, 0, 0.005, -1.110223e-18, -0.005, -4.852939e-26, -2.1855694e-10, 1.1920929e-07, 5.910805e-08, 0.018303394)
 mesh = SubResource("ArrayMesh_a230d")
 
-[node name="@CollisionShape3D@27728" type="CollisionShape3D" parent="." unique_id=370461710]
+[node name="@CollisionShape3D@29082" type="CollisionShape3D" parent="." unique_id=2102813934]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.70884764, 0)
 shape = SubResource("BoxShape3D_7u0jx")

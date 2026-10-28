@@ -52,16 +52,16 @@ shadow_mesh = SubResource("ArrayMesh_v61es")
 data = PackedVector3Array(0.2249999, 0.66881394, 0.2249999, -0.2249999, 0.66881394, 0.2249999, -0.2249999, 0.66881394, -0.2249999, 0.2249999, 0.66881394, 0.2249999, -0.2249999, 0.66881394, -0.2249999, 0.2249999, 0.66881394, -0.2249999, -0.2249999, 0.66881394, -0.2249999, -0.2249999, 0, -0.2249999, 0.22499305, 0, -0.2249999, -0.2249999, 0, 0.2249999, 0.22499305, 0, 0.2249999, 0.22499305, 0, -0.2249999, -0.2249999, 0, 0.2249999, 0.22499305, 0, -0.2249999, -0.2249999, 0, -0.2249999, -0.2249999, 0.66881394, 0.2249999, -0.2249999, 0, 0.2249999, -0.2249999, 0, -0.2249999, -0.2249999, 0.66881394, 0.2249999, -0.2249999, 0, -0.2249999, -0.2249999, 0.66881394, -0.2249999, 0.22499305, 0, 0.2249999, 0.2249999, 0.66881394, 0.2249999, 0.2249999, 0.66881394, -0.2249999, 0.22499305, 0, 0.2249999, 0.2249999, 0.66881394, -0.2249999, 0.22499305, 0, -0.2249999, -0.2249999, 0.66881394, 0.2249999, 0.2249999, 0.66881394, 0.2249999, 0.22499305, 0, 0.2249999, -0.2249999, 0.66881394, -0.2249999, 0.22499305, 0, -0.2249999, 0.2249999, 0.66881394, -0.2249999, -0.2249999, 0.66881394, 0.2249999, 0.22499305, 0, 0.2249999, -0.2249999, 0, 0.2249999)
 backface_collision = true
 
-[node name="concrete_block" type="Node3D" unique_id=2082326416 groups=["props"]]
+[node name="concrete_block" type="Node3D" unique_id=1333879138 groups=["props"]]
 metadata/surface = &"concrete"
 metadata/pick_box = AABB(-0.2249999, 0, -0.2249999, 0.4499998, 0.66881394, 0.4499998)
 
-[node name="@MeshInstance3D@27777" type="MeshInstance3D" parent="." unique_id=92367677]
+[node name="@MeshInstance3D@29130" type="MeshInstance3D" parent="." unique_id=308697606]
 transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 0.33440697, 0)
 mesh = SubResource("ArrayMesh_jd432")
 
-[node name="Concrete" type="StaticBody3D" parent="." unique_id=984081073]
+[node name="Concrete" type="StaticBody3D" parent="." unique_id=1929897654]
 metadata/surface = &"concrete"
 
-[node name="@CollisionShape3D@27778" type="CollisionShape3D" parent="Concrete" unique_id=174406750]
+[node name="@CollisionShape3D@29131" type="CollisionShape3D" parent="Concrete" unique_id=875435738]
 shape = SubResource("ConcavePolygonShape3D_rg3lt")

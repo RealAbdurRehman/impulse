@@ -187,7 +187,7 @@ shadow_mesh = SubResource("ArrayMesh_eaggc")
 [sub_resource type="BoxShape3D" id="BoxShape3D_h1mpg"]
 size = Vector3(1.2115343, 1.1093903, 1.2338172)
 
-[node name="crate_large" type="RigidBody3D" unique_id=1136228328 groups=["props"]]
+[node name="crate_large" type="RigidBody3D" unique_id=487736546 groups=["props"]]
 axis_lock_linear_z = true
 axis_lock_angular_x = true
 axis_lock_angular_y = true
@@ -198,22 +198,22 @@ angular_damp = 0.2
 metadata/surface = &"wood"
 metadata/pick_box = AABB(-0.60576713, 0, -0.6169086, 1.2115343, 1.1093903, 1.2338172)
 
-[node name="@MeshInstance3D@27679" type="MeshInstance3D" parent="." unique_id=682202349]
+[node name="@MeshInstance3D@29033" type="MeshInstance3D" parent="." unique_id=1279405507]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, -3.330669e-18, 0, 3.330669e-18, 0.015, -0.0004015565, 0.005301681, -0.0010715723)
 mesh = SubResource("ArrayMesh_8r72s")
 
-[node name="@MeshInstance3D@27680" type="MeshInstance3D" parent="." unique_id=1867148149]
+[node name="@MeshInstance3D@29034" type="MeshInstance3D" parent="." unique_id=1177058187]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, -3.330669e-18, 0, 3.330669e-18, 0.015, -0.0004015565, 0.005301681, -0.0010715723)
 mesh = SubResource("ArrayMesh_mwpkp")
 
-[node name="@MeshInstance3D@27681" type="MeshInstance3D" parent="." unique_id=207087016]
+[node name="@MeshInstance3D@29035" type="MeshInstance3D" parent="." unique_id=1030663039]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, -3.330669e-18, 0, 3.330669e-18, 0.015, -0.0004015565, 0.005301681, -0.0010715723)
 mesh = SubResource("ArrayMesh_sawy3")
 
-[node name="@MeshInstance3D@27682" type="MeshInstance3D" parent="." unique_id=768014988]
+[node name="@MeshInstance3D@29036" type="MeshInstance3D" parent="." unique_id=768660725]
 transform = Transform3D(0.015, 0, 0, 0, 0.015, -3.330669e-18, 0, 3.330669e-18, 0.015, -0.0004015565, 0.005301681, -0.0010715723)
 mesh = SubResource("ArrayMesh_dk2b1")
 
-[node name="@CollisionShape3D@27683" type="CollisionShape3D" parent="." unique_id=350424274]
+[node name="@CollisionShape3D@29037" type="CollisionShape3D" parent="." unique_id=144712206]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5546951, 0)
 shape = SubResource("BoxShape3D_h1mpg")
