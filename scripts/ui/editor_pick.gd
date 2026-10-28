@@ -4,6 +4,7 @@ extends RefCounted
 const BONE_RADIUS := 0.2
 const REACH := 0.3
 const ITEMS := [WeaponPickup.GROUP, AmmoPickup.GROUP]
+const PROPS := &"props"
 
 
 static func at(tree: SceneTree, point: Vector3, items: bool, skip: CharacterMovement) -> Node3D:
@@ -33,6 +34,16 @@ static func at(tree: SceneTree, point: Vector3, items: bool, skip: CharacterMove
 				best = item
 				best_gap = gap
 
+	for node in tree.get_nodes_in_group(PROPS):
+		var prop := node as Node3D
+		if prop.is_queued_for_deletion():
+			continue
+
+		var gap := _prop_gap(prop, point)
+		if gap < best_gap:
+			best = prop
+			best_gap = gap
+
 	return best
 
 
@@ -44,6 +55,13 @@ static func corners(node: Node3D) -> PackedVector3Array:
 			for sx in [-1.0, 1.0]:
 				for sy in [-1.0, 1.0]:
 					points.append(spot + Vector3(sx, sy, 0.0) * BONE_RADIUS)
+
+		return points
+
+	if node.has_meta(&"pick_box"):
+		var box: AABB = node.get_meta(&"pick_box")
+		for i in 8:
+			points.append(node.global_transform * box.get_endpoint(i))
 
 		return points
 
@@ -86,3 +104,10 @@ static func _box_gap(item: RigidBody3D, point: Vector3) -> float:
 		gap = minf(gap, Vector2(maxf(outside.x, 0.0), maxf(outside.y, 0.0)).length())
 
 	return gap
+
+
+static func _prop_gap(prop: Node3D, point: Vector3) -> float:
+	var box: AABB = prop.get_meta(&"pick_box")
+	var local := prop.global_transform.affine_inverse() * point
+	var outside := (local - box.get_center()).abs() - box.size * 0.5
+	return Vector2(maxf(outside.x, 0.0), maxf(outside.y, 0.0)).length()

@@ -1,0 +1,67 @@
+[gd_scene format=4 uid="uid://caq7sa6u6d0wr"]
+
+[ext_resource type="Texture2D" uid="uid://bd2k0ks1gqxtt" path="res://assets/props/factory_0.jpg" id="1_k767m"]
+[ext_resource type="Texture2D" uid="uid://dj6e6cgspw7lr" path="res://assets/props/factory_1.png" id="2_pw82e"]
+[ext_resource type="Texture2D" uid="uid://cxqkeak23olxw" path="res://assets/props/factory_2.png" id="3_47phv"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_np07d"]
+resource_name = "bricks"
+cull_mode = 2
+albedo_texture = ExtResource("1_k767m")
+metallic_texture = ExtResource("2_pw82e")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_pw82e")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_47phv")
+metadata/_gltf_primary_texture_coord = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_0lo5i"]
+_surfaces = [{
+"aabb": AABB(-0.062405705, -1.25, -0.625, 0.12481141, 2.5, 1.25),
+"format": 34896654337,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAQAAAAMAAwAAAAQAAAACAAQAAQADAAUAAgABAAUAAwAEAAYABgAEAAIABQADAAYABgACAAcAAgAFAAcABQAGAAcA"),
+"name": "bricks",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 8,
+"vertex_data": PackedByteArray("/////wAAAAAAAP//AAAAAAAAAAAAAAAA////////AAD+/wAAAAAAAAAA/////wAA/v8AAP//AAAAAAAA//8AAA==")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_lmox7"]
+resource_name = "Sketchfab_Scene_Factory_modularKit_20_bricks_0"
+_surfaces = [{
+"aabb": AABB(-0.062405705, -1.25, -0.625, 0.12481141, 2.5, 1.25),
+"attribute_data": PackedByteArray("Y0b//2NG///cx4w+AACAP5s5//+bOf//THBmPgAAgD+bOQAAmzkAAEhwZj4AAAAAY0YAAGNGAADax4w+AAAAAJs5//+bOf//THBmPgAAgD9jRv//Y0b//9zHjD4AAIA/Y0YAAGNGAADax4w+AAAAAJs5AACbOQAASHBmPgAAAAAAAP//AAD//wAAAAAAAIA//3////9///8AAAA/AACAP/9/AAD/fwAAAAAAPwAAAAAAAAAAAAAAAAAAAAAAAAAAY0b/P2NG/z/ax4w+AACAPmNG/79jRv+/2seMPgAAQD+bOf+/mzn/v0hwZj4AAEA/mzn/P5s5/z9IcGY+AACAPv9/AAD/fwAAAAAAPwAAAAD/f////3///wAAAD8AAIA/AAD//wAA//8AAAAAAACAPwAAAAAAAAAAAAAAAAAAAACbOf+/mzn/v0xwZj4AAEA/Y0b/v2NG/7/cx4w+AABAP2NG/z9jRv8/3MeMPgAAgD6bOf8/mzn/P0xwZj4AAIA+"),
+"format": 34896654455,
+"index_count": 36,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"),
+"material": SubResource("StandardMaterial3D_np07d"),
+"name": "bricks",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("/////wAAAAAAAP//AAAAAAAAAAAAAAAA/v8AAAAAAAAAAP////8AgP///////wCA/v8AAP//AIAAAAAA//8AgP////////+//////wAA/7/+/wAAAAD/v/7/AAD///+//v8AAP///z/+/wAAAAD/PwAAAAAAAP8/AAAAAP///z8AAAAAAAAAAAAA//8AAAAAAAD/////AAAAAAAA//8AAAAA//8AAP+//////wAA/7//////////vwAA//////+/////f////3////9/////f/9/////f////3////9/////fwAA/38AAP9/AAD/fwAAAAD/fwAA/38AAP9/AAD/f/8//3//P/9//z//f/8//3////9/////f////3////9/")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_0lo5i")
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_k767m"]
+data = PackedVector3Array(0.062405705, 2.5, -0.625, -0.062405705, 2.5, -0.625, -0.062405705, 0, -0.625, 0.062405705, 2.5, -0.625, -0.062405705, 0, -0.625, 0.062403798, 0, -0.625, -0.062405705, 2.5, 0.625, 0.062405705, 2.5, 0.625, 0.062403798, 0, 0.625, -0.062405705, 2.5, 0.625, 0.062403798, 0, 0.625, -0.062405705, 0, 0.625, 0.062405705, 2.5, 0.625, 0.062405705, 2.5, -0.625, 0.062403798, 0, -0.625, 0.062405705, 2.5, 0.625, 0.062403798, 0, -0.625, 0.062403798, 0, 0.625, 0.062403798, 0, 0.625, 0.062403798, 0, -0.625, -0.062405705, 0, -0.625, 0.062403798, 0, 0.625, -0.062405705, 0, -0.625, -0.062405705, 0, 0.625, -0.062405705, 0, -0.625, -0.062405705, 2.5, -0.625, -0.062405705, 2.5, 0.625, -0.062405705, 0, -0.625, -0.062405705, 2.5, 0.625, -0.062405705, 0, 0.625, -0.062405705, 2.5, -0.625, 0.062405705, 2.5, -0.625, 0.062405705, 2.5, 0.625, -0.062405705, 2.5, -0.625, 0.062405705, 2.5, 0.625, -0.062405705, 2.5, 0.625)
+backface_collision = true
+
+[node name="brick_wall_half" type="Node3D" unique_id=2051390368 groups=["props"]]
+metadata/surface = &"concrete"
+metadata/pick_box = AABB(-0.062405705, 0, -0.625, 0.12481141, 2.5, 1.25)
+
+[node name="@MeshInstance3D@27748" type="MeshInstance3D" parent="." unique_id=1755412700]
+transform = Transform3D(1, 0, 0, 0, 1, -2.220446e-16, 0, 2.220446e-16, 1, 0, 1.25, 0)
+mesh = SubResource("ArrayMesh_lmox7")
+
+[node name="Concrete" type="StaticBody3D" parent="." unique_id=2030950134]
+metadata/surface = &"concrete"
+
+[node name="@CollisionShape3D@27749" type="CollisionShape3D" parent="Concrete" unique_id=383540987]
+shape = SubResource("ConcavePolygonShape3D_k767m")

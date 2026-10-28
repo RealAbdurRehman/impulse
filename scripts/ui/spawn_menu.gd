@@ -13,6 +13,7 @@ const MARK_PAD := 6.0
 @export var ally_look: LookStyle
 @export var kinds: Array[SpawnKind]
 @export var weapons: Array[WeaponStats]
+@export var props: Array[PackedScene]
 
 var world: Sandbox
 var player: CharacterMovement:
@@ -50,11 +51,16 @@ func _ready() -> void:
 		var label: String = AmmoPouch.NAMES[stats.ammo_type].capitalize()
 		_add_pick(%Weapons, label, _drop_weapon.bind(stats), "Placing %s" % label)
 
+	for scene in props:
+		var label := scene.resource_path.get_file().get_basename().replace("modularkit_", "").replace("_", " ").capitalize()
+		_add_pick(%PropGrid, label, _drop_prop.bind(scene), "Placing %s" % label)
+
 	_delete = _add_pick(%Tools, "Delete", _delete_at, "Click something to delete it")
 	_possess = _add_pick(%Tools, "Possess", _possess_at, "Click a character to take control")
 	%ClearEnemies.pressed.connect(_clear.bind(false))
 	%ClearAllies.pressed.connect(_clear.bind(true))
 	%ClearWeapons.pressed.connect(_clear_weapons)
+	%ClearProps.pressed.connect(_clear_props)
 	_marker.draw.connect(_paint)
 	_run.toggled.connect(_set_running)
 
@@ -238,6 +244,12 @@ func _drop_weapon(at: Vector3, stats: WeaponStats) -> void:
 	WeaponPickup.spawn(world, stats, stats.magazine_size, Transform3D(Basis.IDENTITY, at), Vector3.ZERO, 0.0)
 
 
+func _drop_prop(at: Vector3, scene: PackedScene) -> void:
+	var prop := scene.instantiate() as Node3D
+	world.add_child(prop)
+	prop.global_position = at
+
+
 func _delete_at(at: Vector3) -> void:
 	var found := EditorPick.at(get_tree(), at, true, player)
 	if found is CharacterMovement:
@@ -264,6 +276,13 @@ func _clear_weapons() -> void:
 	for group in EditorPick.ITEMS:
 		for node in get_tree().get_nodes_in_group(group):
 			node.queue_free()
+
+	_forget_hover()
+
+
+func _clear_props() -> void:
+	for node in get_tree().get_nodes_in_group(EditorPick.PROPS):
+		node.queue_free()
 
 	_forget_hover()
 

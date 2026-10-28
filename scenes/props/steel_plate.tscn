@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://c72ua53se7iq2"]
+
+[ext_resource type="Texture2D" uid="uid://b1nlexskfhnuj" path="res://assets/props/factory_6.png" id="1_o03tj"]
+[ext_resource type="Texture2D" uid="uid://b2ejo5chjhm8t" path="res://assets/props/factory_7.png" id="2_jpcxq"]
+[ext_resource type="Texture2D" uid="uid://cbt2x4bfinldn" path="res://assets/props/factory_8.png" id="3_8c0ii"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o03tj"]
+resource_name = "Trim_metal"
+cull_mode = 2
+albedo_texture = ExtResource("1_o03tj")
+metallic = 1.0
+metallic_texture = ExtResource("2_jpcxq")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_jpcxq")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_8c0ii")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+metadata/_gltf_primary_texture_coord = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_jpcxq"]
+material = SubResource("StandardMaterial3D_o03tj")
+size = Vector3(3, 0.1, 1.5)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_8c0ii"]
+data = PackedVector3Array(-1.5, 0.1, 0.75, 1.5, 0.1, 0.75, -1.5, 0, 0.75, 1.5, 0.1, 0.75, 1.5, 0, 0.75, -1.5, 0, 0.75, 1.5, 0.1, -0.75, -1.5, 0.1, -0.75, 1.5, 0, -0.75, -1.5, 0.1, -0.75, -1.5, 0, -0.75, 1.5, 0, -0.75, 1.5, 0.1, 0.75, 1.5, 0.1, -0.75, 1.5, 0, 0.75, 1.5, 0.1, -0.75, 1.5, 0, -0.75, 1.5, 0, 0.75, -1.5, 0.1, -0.75, -1.5, 0.1, 0.75, -1.5, 0, -0.75, -1.5, 0.1, 0.75, -1.5, 0, 0.75, -1.5, 0, -0.75, 1.5, 0.1, 0.75, -1.5, 0.1, 0.75, 1.5, 0.1, -0.75, -1.5, 0.1, 0.75, -1.5, 0.1, -0.75, 1.5, 0.1, -0.75, -1.5, 0, 0.75, 1.5, 0, 0.75, -1.5, 0, -0.75, 1.5, 0, 0.75, 1.5, 0, -0.75, -1.5, 0, -0.75)
+backface_collision = true
+
+[node name="steel_plate" type="Node3D" unique_id=150949315 groups=["props"]]
+metadata/surface = &"metal"
+metadata/pick_box = AABB(-1.5, 0, -0.75, 3, 0.1, 1.5)
+
+[node name="@MeshInstance3D@27841" type="MeshInstance3D" parent="." unique_id=1118797590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_jpcxq")
+
+[node name="Metal" type="StaticBody3D" parent="." unique_id=740858953]
+metadata/surface = &"metal"
+
+[node name="@CollisionShape3D@27842" type="CollisionShape3D" parent="Metal" unique_id=1289196470]
+shape = SubResource("ConcavePolygonShape3D_8c0ii")
