@@ -28,7 +28,10 @@ func _load_all() -> void:
 		var done := 0.0
 		pending = false
 		for path in PATHS:
-			pending = pending or ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS
+			pending = (
+				pending
+				or ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS
+			)
 			done += progress[0]
 
 		_progress.value = done / PATHS.size() * LOAD_SHARE
@@ -39,8 +42,14 @@ func _load_all() -> void:
 
 
 func _warm_up() -> void:
-	var sandbox := (_kept[1] as PackedScene).instantiate()
+	var sandbox := (_kept[1] as PackedScene).instantiate() as Sandbox
 	add_child(sandbox)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	(sandbox.player.get_node("PlayerInput") as PlayerInput).suspended = true
+	for each in sandbox.find_children("*", "", false, false):
+		if each is CanvasLayer or each is SpawnMenu or each is SquadCall:
+			each.process_mode = Node.PROCESS_MODE_DISABLED
+
 	var tween := create_tween()
 	tween.tween_property(_progress, "value", 1.0, WARM_TIME)
 	await tween.finished
