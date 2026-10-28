@@ -44,7 +44,12 @@ func _ready() -> void:
 	_group.allow_unpress = true
 	_group.pressed.connect(_on_picked)
 	for kind in kinds:
-		_add_pick(%Enemies, kind.label, _drop_character.bind(kind, false), "Placing %s" % kind.label)
+		_add_pick(
+			%Enemies,
+			kind.label,
+			_drop_character.bind(kind, false),
+			"Placing %s" % kind.label,
+		)
 		_add_pick(%Allies, kind.label, _drop_character.bind(kind, true), "Placing %s" % kind.label)
 
 	for stats in weapons:
@@ -52,7 +57,13 @@ func _ready() -> void:
 		_add_pick(%Weapons, label, _drop_weapon.bind(stats), "Placing %s" % label)
 
 	for scene in props:
-		var label := scene.resource_path.get_file().get_basename().replace("modularkit_", "").replace("_", " ").capitalize()
+		var label := scene \
+				.resource_path \
+				.get_file() \
+				.get_basename() \
+				.replace("modularkit_", "") \
+				.replace("_", " ") \
+				.capitalize()
 		_add_pick(%PropGrid, label, _drop_prop.bind(scene), "Placing %s" % label)
 
 	_delete = _add_pick(%Tools, "Delete", _delete_at, "Click something to delete it")
@@ -178,7 +189,10 @@ func _cursor_point() -> Variant:
 	var cam := get_viewport().get_camera_3d()
 	var mouse := get_viewport().get_mouse_position()
 	var plane := Plane(Vector3.BACK, player.plane_z)
-	var hit: Variant = plane.intersects_ray(cam.project_ray_origin(mouse), cam.project_ray_normal(mouse))
+	var hit: Variant = plane.intersects_ray(
+		cam.project_ray_origin(mouse),
+		cam.project_ray_normal(mouse),
+	)
 	if hit == null:
 		return null
 
@@ -241,12 +255,22 @@ func _drop_character(at: Vector3, kind: SpawnKind, ally: bool) -> void:
 
 
 func _drop_weapon(at: Vector3, stats: WeaponStats) -> void:
-	WeaponPickup.spawn(world, stats, stats.magazine_size, Transform3D(Basis.IDENTITY, at), Vector3.ZERO, 0.0)
+	WeaponPickup.spawn(
+		world,
+		stats,
+		stats.magazine_size,
+		Transform3D(Basis.IDENTITY, at),
+		Vector3.ZERO,
+		0.0,
+	)
 
 
 func _drop_prop(at: Vector3, scene: PackedScene) -> void:
 	var prop := scene.instantiate() as Node3D
 	world.add_child(prop)
+	if not prop is RigidBody3D and at.y <= GROUND:
+		at.y = 0.0
+
 	prop.global_position = at
 
 
