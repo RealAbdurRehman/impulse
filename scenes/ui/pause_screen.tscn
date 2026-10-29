@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_screen.gd" id="1_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/controls_page.tscn" id="2_controls"]
 
 [node name="PauseScreen" type="CanvasLayer"]
 process_mode = 3
@@ -49,6 +50,13 @@ layout_mode = 2
 text = "Resume"
 alignment = 0
 
+[node name="ControlsButton" type="Button" parent="Main/Box/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Controls"
+alignment = 0
+
 [node name="Restart" type="Button" parent="Main/Box/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 0)
@@ -62,3 +70,7 @@ custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 text = "Main menu"
 alignment = 0
+
+[node name="ControlsPage" parent="." instance=ExtResource("2_controls")]
+unique_name_in_owner = true
+layout_mode = 1

@@ -13,7 +13,7 @@ const GAME := {
 	&"Indicators": &"indicators",
 }
 
-@onready var _pages: Array[Control] = [%Main, %Settings]
+@onready var _pages: Array[Control] = [%Main, %Settings, %Controls]
 
 
 func _ready() -> void:
@@ -30,6 +30,8 @@ func _ready() -> void:
 	%SettingsButton.pressed.connect(_open.bind(%Settings))
 	%Quit.pressed.connect(get_tree().quit)
 	%SettingsBack.pressed.connect(_open.bind(%Main))
+	%ControlsButton.pressed.connect(_open.bind(%Controls))
+	%Controls.back.connect(_open.bind(%Main))
 	_open(%Main)
 
 
