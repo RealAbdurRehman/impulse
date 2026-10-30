@@ -8,6 +8,7 @@ const ENEMY_TEAM := &"enemy"
 const MARK_COLOR := Color(1.0, 0.36, 0.3)
 const POSSESS_COLOR := Color(0.45, 0.85, 0.5)
 const MARK_PAD := 6.0
+const ARM_TIME := 2.5
 
 @export var enemy_scene: PackedScene
 @export var ally_look: LookStyle
@@ -65,6 +66,10 @@ func _ready() -> void:
 				.replace("_", " ") \
 				.capitalize()
 		_add_pick(%PropGrid, label, _drop_prop.bind(scene), "Placing %s" % label)
+
+	_add_scenario("Empty sandbox", &"")
+	for spec: Dictionary in Scenarios.LIST:
+		_add_scenario(spec.title, spec.id)
 
 	_delete = _add_pick(%Tools, "Delete", _delete_at, "Click something to delete it")
 	_possess = _add_pick(%Tools, "Possess", _possess_at, "Click a character to take control")
@@ -157,6 +162,12 @@ func mourn() -> void:
 
 
 func spawn(at: Vector3, kind: SpawnKind, team: StringName) -> CharacterMovement:
+	var body := build(at, kind, team)
+	world.add_child(body)
+	return body
+
+
+func build(at: Vector3, kind: SpawnKind, team: StringName) -> CharacterMovement:
 	var body := enemy_scene.instantiate() as CharacterMovement
 	(body.get_node("Weapon") as Weapon).stats = kind.weapon
 
@@ -175,7 +186,6 @@ func spawn(at: Vector3, kind: SpawnKind, team: StringName) -> CharacterMovement:
 
 	Roster.align(brain, player.health.team)
 	body.position = at
-	world.add_child(body)
 	return body
 
 
@@ -210,6 +220,29 @@ func _add_pick(grid: Container, label: String, action: Callable, status: String)
 	button.set_meta(&"status", status)
 	grid.add_child(button)
 	return button
+
+
+func _add_scenario(label: String, id: StringName) -> void:
+	var button := Button.new()
+	button.text = label
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.pressed.connect(_load_scenario.bind(button, label, id))
+	%Scenarios.add_child(button)
+
+
+func _load_scenario(button: Button, label: String, id: StringName) -> void:
+	if button.has_meta(&"armed"):
+		Scenarios.play(get_tree(), id)
+		return
+
+	button.set_meta(&"armed", true)
+	button.text = "Click again to load %s" % label
+	get_tree().create_timer(ARM_TIME, true, false, true).timeout.connect(_disarm_scenario.bind(button, label))
+
+
+func _disarm_scenario(button: Button, label: String) -> void:
+	button.remove_meta(&"armed")
+	button.text = label
 
 
 func _on_picked(button: BaseButton) -> void:
@@ -272,6 +305,7 @@ func _drop_prop(at: Vector3, scene: PackedScene) -> void:
 		at.y = 0.0
 
 	prop.global_position = at
+	EnemyNav.reset()
 
 
 func _delete_at(at: Vector3) -> void:
@@ -280,6 +314,7 @@ func _delete_at(at: Vector3) -> void:
 		Roster.remove(get_tree(), found as CharacterMovement, player)
 	elif found != null:
 		found.queue_free()
+		EnemyNav.reset()
 
 	_forget_hover()
 
@@ -307,6 +342,8 @@ func _clear_weapons() -> void:
 func _clear_props() -> void:
 	for node in get_tree().get_nodes_in_group(EditorPick.PROPS):
 		node.queue_free()
+
+	EnemyNav.reset()
 
 	_forget_hover()
 

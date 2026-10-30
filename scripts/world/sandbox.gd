@@ -28,6 +28,11 @@ func _ready() -> void:
 	add_child(_lod)
 	_equip(player)
 	EnemyNav.reset()
+	if Scenarios.pending != &"":
+		var run := ScenarioRun.new()
+		run.spec = Scenarios.find(Scenarios.pending)
+		add_child(run)
+
 	add_child(Grade.new())
 	add_child(PAUSE.instantiate())
 	Transition.reveal(get_tree())

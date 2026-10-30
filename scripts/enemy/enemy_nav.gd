@@ -6,7 +6,7 @@ enum Kind { WALK, JUMP, DROP }
 const STEP := 0.25
 const TOP := 14.0
 const BOTTOM := -10.0
-const MAX_STEP := 0.6
+const MAX_STEP := 0.52
 const EPS := 0.01
 const JUMP_UP := 0.9
 const JUMP_GAP := 1.7
@@ -16,6 +16,12 @@ const WALL_REACH := 4.5
 const WALL_LIMIT := 3.15
 const BIG_DROP := 2.5
 const BIG_DROP_COST := 16.0
+const NUDGE := 0.06
+const ROOM_LIFT := 0.625
+const ROOM_HEIGHT := 1.15
+const ROOF_CHECK := 0.45
+const MIN_LAYER := 0.5
+const DOOR_REACH := 0.35
 
 static var _maps := { }
 
@@ -28,6 +34,7 @@ var _columns: Array = []
 var _space: PhysicsDirectSpaceState3D
 var _mask := 1
 var _z := 0.0
+var _body := BoxShape3D.new()
 
 
 static func reset() -> void:
@@ -37,8 +44,13 @@ static func reset() -> void:
 static func of(node: Node3D, mask: int, extent: float) -> EnemyNav:
 	var key := node.get_world_3d().get_rid()
 	if not _maps.has(key):
+		var doors: Array[Vector3] = []
+		for prop in node.get_tree().get_nodes_in_group(&"props"):
+			if prop is Door:
+				doors.append((prop as Door).global_position)
+
 		var nav := EnemyNav.new()
-		nav._build(node.get_world_3d().direct_space_state, mask, node.global_position, extent)
+		nav._build(node.get_world_3d().direct_space_state, mask, node.global_position, extent, doors)
 		_maps[key] = nav
 
 	return _maps[key]
@@ -170,10 +182,11 @@ func _pop(heap: Array) -> int:
 	return top[1]
 
 
-func _build(space: PhysicsDirectSpaceState3D, mask: int, centre: Vector3, extent: float) -> void:
+func _build(space: PhysicsDirectSpaceState3D, mask: int, centre: Vector3, extent: float, doors: Array[Vector3]) -> void:
 	_space = space
 	_mask = mask
 	_z = centre.z
+	_body.size = Vector3(0.06, ROOM_HEIGHT, 0.3)
 	_first = snappedf(centre.x - extent, STEP) + 0.07
 
 	var count := int(extent * 2.0 / STEP) + 1
@@ -187,7 +200,7 @@ func _build(space: PhysicsDirectSpaceState3D, mask: int, centre: Vector3, extent
 				break
 
 			var top: float = (hit.position as Vector3).y
-			if (hit.normal as Vector3).y > 0.6 and _room(x, top):
+			if (hit.normal as Vector3).y > 0.6 and _room(x, top) and (found.is_empty() or ys[found[-1]] - top >= MIN_LAYER):
 				xs.append(x)
 				ys.append(top)
 				links.append([])
@@ -199,6 +212,17 @@ func _build(space: PhysicsDirectSpaceState3D, mask: int, centre: Vector3, extent
 
 	for id in xs.size():
 		_link(id)
+
+	for door in doors:
+		_bridge(door)
+
+
+func _bridge(door: Vector3) -> void:
+	var near := nearest(door.x - DOOR_REACH, door.y)
+	var far := nearest(door.x + DOOR_REACH, door.y)
+	if near >= 0 and far >= 0 and near != far:
+		_add(near, far, Kind.WALK, DOOR_REACH * 2.0)
+		_add(far, near, Kind.WALK, DOOR_REACH * 2.0)
 
 
 func _link(id: int) -> void:
@@ -277,16 +301,35 @@ func _add(from_id: int, to_id: int, kind: int, cost: float) -> void:
 
 
 func _down(x: float, y: float) -> Dictionary:
+	var hit := _ray(x, y)
+	if hit.is_empty() or (hit.normal as Vector3).y > 0.6:
+		return hit
+
+	var best := hit
+	for nudge in [-NUDGE, NUDGE]:
+		var near := _ray(x + nudge, y)
+		if near.is_empty() or (near.normal as Vector3).y <= 0.6:
+			continue
+
+		if best == hit or (near.position as Vector3).y > (best.position as Vector3).y:
+			best = near
+
+	return best
+
+
+func _ray(x: float, y: float) -> Dictionary:
 	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y, _z), Vector3(x, BOTTOM, _z), _mask)
 	return _space.intersect_ray(query)
 
 
 func _room(x: float, y: float) -> bool:
-	var body_shape := BoxShape3D.new()
-	body_shape.size = Vector3(0.06, 1.45, 0.3)
+	var query := PhysicsRayQueryParameters3D.create(Vector3(x, y + 0.03, _z), Vector3(x, y + ROOF_CHECK, _z), _mask)
+	return _space.intersect_ray(query).is_empty() and _empty(_body, Vector3(x, y + ROOM_LIFT + ROOM_HEIGHT * 0.5, _z))
 
+
+func _empty(shape: Shape3D, at: Vector3) -> bool:
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = body_shape
+	query.shape = shape
 	query.collision_mask = _mask
-	query.transform = Transform3D(Basis.IDENTITY, Vector3(x, y + 0.9, _z))
+	query.transform = Transform3D(Basis.IDENTITY, at)
 	return _space.intersect_shape(query, 1).is_empty()

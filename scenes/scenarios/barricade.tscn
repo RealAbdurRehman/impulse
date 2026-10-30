@@ -1,0 +1,344 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/scenario_level.gd" id="r1"]
+[ext_resource type="Script" path="res://scripts/world/scenario_wave.gd" id="r2"]
+[ext_resource type="Script" path="res://scripts/world/scenario_foe.gd" id="r3"]
+[ext_resource type="Script" path="res://scripts/world/scenario_loot.gd" id="r4"]
+[ext_resource type="PackedScene" path="res://scenes/props/window_wall_wide.tscn" id="r5"]
+[ext_resource type="PackedScene" path="res://scenes/props/dumpster.tscn" id="r6"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate_large.tscn" id="r7"]
+[ext_resource type="PackedScene" path="res://scenes/props/water_tank.tscn" id="r8"]
+[ext_resource type="PackedScene" path="res://scenes/props/barrel_steel.tscn" id="r9"]
+[ext_resource type="PackedScene" path="res://scenes/props/concrete_barrier.tscn" id="r10"]
+[ext_resource type="PackedScene" path="res://scenes/props/low_wall.tscn" id="r11"]
+[ext_resource type="PackedScene" path="res://scenes/props/crate_small.tscn" id="r12"]
+[ext_resource type="PackedScene" path="res://scenes/props/concrete_barrier.tscn" id="r13"]
+[ext_resource type="PackedScene" path="res://scenes/props/concrete_pillar.tscn" id="r14"]
+[ext_resource type="PackedScene" path="res://scenes/props/platform_small.tscn" id="r15"]
+
+[node name="Barricade" type="Node3D"]
+script = ExtResource("r1")
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="WindowWallWide" parent="Props" instance=ExtResource("r5")]
+position = Vector3(-12, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide2" parent="Props" instance=ExtResource("r5")]
+position = Vector3(-7, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide3" parent="Props" instance=ExtResource("r5")]
+position = Vector3(-2, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide4" parent="Props" instance=ExtResource("r5")]
+position = Vector3(3, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide5" parent="Props" instance=ExtResource("r5")]
+position = Vector3(8, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide6" parent="Props" instance=ExtResource("r5")]
+position = Vector3(13, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide7" parent="Props" instance=ExtResource("r5")]
+position = Vector3(18, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide8" parent="Props" instance=ExtResource("r5")]
+position = Vector3(23, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="WindowWallWide9" parent="Props" instance=ExtResource("r5")]
+position = Vector3(28, 0, -3.4)
+rotation = Vector3(0, 1.5708, 0)
+
+[node name="Dumpster" parent="Props" instance=ExtResource("r6")]
+position = Vector3(-7.5, 0, -2.2)
+
+[node name="CrateLarge" parent="Props" instance=ExtResource("r7")]
+position = Vector3(-9.5, 0, -2)
+
+[node name="WaterTank" parent="Props" instance=ExtResource("r8")]
+position = Vector3(-11, 0, -2.4)
+
+[node name="BarrelSteel" parent="Props" instance=ExtResource("r9")]
+position = Vector3(12, 0, -2)
+
+[node name="ConcreteBarrier" parent="Props" instance=ExtResource("r10")]
+position = Vector3(3, 0, -1.5)
+
+[node name="ConcreteBarrier2" parent="Props" instance=ExtResource("r10")]
+position = Vector3(5.2, 0, -1.5)
+
+[node name="ConcreteBarrier3" parent="Props" instance=ExtResource("r10")]
+position = Vector3(7.4, 0, -1.5)
+
+[node name="ConcreteBarrier4" parent="Props" instance=ExtResource("r10")]
+position = Vector3(9.6, 0, -1.5)
+
+[node name="LowWall" parent="Props" instance=ExtResource("r11")]
+position = Vector3(2.6, 0, 0)
+
+[node name="LowWall2" parent="Props" instance=ExtResource("r11")]
+position = Vector3(4, 0, 0)
+
+[node name="LowWall3" parent="Props" instance=ExtResource("r11")]
+position = Vector3(5.4, 0, 0)
+
+[node name="LowWall4" parent="Props" instance=ExtResource("r11")]
+position = Vector3(6.8, 0, 0)
+
+[node name="CrateSmall" parent="Props" instance=ExtResource("r12")]
+position = Vector3(10.4, 0, 0)
+
+[node name="CoverBarrier" parent="Props" instance=ExtResource("r13")]
+position = Vector3(15.2, 0, 0)
+
+[node name="ConcretePillar" parent="Props" instance=ExtResource("r14")]
+position = Vector3(19, 0, -1.7)
+
+[node name="PlatformSmall" parent="Props" instance=ExtResource("r15")]
+position = Vector3(19, 2.5, 0)
+
+[node name="CrateSmall2" parent="Props" instance=ExtResource("r12")]
+position = Vector3(19.7, 2.7, 0)
+
+[node name="Loot" type="Node3D" parent="."]
+
+[node name="PistolAmmo" type="Marker3D" parent="Loot"]
+script = ExtResource("r4")
+position = Vector3(-2.6, 0.4, 0)
+ammo = "pistol"
+count = 24
+
+[node name="ShotgunGun" type="Marker3D" parent="Loot"]
+script = ExtResource("r4")
+position = Vector3(-3.4, 0.4, 0)
+ammo = "shotgun"
+gun = true
+
+[node name="ShotgunAmmo" type="Marker3D" parent="Loot"]
+script = ExtResource("r4")
+position = Vector3(-4, 0.4, 0)
+ammo = "shotgun"
+count = 24
+
+[node name="RifleGun" type="Marker3D" parent="Loot"]
+script = ExtResource("r4")
+position = Vector3(-4.6, 0.4, 0)
+gun = true
+
+[node name="RifleAmmo" type="Marker3D" parent="Loot"]
+script = ExtResource("r4")
+position = Vector3(-5.2, 0.4, 0)
+count = 60
+
+[node name="Allies" type="Node3D" parent="."]
+
+[node name="Gunner" type="Marker3D" parent="Allies"]
+script = ExtResource("r3")
+position = Vector3(-2, 0.1, 0)
+kind = "Gunner"
+ally = true
+skill = 0.6
+
+[node name="Grunt" type="Marker3D" parent="Allies"]
+script = ExtResource("r3")
+position = Vector3(1.5, 0.1, 0)
+ally = true
+skill = 0.55
+
+[node name="Waves" type="Node3D" parent="."]
+
+[node name="Wave1" type="Node3D" parent="Waves"]
+script = ExtResource("r2")
+pause = 1.5
+
+[node name="Grunt" type="Marker3D" parent="Waves/Wave1"]
+script = ExtResource("r3")
+position = Vector3(26, 0.1, 0)
+skill = 0.5
+
+[node name="Grunt2" type="Marker3D" parent="Waves/Wave1"]
+script = ExtResource("r3")
+position = Vector3(28, 0.1, 0)
+delay = 2.5
+skill = 0.5
+
+[node name="Grunt3" type="Marker3D" parent="Waves/Wave1"]
+script = ExtResource("r3")
+position = Vector3(30, 0.1, 0)
+delay = 5
+skill = 0.5
+
+[node name="Grunt4" type="Marker3D" parent="Waves/Wave1"]
+script = ExtResource("r3")
+position = Vector3(-16, 0.1, 0)
+delay = 8
+skill = 0.5
+
+[node name="Wave2" type="Node3D" parent="Waves"]
+script = ExtResource("r2")
+
+[node name="PistolAmmo2" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r4")
+position = Vector3(-1.2, 0.4, 0)
+ammo = "pistol"
+count = 24
+
+[node name="RifleAmmo2" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r4")
+position = Vector3(-2, 0.4, 0)
+count = 30
+
+[node name="Rusher" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r3")
+position = Vector3(26, 0.1, 0)
+kind = "Rusher"
+skill = 0.55
+
+[node name="Rusher2" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r3")
+position = Vector3(29, 0.1, 0)
+kind = "Rusher"
+delay = 2
+skill = 0.55
+
+[node name="Grunt" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r3")
+position = Vector3(31, 0.1, 0)
+delay = 4
+skill = 0.55
+
+[node name="Grunt2" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r3")
+position = Vector3(-17, 0.1, 0)
+delay = 6
+skill = 0.55
+
+[node name="Gunner" type="Marker3D" parent="Waves/Wave2"]
+script = ExtResource("r3")
+position = Vector3(33, 0.1, 0)
+kind = "Gunner"
+delay = 8
+skill = 0.6
+
+[node name="Wave3" type="Node3D" parent="Waves"]
+script = ExtResource("r2")
+carry_over = 1
+
+[node name="RifleAmmo3" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r4")
+position = Vector3(-1.2, 0.4, 0)
+count = 60
+
+[node name="ShotgunAmmo2" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r4")
+position = Vector3(-2.2, 0.4, 0)
+ammo = "shotgun"
+count = 12
+
+[node name="Sniper" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(18.8, 2.9, 0)
+kind = "Sniper"
+stationary = true
+skill = 0.7
+
+[node name="Gunner" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(28, 0.1, 0)
+kind = "Gunner"
+skill = 0.65
+
+[node name="Gunner2" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(31, 0.1, 0)
+kind = "Gunner"
+delay = 3
+skill = 0.65
+
+[node name="Hunter" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(33, 0.1, 0)
+kind = "Hunter"
+delay = 7
+skill = 0.65
+toughness = 1.4
+
+[node name="Flanker" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(-16, 0.1, 0)
+kind = "Flanker"
+delay = 5
+skill = 0.6
+
+[node name="Flanker2" type="Marker3D" parent="Waves/Wave3"]
+script = ExtResource("r3")
+position = Vector3(-19, 0.1, 0)
+kind = "Flanker"
+delay = 8
+skill = 0.6
+
+[node name="Wave4" type="Node3D" parent="Waves"]
+script = ExtResource("r2")
+pause = 5
+
+[node name="RifleAmmo4" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r4")
+position = Vector3(-1.2, 0.4, 0)
+count = 60
+
+[node name="PistolAmmo3" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r4")
+position = Vector3(-2.2, 0.4, 0)
+ammo = "pistol"
+count = 24
+
+[node name="Gunner" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(27, 0.1, 0)
+kind = "Gunner"
+skill = 0.7
+
+[node name="Gunner2" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(30, 0.1, 0)
+kind = "Gunner"
+delay = 3
+skill = 0.7
+
+[node name="Rusher" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(-16, 0.1, 0)
+kind = "Rusher"
+delay = 4
+skill = 0.6
+
+[node name="Rusher2" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(-19, 0.1, 0)
+kind = "Rusher"
+delay = 6
+skill = 0.6
+
+[node name="Hunter" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(33, 0.1, 0)
+kind = "Hunter"
+delay = 7
+skill = 0.7
+toughness = 1.4
+
+[node name="Hunter2" type="Marker3D" parent="Waves/Wave4"]
+script = ExtResource("r3")
+position = Vector3(-22, 0.1, 0)
+kind = "Hunter"
+delay = 11
+skill = 0.7
+toughness = 1.3

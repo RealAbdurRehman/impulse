@@ -43,6 +43,7 @@ class Foot:
 
 
 const NO_GROUND := -1.0e20
+const STAIR_SAMPLES := 4
 const PROBE_UP := 0.8
 
 @export var character: CharacterMovement
@@ -104,6 +105,16 @@ const PROBE_UP := 0.8
 
 @export var max_step_rise := 0.62
 @export var max_step_drop := 0.75
+@export var root_sink := 0.08
+@export var root_float := 0.15
+@export var root_lookahead := 0.18
+@export var root_catch := 0.12
+@export var stairs_riser := 0.3
+@export var stairs_speed := 1.15
+@export var stairs_smooth := 0.56
+@export var ref_follow := 80.0
+@export var stairs_ref_follow := 9.0
+@export var land_spread := 0.12
 
 @export var edge_probe := 0.10
 @export var edge_snap_threshold := 0.05
@@ -111,7 +122,9 @@ const PROBE_UP := 0.8
 @export var heel_reach := 0.07
 @export var swing_clearance := 0.02
 @export var clearance_spring := 16.0
+@export var clearance_rise_scale := 2.5
 @export var toe_clear_height := 0.05
+@export var edge_lookahead := 0.3
 
 @export var idle_speed_threshold := 0.08
 
@@ -122,6 +135,7 @@ const PROBE_UP := 0.8
 
 @export_group("Stairs")
 @export var stairs_slope := 0.22
+@export var stairs_max_rise := 0.4
 @export var stairs_probe := 0.35
 
 @export var step_time_stairs := 0.31
@@ -195,6 +209,8 @@ const PROBE_UP := 0.8
 @export var hips_damping := 22.0
 @export var hip_clamp_speed := 4.0
 @export var run_hip_clamp_speed := 0.5
+@export var hip_catch_speed := 5.0
+@export var hip_catch_excess := 0.12
 @export var foot_speed_limit := 6.0
 
 @export var step_impact := 0.18
@@ -253,6 +269,7 @@ var hips_offset_fwd := 0.0
 var _feet: Array[Foot] = []
 
 var _hip_y := 0.0
+var _ref_y := INF
 var _hip_vel := 0.0
 var _hip_init := false
 
@@ -416,7 +433,35 @@ func _physics_process(delta: float) -> void:
 		for f in _feet:
 			sy += _foot_support_y(f)
 
-		character.drive_root(Vector3(0.0, sy * 0.5 - ankle_height, 0.0), delta)
+		var support := sy * 0.5 - ankle_height
+		var under := _sample_ground(character.global_position)
+		if under[0] and absf(dirx) > 0.0:
+			var ahead := _sample_ground(character.global_position + Vector3(dirx * root_lookahead, 0.0, 0.0))
+			if ahead[0] and float(ahead[1]) - float(under[1]) > stairs_riser:
+				under = ahead
+
+		if under[0]:
+			support = clampf(support, float(under[1]) - root_sink, float(under[1]) + root_float)
+
+		var catch_up := -INF
+		var cap := INF
+		if under[0]:
+			var ref := float(under[1])
+			if stairs_amount > 0.0:
+				ref = lerpf(ref, _smooth_ground(character.global_position), stairs_amount)
+
+			if _ref_y == INF:
+				_ref_y = ref
+
+			_ref_y = lerpf(_ref_y, ref, 1.0 - exp(-lerpf(ref_follow, stairs_ref_follow, stairs_amount) * delta))
+			if stairs_amount > 0.0:
+				support = lerpf(support, _ref_y, stairs_amount)
+
+			catch_up = _ref_y - root_catch
+			cap = _ref_y + root_float
+			support = clampf(support, catch_up, cap)
+
+		character.drive_root(Vector3(0.0, support, 0.0), delta, catch_up, cap)
 
 	if on_floor:
 		_air_t = move_toward(_air_t, 0.0, delta / maxf(air_blend_out_time, 0.02))
@@ -715,6 +760,10 @@ func _retarget_landing(f: Foot, k: float, delta: float) -> void:
 		f.end.x = x
 
 
+func _rise_cap(f: Foot) -> float:
+	return maxf(max_step_rise, character.global_position.y + ankle_height + 0.1 - f.planted.y)
+
+
 func _lead_for(speed: float) -> float:
 	var a := lerpf(lead_base, stairs_lead_base, stairs_amount)
 	var b := lerpf(lead_time, stairs_lead_time, stairs_amount)
@@ -768,7 +817,7 @@ func _plan_landing(
 	var tries := 0
 	while tries < 10:
 		var dh: float = end_pos.y - f.planted.y
-		if dh <= max_step_rise and dh >= -max_step_drop:
+		if dh <= _rise_cap(f) and dh >= -max_step_drop:
 			break
 
 		want.x += back * 0.08
@@ -784,7 +833,7 @@ func _plan_landing(
 		want.x = x
 		var held := _footfall(want, d)
 		var rise: float = held[0].y - f.planted.y
-		if absf(held[0].y - end_pos.y) > 0.03 and rise <= max_step_rise and rise >= -max_step_drop:
+		if absf(held[0].y - end_pos.y) > 0.03 and rise <= _rise_cap(f) and rise >= -max_step_drop:
 			fall = held
 			end_pos = held[0]
 		else:
@@ -890,7 +939,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 		var arc_x := 1.0 - pow(1.0 - k, front)
 		pos.y += pow(sin(arc_x * PI), swing_arc_sharpness) * f.lift
 		var need := _foot_floor(pos, f.fdir) + ankle_height + swing_clearance
-		var w := clearance_spring
+		var w := clearance_spring * (clearance_rise_scale if need > f.clear_y else 1.0)
 		f.clear_vel += (w * w * (need - f.clear_y) - 2.0 * w * f.clear_vel) * delta
 		f.clear_y += f.clear_vel * delta
 		pos.y = maxf(pos.y, lerpf(f.clear_y, 0.0, smoothstep(0.8, 1.0, k)))
@@ -967,9 +1016,13 @@ func _on_plant(was_recovery: bool) -> void:
 func _foot_floor(p: Vector3, dir: Vector3) -> float:
 	var d := signf(dir.x) if absf(dir.x) > 0.01 else _facing_sign()
 	var top := NO_GROUND
-	for off in [-heel_reach, 0.0, toe_reach * 0.5, toe_reach]:
+	var here := _sample_ground(p)
+	for off in [-heel_reach, 0.0, toe_reach * 0.5, toe_reach, toe_reach + edge_lookahead * 0.5, toe_reach + edge_lookahead]:
 		var g := _sample_ground(Vector3(p.x + d * off, p.y, p.z))
 		if g[0]:
+			if off > toe_reach and here[0] and float(g[1]) - float(here[1]) > character.walk_over_height:
+				continue
+
 			top = maxf(top, float(g[1]))
 
 	return top
@@ -1017,10 +1070,12 @@ func _update_stairs(delta: float, on_floor: bool, dirx: float) -> void:
 		var ahead := _sample_ground(Vector3(root.x + d * stairs_probe, root.y + 0.3, _plane_z))
 
 		if here[0] and ahead[0]:
-			var slope := absf(float(ahead[1]) - float(here[1])) / maxf(stairs_probe, 0.05)
-			target = 1.0 if slope > stairs_slope else 0.0
+			var rise := absf(float(ahead[1]) - float(here[1]))
+			var slope := rise / maxf(stairs_probe, 0.05)
+			target = 1.0 if slope > stairs_slope and rise <= stairs_max_rise else 0.0
 
 	stairs_amount = move_toward(stairs_amount, target, 5.0 * delta)
+	character.speed_cap = stairs_speed if stairs_amount > 0.5 else INF
 
 
 func _update_lean(
@@ -1092,7 +1147,9 @@ func _update_hips(delta: float, on_floor: bool) -> void:
 		_hip_y = ny
 
 	if on_floor and _hip_y > max_y:
-		_hip_y = maxf(max_y, _hip_y - lerpf(hip_clamp_speed, run_hip_clamp_speed, _run_amt) * delta)
+		var clamp_speed := lerpf(hip_clamp_speed, run_hip_clamp_speed, _run_amt)
+		clamp_speed = lerpf(clamp_speed, hip_catch_speed, clampf((_hip_y - max_y) / hip_catch_excess, 0.0, 1.0))
+		_hip_y = maxf(max_y, _hip_y - clamp_speed * delta)
 		_hip_vel = minf(_hip_vel, 0.0)
 
 	hips_offset_y = _hip_y - (root.y + hip_rest_height)
@@ -1109,6 +1166,7 @@ func _on_land() -> void:
 	_hip_vel -= impact * landing_dip_speed
 	_since_land = 0.0
 
+	_ref_y = INF
 	for f in _feet:
 		f.shown_y = INF
 		f.swinging = false
@@ -1117,13 +1175,32 @@ func _on_land() -> void:
 		f.stance_facing = int(_facing_sign())
 		f.home_at_plant = INF
 
-		var g := _sample_ground(f.current)
+		var foot_x := f.current.x
+		var root_x: float = character.global_position.x
+		var under := _sample_ground(character.global_position)
+		var own := _sample_ground(f.current)
+		if under[0] and (not own[0] or absf(float(own[1]) - float(under[1])) > max_step_rise * 0.5):
+			foot_x = root_x + clampf(f.current.x - root_x, -land_spread, land_spread)
+
+		var g := _sample_ground(Vector3(foot_x, f.current.y, f.current.z))
 		if g[0]:
-			f.planted = Vector3(f.current.x, g[1] + ankle_height, f.current.z)
+			f.planted = Vector3(foot_x, g[1] + ankle_height, f.current.z)
 			f.planted_normal = g[2]
 		else:
-			f.planted = Vector3(f.current.x, character.global_position.y + ankle_height, f.current.z)
+			f.planted = Vector3(foot_x, character.global_position.y + ankle_height, f.current.z)
 			f.planted_normal = Vector3.UP
+
+
+func _smooth_ground(at: Vector3) -> float:
+	var sum := 0.0
+	var count := 0
+	for k in range(-STAIR_SAMPLES, STAIR_SAMPLES + 1):
+		var g := _sample_ground(at + Vector3(stairs_smooth * float(k) / float(STAIR_SAMPLES), 0.0, 0.0))
+		if g[0]:
+			sum += float(g[1])
+			count += 1
+
+	return sum / maxf(float(count), 1.0)
 
 
 func _foot_support_y(f: Foot) -> float:

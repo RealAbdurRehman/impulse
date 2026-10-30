@@ -170,6 +170,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 columns = 2
 
+[node name="Scenarios" type="VBoxContainer" parent="Panel/Margin/Box/Tabs"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+metadata/_tab_index = 4
+
 [node name="RemoveLabel" type="Label" parent="Panel/Margin/Box"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"

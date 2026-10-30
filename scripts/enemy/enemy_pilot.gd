@@ -2,7 +2,6 @@ class_name EnemyPilot
 extends RefCounted
 
 const LOOK_AHEAD := 0.55
-const STEP_UP := 0.55
 const WALL_HEIGHT := 1.4
 const ARRIVE := 0.3
 const DEFAULT_DROP := 1.2
@@ -13,6 +12,9 @@ const WALL_STANDOFF := 0.5
 const RUN_AT_RISE := 0.65
 const SPRINT_SPEED := 1.9
 const RUN_UP := 2.0
+const SCAN_STEP := 0.05
+const RISE_WINDOW := 10
+const OBSTACLE_DEPTH := 0.6
 
 var body: CharacterMovement
 var input: ActorInput
@@ -138,7 +140,7 @@ func _back_off(delta: float) -> void:
 
 	var x := body.global_position.x
 	var behind := _surface(x + _runup_dir * 0.6, body.global_position.y)
-	if is_nan(behind) or behind - body.global_position.y > STEP_UP or absf(x - _runup_from) >= RUN_UP:
+	if is_nan(behind) or behind - body.global_position.y > body.walk_over_height or absf(x - _runup_from) >= RUN_UP:
 		_runup_left = 0.0
 		input.move = 0.0
 
@@ -194,19 +196,37 @@ func _read_ground(dir: float, may_jump: bool) -> void:
 
 
 func _obstacle(dir: float, x: float, feet: float, far: float) -> Vector2:
-	var level := feet
-	var climbed := false
+	var tops := PackedFloat32Array()
 	var s := 0.1
-	while s <= far:
-		var top := _surface(x + dir * s, feet)
-		if not is_nan(top):
-			if top - level > STEP_UP:
-				return Vector2(INF, 0.0) if climbed else Vector2(s, top - feet)
+	while s <= far + OBSTACLE_DEPTH:
+		tops.append(_surface(x + dir * s, feet))
+		s += SCAN_STEP
 
-			climbed = climbed or top > feet + 0.2
-			level = top
+	var reach := int((far - 0.1) / SCAN_STEP) + 1
+	for i in mini(reach, tops.size()):
+		if is_nan(tops[i]) or tops[i] - feet <= body.walk_over_height:
+			continue
 
-		s += 0.05
+		var low := tops[i]
+		for k in range(maxi(i - RISE_WINDOW, 0), i):
+			if not is_nan(tops[k]):
+				low = minf(low, tops[k])
+
+		if tops[i] - low <= body.walk_over_height:
+			continue
+
+		var start := i
+		for k in range(maxi(i - RISE_WINDOW, 0), i):
+			if not is_nan(tops[k]) and tops[k] > low + 0.2:
+				start = k
+				break
+
+		var high := tops[i]
+		for k in range(i, mini(i + int(OBSTACLE_DEPTH / SCAN_STEP), tops.size())):
+			if not is_nan(tops[k]):
+				high = maxf(high, tops[k])
+
+		return Vector2(0.1 + float(start) * SCAN_STEP, high - feet)
 
 	return Vector2(INF, 0.0)
 
@@ -216,7 +236,7 @@ func _approach(dir: float, edge: float, rise: float, speed: float) -> void:
 	if rise > RUN_AT_RISE:
 		input.sprint = true
 
-	var blocks := rise >= body.max_step_up + 0.1
+	var blocks := rise >= body.walk_over_height
 	var window := _window(rise)
 	var aim := lerpf(window.x, window.y, 0.65)
 	var launch := maxf(speed * aim, WALL_STANDOFF + 0.05 if blocks else 0.15)

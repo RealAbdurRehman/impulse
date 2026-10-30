@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://defcal4rp4ruc" path="res://scripts/ui/menu.gd" id="1"]
 [ext_resource type="Script" uid="uid://ltupni4h23ni" path="res://scripts/ui/value_label.gd" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_page.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/ui/scenarios_page.tscn" id="4"]
 
 [node name="Menu" type="Control" unique_id=2000440978]
 layout_mode = 3
@@ -61,6 +62,13 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(360, 0)
 layout_mode = 2
 text = "Play"
+alignment = 0
+
+[node name="ScenariosButton" type="Button" parent="Main/Box/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+text = "Scenarios"
 alignment = 0
 
 [node name="ControlsButton" type="Button" parent="Main/Box/Buttons"]
@@ -278,5 +286,9 @@ layout_mode = 2
 text = "Back"
 
 [node name="Controls" parent="." instance=ExtResource("3")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="ScenarioPage" parent="." instance=ExtResource("4")]
 unique_name_in_owner = true
 layout_mode = 1

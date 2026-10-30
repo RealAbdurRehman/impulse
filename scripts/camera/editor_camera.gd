@@ -27,6 +27,10 @@ func _init() -> void:
 	set_process_unhandled_input(false)
 
 
+func _ready() -> void:
+	set_process_unhandled_input(false)
+
+
 func begin(from: FollowCamera, subject: CharacterMovement) -> void:
 	_subject = subject
 	_plane = subject.plane_z

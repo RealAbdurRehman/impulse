@@ -17,6 +17,8 @@ const CORPSE_LAYER := 32
 @export_range(0.0, 1.0) var foot_linear_assist: float = 1.0
 
 @export_group("Leg Strength")
+@export var stuck_error := 0.22
+@export var freed_error := 0.07
 @export_range(0.05, 1.0) var upper_leg_mass_scale := 0.1
 @export_range(0.05, 1.0) var lower_leg_mass_scale := 0.2
 @export_range(0.05, 1.0) var foot_mass_scale := 0.5
@@ -189,6 +191,8 @@ var _legs_s := 1.0
 var _lin_upper_s := 1.0
 var _ang_upper_s := 1.0
 var _rest_mass := { }
+var _stuck := { }
+var _leg_mask := 1
 var _flinch := { }
 var _pushes: Array[Push] = []
 var _blows: Array = []
@@ -768,6 +772,8 @@ func _physics_process(delta: float) -> void:
 	_update_body_velocity(delta)
 	_update_flinch(delta)
 	_update_collapse(delta)
+	if _collapse < 0.0:
+		_free_stuck_legs()
 
 	for bone in physical_bones:
 		if _severed.has(bone):
@@ -833,6 +839,27 @@ func _physics_process(delta: float) -> void:
 		_limit_arms()
 
 	_apply_kicks()
+
+
+func _free_stuck_legs() -> void:
+	for side in ["Left", "Right"]:
+		var worst := 0.0
+		var group: Array[PhysicalBone3D] = []
+		for bone in leg_bones + feet_bones:
+			if String(bone.bone_name).contains(side):
+				group.append(bone)
+				worst = maxf(worst, (_target_body_transform(bone).origin - bone.global_position).length())
+
+		var stuck: bool = _stuck.get(side, false)
+		if worst > stuck_error:
+			stuck = true
+		elif worst < freed_error:
+			stuck = false
+
+		if stuck != _stuck.get(side, false):
+			_stuck[side] = stuck
+			for bone in group:
+				bone.collision_mask = 0 if stuck else _leg_mask
 
 
 func _feedforward_for(bone: PhysicalBone3D) -> float:

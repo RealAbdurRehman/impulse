@@ -1,7 +1,6 @@
 class_name Menu
 extends Control
 
-const SANDBOX := "res://scenes/world/sandbox.tscn"
 const GAME := {
 	&"Quality": &"quality",
 	&"Fullscreen": &"fullscreen",
@@ -13,7 +12,7 @@ const GAME := {
 	&"Indicators": &"indicators",
 }
 
-@onready var _pages: Array[Control] = [%Main, %Settings, %Controls]
+@onready var _pages: Array[Control] = [%Main, %Settings, %Controls, %ScenarioPage]
 
 
 func _ready() -> void:
@@ -32,6 +31,9 @@ func _ready() -> void:
 	%SettingsBack.pressed.connect(_open.bind(%Main))
 	%ControlsButton.pressed.connect(_open.bind(%Controls))
 	%Controls.back.connect(_open.bind(%Main))
+	%ScenariosButton.pressed.connect(_open.bind(%ScenarioPage))
+	%ScenarioPage.back.connect(_open.bind(%Main))
+	%ScenarioPage.chosen.connect(_play)
 	_open(%Main)
 
 
@@ -81,4 +83,8 @@ func _on_game_changed() -> void:
 
 
 func _start() -> void:
-	Transition.go(get_tree(), SANDBOX)
+	_play(&"")
+
+
+func _play(id: StringName) -> void:
+	Scenarios.play(get_tree(), id)

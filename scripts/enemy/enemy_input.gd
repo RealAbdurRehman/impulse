@@ -56,6 +56,8 @@ const ESCORT_DEAD := 0.35
 const ESCORT_START := 0.9
 const ESCORT_LEAD := 0.35
 const ESCORT_CLOSE := 3.5
+const NEAR_REACH := 6.0
+const ARRIVED_RANGE := 2.0
 
 @export var target: CharacterMovement
 @export var carrier: WeaponCarrier
@@ -76,6 +78,7 @@ const ESCORT_CLOSE := 3.5
 @export var show_mark := true
 
 @export_group("Patrol")
+@export var stationary := false
 @export var roam_radius := 5.0
 @export var idle_time := Vector2(1.5, 4.5)
 
@@ -380,11 +383,18 @@ func alarmed() -> bool:
 	return health.alive and _alarm_left > 0.0
 
 
+func alert(at: Vector3) -> void:
+	if _mode != Mode.COMBAT:
+		_alarm(at)
+
+
 func poll() -> void:
 	var delta := get_physics_process_delta_time()
-	if _nav == null:
-		_nav = EnemyNav.of(_body, _body.ground_mask, map_extent)
-		_cover.nav = _nav
+	var nav := EnemyNav.of(_body, _body.ground_mask, map_extent)
+	if nav != _nav:
+		_nav = nav
+		_cover.nav = nav
+		_pilot.set_route(PackedVector3Array())
 
 	fire = false
 	aim = false
@@ -736,7 +746,7 @@ func _reaction() -> float:
 
 
 func _walks_in() -> bool:
-	return _hidden and _laser == null
+	return _hidden and _laser == null and not stationary
 
 
 func _is_sniper() -> bool:
@@ -789,6 +799,9 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 	var me := _body.global_position
 	_route_left -= delta
 	_travel_failed = false
+	if stationary:
+		_pilot.stop()
+		return true
 
 	var stale := (
 		not _pilot.has_route() or _route_goal.distance_to(goal) > 0.8
@@ -801,6 +814,10 @@ func _travel(goal: Vector2, run: bool, delta: float, keep_off_target := false) -
 		if keep_off_target:
 			path = _nav.route(from, to, target.global_position.x, 1.6, target.global_position.y)
 		else:
+			path = _nav.route(from, to)
+
+		if path.is_empty() and from != to and not keep_off_target:
+			to = _nav.nearest(goal.x, goal.y, NEAR_REACH)
 			path = _nav.route(from, to)
 
 		if path.is_empty() and from != to:
@@ -1075,7 +1092,8 @@ func _combat(delta: float) -> void:
 		if _plan == Plan.COVER:
 			_since_seen = 0.0
 
-	if not _visible and _since_seen > memory_time:
+	var homing := _walks_in() and absf(_last_seen.x - me.x) > ARRIVED_RANGE
+	if not _visible and _since_seen > memory_time and not homing:
 		_known = false
 		awareness = 0.6
 		_leave_combat()
@@ -1192,6 +1210,9 @@ func _ally_engaged() -> bool:
 
 
 func _take_cover(me: Vector3, there: Vector3, band: Vector2) -> bool:
+	if stationary:
+		return false
+
 	var spot := _cover.find_cover(me, there, get_instance_id(), cover_search, band)
 	if is_nan(spot.x):
 		return false
@@ -1208,6 +1229,9 @@ func _take_cover(me: Vector3, there: Vector3, band: Vector2) -> bool:
 
 
 func _start_flank(me: Vector3, there: Vector3) -> void:
+	if stationary:
+		return
+
 	var spot := _cover.find_flank(me, there, get_instance_id(), flank_search, flank_limit)
 	_flank_cooldown = 12.0
 	if is_nan(spot.x):
@@ -1321,7 +1345,7 @@ func _engage(delta: float, weapon: Weapon, distance: float) -> void:
 	var tactic := Tactic.ADVANCE if apart and not _visible else _tactic
 	match tactic:
 		Tactic.ADVANCE:
-			if not _visible:
+			if not _visible or (apart and _walks_in()):
 				_chase(delta, run)
 			elif apart:
 				_stand(delta, toward if distance < band.x * 0.9 else 0.0)
@@ -1377,7 +1401,7 @@ func _chase(delta: float, run: bool) -> void:
 
 
 func _stand(delta: float, not_toward := 0.0) -> void:
-	if _spread == 0.0 or _spread == not_toward or absf(_body.velocity.x) > 0.5:
+	if stationary or _spread == 0.0 or _spread == not_toward or absf(_body.velocity.x) > 0.5:
 		_pilot.stop()
 		return
 
@@ -1435,6 +1459,11 @@ func _look_around(delta: float) -> void:
 
 
 func _pick_tactic(distance: float, band: Vector2, weapon: Weapon) -> void:
+	if stationary:
+		_tactic = Tactic.HOLD
+		_tactic_left = 1.0
+		return
+
 	var roll := _rng.randf()
 	if not _visible:
 		_tactic = Tactic.ADVANCE

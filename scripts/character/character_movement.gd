@@ -26,12 +26,18 @@ signal landed(speed: float)
 
 @export_group("Root Follow")
 @export var follow_y := 9.0
+@export var follow_y_drop := 24.0
+@export var drop_boost_height := 0.3
 
 @export_group("World Probes")
 @export_flags_3d_physics var ground_mask: int = 1
 @export_flags_3d_physics var character_mask: int = 8
 
 @export var max_step_up := 0.6
+@export var walk_over_height := 0.52
+@export var brake_lookahead := 1.4
+@export var brake_decel := 2.8
+@export var brake_front_limit := 0.25
 @export var wall_check_distance := 0.45
 @export var head_check_height := 1.5
 @export var stand_height := 1.8
@@ -81,6 +87,7 @@ var velocity := Vector3.ZERO
 
 var plane_z := 0.0
 var speed_scale := 1.0
+var speed_cap := INF
 
 var push := 0.0
 
@@ -171,9 +178,12 @@ func _physics_process(delta: float) -> void:
 	elif input.sprint and aim_amount < 0.1:
 		speed = run_speed
 
-	speed *= aim_speed_scale * speed_scale
+	speed = minf(speed, speed_cap) * aim_speed_scale * speed_scale
 
 	var want_dir := int(signf(dir)) if absf(dir) > 0.1 else 0
+	if grounded and want_dir != 0 and _jump_buffer <= 0.0 and input is PlayerInput:
+		speed = minf(speed, _stopping_speed(want_dir))
+
 	var blocked := want_dir != 0 and _world_blocked(want_dir)
 	if want_dir != 0 and not blocked:
 		var ahead := _character_ahead(want_dir)
@@ -227,12 +237,13 @@ func _advance_grounded(delta: float) -> void:
 	velocity = Vector3(move_dir * move_speed, velocity.y, 0.0)
 
 
-func drive_root(target: Vector3, delta: float) -> void:
+func drive_root(target: Vector3, delta: float, floor_y := -INF, ceiling_y := INF) -> void:
 	if not grounded:
 		return
 
 	var old_y := global_position.y
-	var ny := lerpf(old_y, target.y, 1.0 - exp(-follow_y * delta))
+	var rate := lerpf(follow_y, follow_y_drop, clampf((old_y - target.y) / drop_boost_height, 0.0, 1.0))
+	var ny := clampf(lerpf(old_y, target.y, 1.0 - exp(-rate * delta)), floor_y, ceiling_y)
 
 	global_position = Vector3(global_position.x, ny, plane_z)
 	velocity.y = (ny - old_y) / maxf(delta, 0.0001)
@@ -348,13 +359,29 @@ func _world_blocked(dir: int) -> bool:
 	var o := global_position
 	var d := Vector3.RIGHT * float(dir) * wall_check_distance
 
-	var heights: Array[float] = [max_step_up + 0.1, _head_height()]
+	var heights: Array[float] = [walk_over_height, _head_height()]
 	for h in heights:
 		var from: Vector3 = o + Vector3.UP * h
 		if not _ray(from, from + d).is_empty():
 			return true
 
 	return false
+
+
+func _stopping_speed(dir: int) -> float:
+	var from := global_position + Vector3.UP * walk_over_height
+	var reach := Vector3.RIGHT * float(dir) * brake_lookahead
+	var hit := _ray(from, from + reach)
+	if hit.is_empty() or (hit.collider as Node).get_parent() is Door:
+		return INF
+
+	var face: Vector3 = hit.position
+	var front := _ray(face - Vector3.RIGHT * float(dir) * 0.05, face - Vector3.RIGHT * float(dir) * 0.05 + Vector3.DOWN * (walk_over_height + 0.1))
+	if not front.is_empty() and (front.position as Vector3).y > global_position.y + brake_front_limit:
+		return INF
+
+	var room := absf(face.x - global_position.x) - wall_check_distance
+	return sqrt(2.0 * brake_decel * maxf(room, 0.0))
 
 
 func _character_ahead(dir: int) -> CharacterMovement:
