@@ -15,8 +15,9 @@
 [ext_resource type="PackedScene" path="res://scenes/props/concrete_barrier.tscn" id="r13"]
 [ext_resource type="PackedScene" path="res://scenes/props/concrete_pillar.tscn" id="r14"]
 [ext_resource type="PackedScene" path="res://scenes/props/platform_small.tscn" id="r15"]
+[ext_resource type="PackedScene" path="res://scenes/props/brick_wall.tscn" id="boundary"]
 
-[node name="Barricade" type="Node3D"]
+[node name="Checkpoint" type="Node3D"]
 script = ExtResource("r1")
 
 [node name="Props" type="Node3D" parent="."]
@@ -107,6 +108,18 @@ position = Vector3(19, 2.5, 0)
 
 [node name="CrateSmall2" parent="Props" instance=ExtResource("r12")]
 position = Vector3(19.7, 2.7, 0)
+
+[node name="BoundaryWall" parent="Props" instance=ExtResource("boundary")]
+position = Vector3(-26.0, 0, 0)
+
+[node name="BoundaryWall2" parent="Props" instance=ExtResource("boundary")]
+position = Vector3(-26.0, 2.5, 0)
+
+[node name="BoundaryWall3" parent="Props" instance=ExtResource("boundary")]
+position = Vector3(37.0, 0, 0)
+
+[node name="BoundaryWall4" parent="Props" instance=ExtResource("boundary")]
+position = Vector3(37.0, 2.5, 0)
 
 [node name="Loot" type="Node3D" parent="."]
 

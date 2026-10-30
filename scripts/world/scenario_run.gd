@@ -4,6 +4,7 @@ extends CanvasLayer
 const CLEAR_DELAY := 1.2
 const BANNER_HOLD := 2.2
 const BANNER_FADE := 0.8
+const CLEARED_HOLD := 8.0
 const RALLY_GAP := 1.0
 const RALLY_RANGE := 12.0
 
@@ -45,6 +46,13 @@ func _ready() -> void:
 	_wait = _waves[0].pause
 	_build_hud()
 	_show(String(spec.title).to_upper(), "")
+
+
+func _input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if _done and key != null and key.pressed and not key.echo and key.keycode == KEY_TAB:
+		_banner_tween.kill()
+		_banner.modulate.a = 0.0
 
 
 func _physics_process(delta: float) -> void:
@@ -183,9 +191,6 @@ func _show(headline: String, detail: String, hold := false) -> void:
 	if _banner_tween != null:
 		_banner_tween.kill()
 
-	if hold:
-		return
-
 	_banner_tween = create_tween()
-	_banner_tween.tween_interval(BANNER_HOLD)
+	_banner_tween.tween_interval(CLEARED_HOLD if hold else BANNER_HOLD)
 	_banner_tween.tween_property(_banner, "modulate:a", 0.0, BANNER_FADE)

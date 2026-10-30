@@ -7,13 +7,9 @@ const SAVE := "user://scenarios.cfg"
 static var pending := &""
 
 const LIST := [
-	{ "id": &"compound", "title": "Compound", "scene": "res://scenes/scenarios/compound.tscn" },
-	{
-		"id": &"stairs_duel",
-		"title": "Stairs Duel",
-		"scene": "res://scenes/scenarios/stairs_duel.tscn",
-	},
-	{ "id": &"barricade", "title": "Barricade", "scene": "res://scenes/scenarios/barricade.tscn" },
+	{ "id": &"yard", "title": "Yard", "scene": "res://scenes/scenarios/yard.tscn" },
+	{ "id": &"stairs", "title": "Stairs", "scene": "res://scenes/scenarios/stairs.tscn" },
+	{ "id": &"checkpoint", "title": "Checkpoint", "scene": "res://scenes/scenarios/checkpoint.tscn" },
 ]
 
 

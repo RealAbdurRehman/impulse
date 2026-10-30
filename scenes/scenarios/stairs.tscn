@@ -1,0 +1,316 @@
+[gd_scene format=3 uid="uid://fpoxal8ox0lj"]
+
+[ext_resource type="PackedScene" uid="uid://bycq2uvlni2ge" path="res://scenes/props/stairs_rail.tscn" id="10_yoce1"]
+[ext_resource type="PackedScene" uid="uid://cf7dajg8lpomh" path="res://scenes/props/wood_pallet.tscn" id="11_p2tu8"]
+[ext_resource type="PackedScene" uid="uid://bkh22u3r8rr0" path="res://scenes/props/barrel_plastic.tscn" id="14_h4aq2"]
+[ext_resource type="PackedScene" uid="uid://cjcagqo4tl5yg" path="res://scenes/props/brick_wall.tscn" id="boundary"]
+[ext_resource type="Script" uid="uid://l1tdfql85c1v" path="res://scripts/world/scenario_level.gd" id="r1"]
+[ext_resource type="Script" uid="uid://c1bb0uyq4jam1" path="res://scripts/world/scenario_wave.gd" id="r2"]
+[ext_resource type="Script" uid="uid://6eui2aku0nfu" path="res://scripts/world/scenario_foe.gd" id="r3"]
+[ext_resource type="Script" uid="uid://bfjbx24njl5ku" path="res://scripts/world/scenario_loot.gd" id="r4"]
+[ext_resource type="PackedScene" uid="uid://c70xdrgmhtubv" path="res://scenes/props/window_wall_wide.tscn" id="r5"]
+[ext_resource type="PackedScene" uid="uid://dt68e453twcnu" path="res://scenes/props/crate_large.tscn" id="r6"]
+[ext_resource type="PackedScene" uid="uid://rytuvglpsgma" path="res://scenes/props/dumpster.tscn" id="r7"]
+[ext_resource type="PackedScene" uid="uid://dd7ot5ybccxeu" path="res://scenes/props/water_tank.tscn" id="r8"]
+[ext_resource type="PackedScene" uid="uid://bmod7jnoiosdm" path="res://scenes/props/barrel_steel.tscn" id="r9"]
+[ext_resource type="PackedScene" uid="uid://ekfxqkt18p2b" path="res://scenes/props/concrete_pillar.tscn" id="r10"]
+[ext_resource type="PackedScene" uid="uid://cr007kvbr6gkb" path="res://scenes/props/concrete_barrier.tscn" id="r11"]
+[ext_resource type="PackedScene" uid="uid://b8a03uyuy2udy" path="res://scenes/props/crate_small.tscn" id="r12"]
+[ext_resource type="PackedScene" uid="uid://lftwxmot5iej" path="res://scenes/props/platform_large.tscn" id="r14"]
+[ext_resource type="PackedScene" uid="uid://dl6gbj4brcgvt" path="res://scenes/props/platform_small.tscn" id="r16"]
+
+[node name="Stairs" type="Node3D" unique_id=1365922720]
+script = ExtResource("r1")
+
+[node name="Props" type="Node3D" parent="." unique_id=454445401]
+
+[node name="WindowWallWide" parent="Props" unique_id=768165063 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 2, 0, -3.4)
+
+[node name="WindowWallWide2" parent="Props" unique_id=999197679 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 7, 0, -3.4)
+
+[node name="WindowWallWide3" parent="Props" unique_id=142599071 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 12, 0, -3.4)
+
+[node name="WindowWallWide4" parent="Props" unique_id=1009809247 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 17, 0, -3.4)
+
+[node name="WindowWallWide10" parent="Props" unique_id=1218702760 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -17.995817, 0, -3.4)
+
+[node name="WindowWallWide11" parent="Props" unique_id=1108611774 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -12.995817, 0, -3.4)
+
+[node name="WindowWallWide12" parent="Props" unique_id=2111274144 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -7.995817, 0, -3.4)
+
+[node name="WindowWallWide13" parent="Props" unique_id=1347647948 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, -2.9958172, 0, -3.4)
+
+[node name="WindowWallWide5" parent="Props" unique_id=1661208781 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 22, 0, -3.4)
+
+[node name="WindowWallWide6" parent="Props" unique_id=369673815 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 27, 0, -3.4)
+
+[node name="WindowWallWide7" parent="Props" unique_id=605269802 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 32, 0, -3.4)
+
+[node name="WindowWallWide8" parent="Props" unique_id=1718562750 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 37, 0, -3.4)
+
+[node name="WindowWallWide9" parent="Props" unique_id=1326350540 instance=ExtResource("r5")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 41.95294, 0, -3.4)
+
+[node name="CrateLarge" parent="Props" unique_id=2040338444 instance=ExtResource("r6")]
+transform = Transform3D(0.83676434, 0, 0.5475632, 0, 1, 0, -0.5475632, 0, 0.83676434, -2.5, 0, -1.512222)
+
+[node name="CrateLarge2" parent="Props" unique_id=487736546 instance=ExtResource("r6")]
+transform = Transform3D(0.32391757, 0, 0.94608533, 0, 1, 0, -0.94608533, 0, 0.32391757, 15.27236, -0.027187228, 1.0724909)
+
+[node name="CrateLarge3" parent="Props" unique_id=1150589140 instance=ExtResource("r6")]
+transform = Transform3D(0.9690157, 0, 0.24699901, 0, 1, 0, -0.24699901, 0, 0.9690157, 43.454063, -0.027187228, 0.04895127)
+
+[node name="Dumpster" parent="Props" unique_id=868569703 instance=ExtResource("r7")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 6, 0, -2.528401)
+
+[node name="Dumpster2" parent="Props" unique_id=1595551531 instance=ExtResource("r7")]
+transform = Transform3D(0.99254614, 0, 0.12186935, 0, 1, 0, -0.12186935, 0, 0.99254614, 39.941223, 0, 2.2193577)
+
+[node name="WaterTank" parent="Props" unique_id=1160733048 instance=ExtResource("r8")]
+transform = Transform3D(0.83676434, 0, 0.5475632, 0, 1, 0, -0.5475632, 0, 0.83676434, 27.8, 0, -2.4)
+
+[node name="BarrelSteel" parent="Props" unique_id=793262631 instance=ExtResource("r9")]
+transform = Transform3D(0.90630776, 0, 0.42261827, 0, 1, 0, -0.42261827, 0, 0.90630776, 34.49031, 0, -1.6342794)
+
+[node name="BarrelSteel2" parent="Props" unique_id=1453674924 instance=ExtResource("r9")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.367771, 0, 0)
+
+[node name="BarrelSteel3" parent="Props" unique_id=1915082997 instance=ExtResource("r9")]
+transform = Transform3D(0.83676434, 0.5475632, -2.3934748e-08, 0, -4.371139e-08, -1, -0.5475632, 0.83676434, -3.6576132e-08, 16.701443, 0.2765649, 0.011693597)
+
+[node name="ConcretePillar" parent="Props" unique_id=1702679116 instance=ExtResource("r10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.6, -0.1, -1.7)
+
+[node name="ConcretePillar2" parent="Props" unique_id=1376615258 instance=ExtResource("r10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.4, -0.1, -1.7)
+
+[node name="CoverBarrier" parent="Props" unique_id=1394884848 instance=ExtResource("r11")]
+transform = Transform3D(0.9515944, 0, -0.30735663, 0, 1, 0, 0.30735663, 0, 0.9515944, 3.6, 0, 0)
+
+[node name="CoverBarrier3" parent="Props" unique_id=933018814 instance=ExtResource("r11")]
+transform = Transform3D(0.9969173, 0, 0.0784591, 0, 1, 0, -0.0784591, 0, 0.9969173, 17.04888, 1.5248628, 0)
+
+[node name="CrateSmall" parent="Props" unique_id=1158574413 instance=ExtResource("r12")]
+transform = Transform3D(0.9862856, 0, 0.1650476, 0, 1, 0, -0.1650476, 0, 0.9862856, 8, 0, 0)
+
+[node name="CrateSmall2" parent="Props" unique_id=833495086 instance=ExtResource("r12")]
+transform = Transform3D(0.7890841, 0, -0.6142852, 0, 1, 0, 0.6142852, 0, 0.7890841, 12.896895, 0, 1.0646671)
+
+[node name="CrateSmall5" parent="Props" unique_id=749735212 instance=ExtResource("r12")]
+transform = Transform3D(0.16504756, 0, 0.98628557, 0, 1, 0, -0.98628557, 0, 0.16504756, 13.610819, 0, -0.04906851)
+
+[node name="CrateSmall4" parent="Props" unique_id=51082642 instance=ExtResource("r12")]
+transform = Transform3D(0.1391731, 0, 0.99026805, 0, 1, 0, -0.99026805, 0, 0.1391731, -4.167907, 0, 2.3365142)
+
+[node name="stairs_rail4" parent="Props" unique_id=796691381 instance=ExtResource("10_yoce1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.070411, 0, 0)
+
+[node name="stairs_rail3" parent="Props" unique_id=2042188127 instance=ExtResource("10_yoce1")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 19.249672, 0, 0)
+
+[node name="wood_pallet" parent="Props" unique_id=1302898345 instance=ExtResource("11_p2tu8")]
+transform = Transform3D(-0.97189116, -0.23069218, -0.046997983, -0.09466742, 0.5657102, -0.81915206, 0.21555921, -0.7916775, -0.57164776, 18.647375, 0.46321434, -0.8128087)
+
+[node name="PlatformLarge" parent="Props" unique_id=507591368 instance=ExtResource("r14")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.1525, 1.2281351, 0)
+
+[node name="CrateSmall3" parent="Props" unique_id=2007928353 instance=ExtResource("r12")]
+transform = Transform3D(0.4756242, 0, 0.87964857, 0, 1, 0, -0.87964857, 0, 0.4756242, 25.5, 0, 0)
+
+[node name="CrateSmall6" parent="Props" unique_id=1273895737 instance=ExtResource("r12")]
+transform = Transform3D(0.99649286, 0, 0.08367784, 0, 1, 0, -0.08367784, 0, 0.99649286, 34.880775, 0, 1.3493354)
+
+[node name="CrateSmall7" parent="Props" unique_id=734447547 instance=ExtResource("r12")]
+transform = Transform3D(0.8377187, 0, -0.5461019, 0, 1, 0, 0.5461019, 0, 0.8377187, 43.75491, 0, 1.3493354)
+
+[node name="CrateSmall8" parent="Props" unique_id=1943573784 instance=ExtResource("r12")]
+transform = Transform3D(-0.9966374, 0, 0.081938416, 0, 1, 0, -0.081938416, 0, -0.9966374, 43.235313, 1.0865115, 0.15161717)
+
+[node name="CoverBarrier2" parent="Props" unique_id=1418024859 instance=ExtResource("r11")]
+transform = Transform3D(0.9848077, 0, 0.17364818, 0, 1, 0, -0.17364818, 0, 0.9848077, 30.5, 0, 0)
+
+[node name="CoverBarrier4" parent="Props" unique_id=1668700861 instance=ExtResource("r11")]
+transform = Transform3D(0.9727759, 0, 0.2317479, 0, 1, 0, -0.2317479, 0, 0.9727759, 34.436943, 2.69641, 0)
+
+[node name="ConcretePillar5" parent="Props" unique_id=165645802 instance=ExtResource("r10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, -1.7)
+
+[node name="ConcretePillar8" parent="Props" unique_id=1656629611 instance=ExtResource("r10")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 1.9597573)
+
+[node name="PlatformSmall" parent="Props" unique_id=1319565968 instance=ExtResource("r16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.5, 0)
+
+[node name="PlatformSmall4" parent="Props" unique_id=1905678126 instance=ExtResource("r16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.5, 1.4721116)
+
+[node name="PlatformSmall5" parent="Props" unique_id=10861954 instance=ExtResource("r16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.5, 2.9303389)
+
+[node name="PlatformSmall2" parent="Props" unique_id=764116488 instance=ExtResource("r16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.5, -1.4946536)
+
+[node name="PlatformSmall3" parent="Props" unique_id=1495468159 instance=ExtResource("r16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 2.496593, -2.7081559)
+
+[node name="barrel_plastic" parent="Props" unique_id=281578269 instance=ExtResource("14_h4aq2")]
+transform = Transform3D(0.83867055, 0, 0.54463905, 0, 1, 0, -0.54463905, 0, 0.83867055, 20.079062, 0, 0.84636915)
+
+[node name="barrel_plastic2" parent="Props" unique_id=223658958 instance=ExtResource("14_h4aq2")]
+transform = Transform3D(-0.96858317, 0, 0.2486899, 0, 1, 0, -0.2486899, 0, -0.96858317, 41.319225, 0, 2.7276766)
+
+[node name="BoundaryWall" parent="Props" unique_id=1894966511 instance=ExtResource("boundary")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, -0.0063853264)
+
+[node name="BoundaryWall7" parent="Props" unique_id=223219233 instance=ExtResource("boundary")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, -2.5036266)
+
+[node name="BoundaryWall8" parent="Props" unique_id=1394417807 instance=ExtResource("boundary")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -21.720984, 0, -3.4327805)
+
+[node name="BoundaryWall9" parent="Props" unique_id=1444459500 instance=ExtResource("boundary")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -24.22183, 0, -3.4327805)
+
+[node name="BoundaryWall10" parent="Props" unique_id=1118157308 instance=ExtResource("boundary")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -24.786968, 0, -3.4277258)
+
+[node name="BoundaryWall4" parent="Props" unique_id=1056172644 instance=ExtResource("boundary")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0, 2.4840145)
+
+[node name="BoundaryWall3" parent="Props" unique_id=1034773318 instance=ExtResource("boundary")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 44.429386, 0, -0.20585203)
+
+[node name="BoundaryWall6" parent="Props" unique_id=1135502879 instance=ExtResource("boundary")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 44.429386, 0, -2.2410147)
+
+[node name="BoundaryWall5" parent="Props" unique_id=1215483607 instance=ExtResource("boundary")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 44.429386, 0, 2.2946434)
+
+[node name="Loot" type="Node3D" parent="." unique_id=80828043]
+
+[node name="RifleGun" type="Marker3D" parent="Loot" unique_id=788607202]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1.7125199, 0)
+script = ExtResource("r4")
+gun = true
+
+[node name="RifleAmmo" type="Marker3D" parent="Loot" unique_id=1740813455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.8, 1.7125199, 0)
+script = ExtResource("r4")
+count = 60
+
+[node name="PistolAmmo" type="Marker3D" parent="Loot" unique_id=1883781959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.4, 0)
+script = ExtResource("r4")
+ammo = "pistol"
+count = 24
+
+[node name="PistolAmmo2" type="Marker3D" parent="Loot" unique_id=1336858841]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.6, 0.4, 0)
+script = ExtResource("r4")
+ammo = "pistol"
+count = 24
+
+[node name="Waves" type="Node3D" parent="." unique_id=531612872]
+
+[node name="Wave1" type="Node3D" parent="Waves" unique_id=1599774086]
+script = ExtResource("r2")
+pause = 1.5
+
+[node name="Grunt" type="Marker3D" parent="Waves/Wave1" unique_id=976962255]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.56777, 0.1, 0)
+script = ExtResource("r3")
+
+[node name="Grunt2" type="Marker3D" parent="Waves/Wave1" unique_id=607052536]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.219788, 0.1, 0)
+script = ExtResource("r3")
+delay = 2.0
+
+[node name="Rusher" type="Marker3D" parent="Waves/Wave1" unique_id=652041973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 0.1, 0)
+script = ExtResource("r3")
+kind = "Rusher"
+delay = 4.5
+
+[node name="Wave2" type="Node3D" parent="Waves" unique_id=621963113]
+script = ExtResource("r2")
+pause = 3
+carry_over = 1
+
+[node name="RifleAmmo2" type="Marker3D" parent="Waves/Wave2" unique_id=1600658545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.6, 1.7125199, 0)
+script = ExtResource("r4")
+
+[node name="Flanker" type="Marker3D" parent="Waves/Wave2" unique_id=611186706]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, 0)
+script = ExtResource("r3")
+kind = "Flanker"
+skill = 0.6
+
+[node name="Flanker2" type="Marker3D" parent="Waves/Wave2" unique_id=717081515]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.1, 0)
+script = ExtResource("r3")
+kind = "Flanker"
+delay = 5.0
+skill = 0.6
+
+[node name="Gunner" type="Marker3D" parent="Waves/Wave2" unique_id=634618792]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 0.1, 0)
+script = ExtResource("r3")
+kind = "Gunner"
+delay = 2.0
+skill = 0.65
+
+[node name="Wave3" type="Node3D" parent="Waves" unique_id=1488257157]
+script = ExtResource("r2")
+
+[node name="RifleAmmo3" type="Marker3D" parent="Waves/Wave3" unique_id=81136353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.4, 1.7125199, 0)
+script = ExtResource("r4")
+count = 60
+
+[node name="PistolAmmo3" type="Marker3D" parent="Waves/Wave3" unique_id=948614173]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 0.4, 0)
+script = ExtResource("r4")
+ammo = "pistol"
+count = 24
+
+[node name="Sniper" type="Marker3D" parent="Waves/Wave3" unique_id=1486508358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.332962, 2.7, 0)
+script = ExtResource("r3")
+kind = "Sniper"
+stationary = true
+skill = 0.7
+
+[node name="Hunter" type="Marker3D" parent="Waves/Wave3" unique_id=830600323]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.47406, 0.1, 0)
+script = ExtResource("r3")
+kind = "Hunter"
+delay = 2.0
+skill = 0.65
+toughness = 1.4
+
+[node name="Gunner" type="Marker3D" parent="Waves/Wave3" unique_id=208274039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.019539, 0.1, 0)
+script = ExtResource("r3")
+kind = "Gunner"
+delay = 5.0
+skill = 0.65
+
+[node name="Gunner2" type="Marker3D" parent="Waves/Wave3" unique_id=742042490]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.1, 0)
+script = ExtResource("r3")
+kind = "Gunner"
+delay = 9.0
+skill = 0.65
