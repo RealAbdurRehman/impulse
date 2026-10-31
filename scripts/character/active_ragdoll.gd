@@ -322,7 +322,7 @@ func parent_bone(bone: PhysicalBone3D) -> PhysicalBone3D:
 
 
 func can_sever(bone: PhysicalBone3D) -> bool:
-	return not _roots.has(bone) and parent_bone(bone) != null
+	return bone_indices.has(bone) and not _roots.has(bone) and parent_bone(bone) != null
 
 
 func sever(bone: PhysicalBone3D) -> Array[PhysicalBone3D]:

@@ -118,6 +118,7 @@ func _finish() -> void:
 	line += "   NEW BEST" if improved else "   BEST %s" % Scenarios.clock(Scenarios.best(spec.id))
 	_status.text = ""
 	_show("CLEARED", line, true)
+	GameAudio.of(get_tree()).victory()
 	_detail.text += "\n\nTab to edit  ·  Esc to restart or leave"
 
 

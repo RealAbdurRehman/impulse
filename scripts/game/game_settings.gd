@@ -17,6 +17,8 @@ static var current := _load()
 @export var fullscreen := false
 @export var vsync := true
 @export_range(0.0, 1.0) var volume := 1.0
+@export_range(0.0, 1.0) var music := 0.8
+@export_range(0.0, 1.0) var sfx := 1.0
 @export var blood := true
 @export var dismemberment := true
 @export_range(0.0, 1.5) var effects := 1.0
@@ -53,5 +55,11 @@ func apply(viewport: Viewport) -> void:
 		DisplayServer.window_set_mode(mode)
 
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
-	AudioServer.set_bus_mute(0, volume <= 0.001)
-	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(volume, 0.001)))
+	_set_bus(0, volume)
+	_set_bus(AudioServer.get_bus_index(&"Music"), music)
+	_set_bus(AudioServer.get_bus_index(&"SFX"), sfx)
+
+
+func _set_bus(bus: int, level: float) -> void:
+	AudioServer.set_bus_mute(bus, level <= 0.001)
+	AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(level, 0.001)))

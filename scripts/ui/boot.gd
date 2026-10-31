@@ -13,6 +13,7 @@ static var _kept: Array[Resource] = []
 
 
 func _ready() -> void:
+	GameAudio.of(get_tree())
 	for path in PATHS:
 		ResourceLoader.load_threaded_request(path, "", true)
 
@@ -42,6 +43,7 @@ func _load_all() -> void:
 
 
 func _warm_up() -> void:
+	SoundBank.warm()
 	var sandbox := (_kept[1] as PackedScene).instantiate() as Sandbox
 	add_child(sandbox)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

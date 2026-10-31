@@ -34,6 +34,11 @@ static func spawn(
 
 func _ready() -> void:
 	add_to_group(GROUP)
+	var drop := DropFoley.new()
+	drop.voice = &"plastic"
+	drop.pitch = 1.15
+	drop.gain_db = -7.0
+	add_child(drop)
 	collision_layer = 4
 	collision_mask = 1
 	axis_lock_linear_z = true

@@ -33,6 +33,9 @@ func _ready() -> void:
 		run.spec = Scenarios.find(Scenarios.pending)
 		add_child(run)
 
+	if get_tree().current_scene == self:
+		GameAudio.of(get_tree()).play(GameAudio.Mode.LEVEL)
+
 	add_child(Grade.new())
 	add_child(PAUSE.instantiate())
 	Transition.reveal(get_tree())

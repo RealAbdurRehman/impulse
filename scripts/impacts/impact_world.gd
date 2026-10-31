@@ -67,6 +67,8 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 
 	if style.sound != null:
 		audio.play(style.sound, point, 0.0)
+	else:
+		Foley.of(self).bullet(point, surface, size, exiting)
 
 	var punch := pow(size, 0.75)
 	var glance := 1.0 - absf(dir.dot(normal))

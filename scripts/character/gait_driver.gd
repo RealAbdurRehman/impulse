@@ -1,6 +1,8 @@
 class_name GaitDriver
 extends Node
 
+signal stepped(at: Vector3, recovery: bool)
+
 
 class Foot:
 	var side := 1.0
@@ -301,6 +303,7 @@ var _shuffle_timer := 4.0
 
 
 func _ready() -> void:
+	add_child(CharacterFoley.new())
 	_rng.randomize()
 	_shuffle_timer = _rng.randf_range(idle_shuffle_interval.x, idle_shuffle_interval.y)
 
@@ -976,6 +979,7 @@ func _update_grounded_foot(f: Foot, delta: float) -> void:
 			f.current_normal = f.end_normal
 			f.fdir = f.end_dir
 
+			stepped.emit(f.end, was_recovery)
 			_on_plant(was_recovery)
 
 		return

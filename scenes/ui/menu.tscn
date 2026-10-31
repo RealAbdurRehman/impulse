@@ -196,6 +196,72 @@ layout_mode = 2
 theme_type_variation = &"MutedLabel"
 text = "%"
 
+[node name="MusicLabel" type="Label" parent="Settings/Box/Tabs/Audio" unique_id=1082336068]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Music volume"
+
+[node name="MusicRow" type="HBoxContainer" parent="Settings/Box/Tabs/Audio" unique_id=889555843]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 4
+
+[node name="MusicVolume" type="HSlider" parent="Settings/Box/Tabs/Audio/MusicRow" unique_id=1945661840]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 0.8
+
+[node name="MusicValue" type="Label" parent="Settings/Box/Tabs/Audio/MusicRow" unique_id=718770411 node_paths=PackedStringArray("source")]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "100"
+horizontal_alignment = 2
+script = ExtResource("2")
+source = NodePath("../MusicVolume")
+
+[node name="MusicPercent" type="Label" parent="Settings/Box/Tabs/Audio/MusicRow" unique_id=1817018269]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "%"
+
+[node name="SfxLabel" type="Label" parent="Settings/Box/Tabs/Audio" unique_id=1041235953]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Effects volume"
+
+[node name="SfxRow" type="HBoxContainer" parent="Settings/Box/Tabs/Audio" unique_id=2061939228]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 4
+
+[node name="SfxVolume" type="HSlider" parent="Settings/Box/Tabs/Audio/SfxRow" unique_id=691135867]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="SfxValue" type="Label" parent="Settings/Box/Tabs/Audio/SfxRow" unique_id=409825565 node_paths=PackedStringArray("source")]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "100"
+horizontal_alignment = 2
+script = ExtResource("2")
+source = NodePath("../SfxVolume")
+
+[node name="SfxPercent" type="Label" parent="Settings/Box/Tabs/Audio/SfxRow" unique_id=36458465]
+layout_mode = 2
+theme_type_variation = &"MutedLabel"
+text = "%"
+
 [node name="Gameplay" type="GridContainer" parent="Settings/Box/Tabs" unique_id=2098408614]
 visible = false
 layout_mode = 2

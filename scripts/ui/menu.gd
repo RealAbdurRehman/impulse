@@ -6,6 +6,8 @@ const GAME := {
 	&"Fullscreen": &"fullscreen",
 	&"VSync": &"vsync",
 	&"Volume": &"volume",
+	&"MusicVolume": &"music",
+	&"SfxVolume": &"sfx",
 	&"Blood": &"blood",
 	&"Dismember": &"dismemberment",
 	&"Effects": &"effects",
@@ -19,6 +21,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	GameSettings.current.apply(get_viewport())
 	Transition.reveal(get_tree(), 0.0)
+	GameAudio.of(get_tree()).play(GameAudio.Mode.MENU)
 
 	%Quit.visible = not OS.has_feature("web")
 	_fill(GAME, GameSettings.current)

@@ -39,6 +39,7 @@ func _on_died() -> void:
 	var side := signf(health.last_direction.x)
 	var speed := lerpf(throw_min, throw_top, 1.0 - exp(-health.blow / throw_blow))
 	ragdoll.collapse(times.x, times.y, Vector3(side, throw_lift, 0.0) * speed, -side * speed * throw_spin)
+	ragdoll.add_child(RagdollFoley.new())
 
 	_after_death()
 
