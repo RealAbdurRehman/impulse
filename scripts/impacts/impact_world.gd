@@ -55,7 +55,16 @@ func _warm_up() -> void:
 	debris.warm(false)
 
 
-func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, size: float, exiting := false, tint := Color.WHITE) -> void:
+func strike(
+	collider: CollisionObject3D,
+	point: Vector3,
+	normal: Vector3,
+	dir: Vector3,
+	surface: StringName,
+	size: float,
+	exiting := false,
+	tint := Color.WHITE,
+) -> void:
 	var style := Surfaces.style(surface)
 	var dust_color := style.dust_color
 	var chip_colors := style.debris_colors
@@ -70,6 +79,17 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 	else:
 		Foley.of(self).bullet(point, surface, size, exiting)
 
+	var camera := get_viewport().get_camera_3d()
+	var sight := PhysicsRayQueryParameters3D.create(
+		camera.global_position,
+		point,
+		1,
+		[collider.get_rid()],
+	)
+
+	if not get_world_3d().direct_space_state.intersect_ray(sight).is_empty():
+		return
+
 	var punch := pow(size, 0.75)
 	var glance := 1.0 - absf(dir.dot(normal))
 	var skid := dir - normal * (2.0 * dir.dot(normal))
@@ -83,7 +103,13 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 		d.z = 0.0
 		d = d.normalized()
 		var speed := randf_range(style.dust_speed.x, style.dust_speed.y) * punch
-		dust.puff(point - normal * 0.01, d * speed + dir * carried * speed, style, punch, dust_color)
+		dust.puff(
+			point - normal * 0.01,
+			d * speed + dir * carried * speed,
+			style,
+			punch,
+			dust_color,
+		)
 
 	for i in _count(style.debris_count * size):
 		var d := _cone((spray + dir * carried).normalized(), chip_cone)
@@ -98,10 +124,20 @@ func strike(point: Vector3, normal: Vector3, dir: Vector3, surface: StringName, 
 	for i in _count(sparks):
 		var d := _cone(spark_dir, 0.5 if ricochet else 1.1)
 		var speed := randf_range(style.spark_speed.x, style.spark_speed.y) * punch
-		debris.spark(point + normal * 0.01, d * speed, style.spark_color, randf_range(0.005, 0.01), randf_range(0.14, 0.32))
+		debris.spark(
+			point + normal * 0.01,
+			d * speed,
+			style.spark_color,
+			randf_range(0.005, 0.01),
+			randf_range(0.14, 0.32),
+		)
 
 	if style.flash > 0.0:
-		debris.flash(point + normal * 0.02, style.spark_color.lightened(0.4), 0.07 * style.flash * punch)
+		debris.flash(
+			point + normal * 0.02,
+			style.spark_color.lightened(0.4),
+			0.07 * style.flash * punch,
+		)
 
 	if style.mark != SurfaceStyle.Mark.NONE:
 		marks.mark(point, normal, dir, style, size * (1.3 if exiting else 1.0), mark_color)

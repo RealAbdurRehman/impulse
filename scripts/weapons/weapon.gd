@@ -374,8 +374,8 @@ func _cast(origin: Vector3, end: Vector3, exclude: Array[RID]) -> Dictionary:
 func _is_friend(collider: Object) -> bool:
 	var other := Health.of(collider)
 	return (
-		not friendly_fire and other != null and other.alive and other.team != &""
-		and other.team == character.health.team
+		not friendly_fire and other != null and other.alive
+		and other.team != &"" and other.team == character.health.team
 	)
 
 
@@ -411,7 +411,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 		var resistance := style.resistance
 		var tint := Surfaces.tint_of(hit.collider) if style.tinted else Color.WHITE
 		var size := clampf(sqrt(stats.damage * power / REFERENCE_DAMAGE), 0.5, 2.2)
-		world.strike(hit.position, hit.normal, dir, surface, size, false, tint)
+		world.strike(hit.collider, hit.position, hit.normal, dir, surface, size, false, tint)
 
 		var depth := reach / resistance
 		var exit := _exit(hit, dir, depth, skip)
@@ -421,7 +421,7 @@ func _trace(origin: Vector3, dir: Vector3) -> void:
 			end = hit.position + dir * depth
 			break
 
-		world.strike(exit.position, exit.normal, dir, surface, size * 0.7, true, tint)
+		world.strike(hit.collider, exit.position, exit.normal, dir, surface, size * 0.7, true, tint)
 
 		reach -= hit.position.distance_to(exit.position) * resistance
 		from = exit.position + dir * 0.01
