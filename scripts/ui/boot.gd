@@ -31,7 +31,8 @@ func _load_all() -> void:
 		for path in PATHS:
 			pending = (
 				pending
-				or ResourceLoader.load_threaded_get_status(path, progress) == ResourceLoader.THREAD_LOAD_IN_PROGRESS
+				or ResourceLoader.load_threaded_get_status(path, progress)
+				== ResourceLoader.THREAD_LOAD_IN_PROGRESS
 			)
 			done += progress[0]
 
@@ -43,6 +44,12 @@ func _load_all() -> void:
 
 
 func _warm_up() -> void:
+	var muted: Array[int] = []
+	for bus in [&"Foley", &"Weapons", &"WeaponBody"]:
+		var index := AudioServer.get_bus_index(bus)
+		AudioServer.set_bus_mute(index, true)
+		muted.append(index)
+
 	SoundBank.warm()
 	var sandbox := (_kept[1] as PackedScene).instantiate() as Sandbox
 	add_child(sandbox)
@@ -50,7 +57,11 @@ func _warm_up() -> void:
 	(sandbox.player.get_node("PlayerInput") as PlayerInput).suspended = true
 	var menu := sandbox.get_node("SpawnMenu") as SpawnMenu
 	for kind in menu.kinds:
-		var dummy := menu.build(sandbox.player.global_position + Vector3(1.5, 0.0, 0.0), kind, SpawnMenu.ENEMY_TEAM)
+		var dummy := menu.build(
+			sandbox.player.global_position + Vector3(1.5, 0.0, 0.0),
+			kind,
+			SpawnMenu.ENEMY_TEAM,
+		)
 		dummy.process_mode = Node.PROCESS_MODE_DISABLED
 		menu.world.add_child(dummy)
 
@@ -64,3 +75,5 @@ func _warm_up() -> void:
 
 	sandbox.queue_free()
 	await get_tree().process_frame
+	for index in muted:
+		AudioServer.set_bus_mute(index, false)
