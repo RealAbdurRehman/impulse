@@ -1,8 +1,8 @@
 shader_type canvas_item;
 render_mode unshaded;
 
-uniform float vignette : hint_range(0.0, 1.0) = 0.55;
-uniform float grain : hint_range(0.0, 0.2) = 0.045;
+uniform float vignette : hint_range(0.0, 1.0) = 0.6;
+uniform float grain : hint_range(0.0, 0.2) = 0.085;
 
 float hash(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);

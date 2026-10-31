@@ -9,11 +9,13 @@ const PAUSE := preload("res://scenes/ui/pause_screen.tscn")
 @export var start_magazines := 4
 @export var god_mode := false
 @export var infinite_stamina := false
+@export_range(0.0, 1.0, 0.05) var wetness := 0.4
 
 var _lod: EnemyLod
 
 
 func _ready() -> void:
+	Wetness.set_level(wetness)
 	var game := GameSettings.current
 	game.apply(get_viewport())
 	for sun: DirectionalLight3D in find_children("*", "DirectionalLight3D", false, false):

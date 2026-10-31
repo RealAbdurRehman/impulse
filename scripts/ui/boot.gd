@@ -48,6 +48,12 @@ func _warm_up() -> void:
 	add_child(sandbox)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	(sandbox.player.get_node("PlayerInput") as PlayerInput).suspended = true
+	var menu := sandbox.get_node("SpawnMenu") as SpawnMenu
+	for kind in menu.kinds:
+		var dummy := menu.build(sandbox.player.global_position + Vector3(1.5, 0.0, 0.0), kind, SpawnMenu.ENEMY_TEAM)
+		dummy.process_mode = Node.PROCESS_MODE_DISABLED
+		menu.world.add_child(dummy)
+
 	for each in sandbox.find_children("*", "", false, false):
 		if each is CanvasLayer or each is SpawnMenu or each is SquadCall:
 			each.process_mode = Node.PROCESS_MODE_DISABLED

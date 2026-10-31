@@ -44,6 +44,10 @@ func shadows() -> bool:
 	return quality != Quality.LOW
 
 
+func polish() -> bool:
+	return quality == Quality.HIGH or (quality == Quality.MEDIUM and not OS.has_feature("web"))
+
+
 func apply(viewport: Viewport) -> void:
 	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	viewport.scaling_3d_scale = SCALE[quality]

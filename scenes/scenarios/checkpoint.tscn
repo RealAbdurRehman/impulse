@@ -26,6 +26,7 @@
 
 [node name="Checkpoint" type="Node3D" unique_id=1354032413]
 script = ExtResource("r1")
+wetness = 0.8
 
 [node name="Props" type="Node3D" parent="." unique_id=716785745]
 

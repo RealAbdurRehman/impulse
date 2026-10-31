@@ -4,6 +4,7 @@ extends Node3D
 
 @export_range(0.5, 2.0, 0.05) var toughness := 1.0
 @export_range(-0.3, 0.3, 0.05) var skill := 0.0
+@export_range(0.0, 1.0, 0.05) var wetness := 0.0
 
 
 func _ready() -> void:
@@ -11,6 +12,9 @@ func _ready() -> void:
 		_draw_ground()
 	elif get_tree().current_scene == self:
 		Scenarios.play.call_deferred(get_tree(), Scenarios.id_of(scene_file_path))
+	else:
+		Wetness.set_level(wetness)
+		Wetness.dress(self)
 
 
 func _draw_ground() -> void:

@@ -3,6 +3,8 @@ shader_type canvas_item;
 uniform sampler2D screen : hint_screen_texture, repeat_disable, filter_linear;
 
 uniform float aberration = 0.0;
+uniform float lens = 0.0;
+uniform float tone = 0.0;
 uniform float desaturate = 0.0;
 uniform float focus = 0.0;
 uniform float haze = 0.0;
@@ -39,12 +41,16 @@ void fragment() {
 	}
 
 	float split = aberration + 0.0035 * fringe;
-	if (split > 0.0002) {
-		vec2 shift = centre * split * (0.35 + radius);
+	float rim_lens = lens * smoothstep(0.2, 0.9, radius);
+	if (split + rim_lens > 0.0002) {
+		vec2 shift = centre * (split * (0.35 + radius) + rim_lens);
 		float keep = zone > 0.003 ? 0.5 : 0.0;
 		col.r = mix(textureLod(screen, SCREEN_UV + shift, 0.0).r, col.r, keep);
 		col.b = mix(textureLod(screen, SCREEN_UV - shift, 0.0).b, col.b, keep);
 	}
+
+	float lum = dot(col, LUMA);
+	col *= mix(vec3(1.0), mix(vec3(0.94, 1.0, 1.07), vec3(1.07, 1.0, 0.93), smoothstep(0.15, 0.75, lum)), tone);
 
 	col = mix(col, vec3(dot(col, LUMA)), desaturate);
 

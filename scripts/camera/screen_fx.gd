@@ -29,6 +29,10 @@ class Uniforms:
 @export var base_vignette := 0.12
 @export var smoothing := 30.0
 
+@export_group("Lens")
+@export var lens := 0.0028
+@export var tone := 0.45
+
 @export_group("Damage streaks")
 @export var streak_time := 1.7
 @export var strike_decay := 5.0
@@ -63,6 +67,7 @@ var _hits := PackedVector4Array()
 var _style := PackedVector4Array()
 var _streaks := 0
 var _warm := 8
+var _look := 0.0
 
 
 func _ready() -> void:
@@ -73,6 +78,12 @@ func _ready() -> void:
 
 	_grade_rect = _cover(_grade.material)
 	_cover(_overlay.material)
+
+	var game := GameSettings.current
+	if game.polish():
+		_look = game.effects
+		_grade.send(&"lens", lens * _look)
+		_grade.send(&"tone", tone * _look)
 
 
 func add_hit(entry: Vector2, inward: Vector2, strength: float) -> void:
@@ -117,6 +128,7 @@ func _process(delta: float) -> void:
 		or _desaturate > 0.004
 		or _blood > 0.004
 		or maxf(_focus, _haze) > 0.01
+		or _look > 0.0
 	)
 	_warm = maxi(_warm - 1, 0)
 	graded = graded or _warm > 0

@@ -214,17 +214,9 @@ metadata/tint = Color(0.86, 0.87, 0.88, 1)
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_4ns10")
 
-[node name="@MeshInstance3D@29055" type="MeshInstance3D" parent="." unique_id=877660937]
-transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
-mesh = SubResource("ArrayMesh_5fgpq")
-
 [node name="@MeshInstance3D@29056" type="MeshInstance3D" parent="." unique_id=633139630]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
 mesh = SubResource("ArrayMesh_sm1gm")
-
-[node name="@MeshInstance3D@29057" type="MeshInstance3D" parent="." unique_id=279792240]
-transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)
-mesh = SubResource("ArrayMesh_6ywno")
 
 [node name="@MeshInstance3D@29058" type="MeshInstance3D" parent="." unique_id=1182788611]
 transform = Transform3D(0.015, 0, 0, 0, 3.330669e-18, 0.015, 0, -0.015, 3.330669e-18, 0, 9.350786e-17, -0.0018602014)

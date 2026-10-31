@@ -152,6 +152,9 @@ func _material(colour: Color, roughness: float, metallic := 0.0) -> StandardMate
 	material.albedo_color = colour
 	material.roughness = roughness
 	material.metallic = metallic
+	material.rim_enabled = true
+	material.rim = 0.1
+	material.rim_tint = 0.5
 	return material
 
 

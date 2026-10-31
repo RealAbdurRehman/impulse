@@ -22,11 +22,11 @@ shader_parameter/wall_rise = 10.0
 shader_parameter/floor_min = 0.45
 shader_parameter/wall_min = 0.3
 shader_parameter/grain = ExtResource("5_texture")
-shader_parameter/tint = Color(0.3, 0.3, 0.32, 1)
-shader_parameter/glow = Color(0.9, 0.92, 1, 1)
+shader_parameter/tint = Color(0.31, 0.31, 0.32, 1)
+shader_parameter/glow = Color(0.92, 0.92, 0.94, 1)
 shader_parameter/grain_scale = 0.18
 shader_parameter/lines = 0.5
-shader_parameter/lit = 1.1
+shader_parameter/lit = 0.95
 shader_parameter/gloss = 0.7
 shader_parameter/mirror_base = 0.04
 shader_parameter/mirror_gain = 0.3
@@ -49,10 +49,10 @@ shader_parameter/wall_radius = 11.0
 shader_parameter/wall_rise = 10.0
 shader_parameter/floor_min = 0.45
 shader_parameter/wall_min = 0.3
-shader_parameter/tint = Color(0.36, 0.36, 0.38, 1)
-shader_parameter/glow = Color(0.88, 0.9, 1, 1)
+shader_parameter/tint = Color(0.33, 0.33, 0.34, 1)
+shader_parameter/glow = Color(0.9, 0.9, 0.92, 1)
 shader_parameter/panel = Vector2(4, 3)
-shader_parameter/wash = 1.6
+shader_parameter/wash = 1.45
 
 [sub_resource type="BoxMesh" id="Mesh_back"]
 material = SubResource("Material_wall")
@@ -89,19 +89,20 @@ size = Vector3(400, 0.22, 0.1)
 [sub_resource type="Environment" id="Environment_sandbox"]
 background_mode = 1
 ambient_light_source = 2
-ambient_light_color = Color(0.24, 0.24, 0.255, 1)
+ambient_light_color = Color(0.31, 0.315, 0.35, 1)
 reflected_light_source = 1
 tonemap_mode = 3
 tonemap_white = 6.0
 glow_enabled = true
-glow_intensity = 0.5
+glow_intensity = 0.4
 glow_bloom = 0.04
+glow_hdr_threshold = 1.0
 fog_enabled = true
 fog_light_color = Color(0.02, 0.02, 0.025, 1)
 fog_density = 0.004
 adjustment_enabled = true
-adjustment_contrast = 1.05
-adjustment_saturation = 0.9
+adjustment_contrast = 1.06
+adjustment_saturation = 0.78
 
 [node name="Sandbox" type="Node3D" unique_id=1 node_paths=PackedStringArray("player")]
 script = ExtResource("1_sandbox")
@@ -179,7 +180,8 @@ script = ExtResource("8_lights")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=5]
 transform = Transform3D(0.7880108, -0.4575257, 0.41195792, 0, 0.66913056, 0.74314487, -0.6156615, -0.58560616, 0.5272821, 0, 0, 0)
-light_energy = 0.6
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 0.65
 light_angular_distance = 0.5
 light_specular = 0.3
 shadow_enabled = true

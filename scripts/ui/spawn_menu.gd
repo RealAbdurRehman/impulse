@@ -301,6 +301,7 @@ func _drop_weapon(at: Vector3, stats: WeaponStats) -> void:
 func _drop_prop(at: Vector3, scene: PackedScene) -> void:
 	var prop := scene.instantiate() as Node3D
 	world.add_child(prop)
+	Wetness.dress(prop)
 	if not prop is RigidBody3D and at.y <= GROUND:
 		at.y = 0.0
 
