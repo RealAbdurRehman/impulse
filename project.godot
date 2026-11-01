@@ -34,6 +34,7 @@ enabled=PackedStringArray("res://addons/GDQuest_GDScript_formatter/plugin.cfg", 
 [gui]
 
 theme/custom="res://scenes/ui/theme.tres"
+theme/custom_font="uid://i2xp3buamn04"
 
 [input]
 
