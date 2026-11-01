@@ -126,6 +126,7 @@ const CORPSE_LAYER := 32
 
 @onready var animated_skeleton: Skeleton3D = get_node(animated_skeleton_path)
 
+
 class Push:
 	var bone: PhysicalBone3D
 	var speed := Vector3.ZERO
@@ -303,7 +304,6 @@ func collapse(legs_time: float, upper_time: float, throw := Vector3.ZERO, spin :
 	for b in physical_bones:
 		b.collision_layer = CORPSE_LAYER
 		b.collision_mask = 1 | CORPSE_LAYER
-		b.axis_lock_linear_z = true
 		b.friction = corpse_friction
 
 	_apply_corpse_limits()
@@ -366,7 +366,9 @@ func kick(bone: PhysicalBone3D, impulse: Vector3, offset: Vector3) -> void:
 	var push := Push.new()
 	push.bone = bone
 	push.speed = (impulse * kick_gain * soaked / bone.mass).limit_length(max_kick_speed)
-	push.spin = (offset.cross(impulse) * kick_gain * soaked / (bone.mass * 0.015)).limit_length(max_kick_spin)
+	push.spin = (
+		offset.cross(impulse) * kick_gain * soaked / (bone.mass * 0.015)
+	).limit_length(max_kick_spin)
 	_pushes.append(push)
 
 
@@ -733,7 +735,9 @@ func _limit_arms() -> void:
 		if _severed.has(arm) or _severed.has(_forearm_of[arm]):
 			continue
 
-		var dir := ((_forearm_of[arm] as PhysicalBone3D).global_position - arm.global_position).normalized()
+		var dir := (
+			(_forearm_of[arm] as PhysicalBone3D).global_position - arm.global_position
+		).normalized()
 		var excess := dir.angle_to(down) - reach
 		if excess <= 0.0:
 			continue
@@ -786,7 +790,12 @@ func _physics_process(delta: float) -> void:
 
 		if bone == hips:
 			_track_linear(bone, target, _lin_k, _lin_c, 1.0, delta)
-			_apply_upright_torque(bone, delta, upright_torque * _strength(bone, true), upright_damping)
+			_apply_upright_torque(
+				bone,
+				delta,
+				upright_torque * _strength(bone, true),
+				upright_damping,
+			)
 		elif bone in spine_bones:
 			if spine_upright_torque > 0.0:
 				_apply_upright_torque(bone, delta, spine_upright_torque, spine_upright_damping)
@@ -848,7 +857,10 @@ func _free_stuck_legs() -> void:
 		for bone in leg_bones + feet_bones:
 			if String(bone.bone_name).contains(side):
 				group.append(bone)
-				worst = maxf(worst, (_target_body_transform(bone).origin - bone.global_position).length())
+				worst = maxf(
+					worst,
+					(_target_body_transform(bone).origin - bone.global_position).length(),
+				)
 
 		var stuck: bool = _stuck.get(side, false)
 		if worst > stuck_error:
