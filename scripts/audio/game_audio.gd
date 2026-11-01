@@ -1,12 +1,16 @@
 class_name GameAudio
 extends Node
 
-enum Mode { NONE, MENU, LEVEL }
+enum Mode {
+	NONE,
+	MENU,
+	LEVEL,
+}
 
-const HOVER := {"file": "ui_hover", "db": -12.0, "pitch": 0.85}
-const PRESS := {"file": "ui_press", "db": -6.0, "pitch": 0.9}
-const TOGGLE := {"file": "ui_toggle", "db": -6.0, "pitch": 0.85}
-const SLIDE := {"file": "ui_slide", "db": -14.0, "pitch": 0.8}
+const HOVER := { "file": "ui_hover", "db": -12.0, "pitch": 0.85 }
+const PRESS := { "file": "ui_press", "db": -6.0, "pitch": 0.9 }
+const TOGGLE := { "file": "ui_toggle", "db": -6.0, "pitch": 0.85 }
+const SLIDE := { "file": "ui_slide", "db": -14.0, "pitch": 0.8 }
 
 static var _shared: GameAudio
 
@@ -14,6 +18,7 @@ static var _shared: GameAudio
 @export var ambience_fade := 6.0
 @export var enter_time := 3.0
 @export var leave_time := 1.5
+@export var menu_leave := 1.8
 @export var drift_depth_db := 1.5
 @export var duck_db := -7.0
 @export var duck_attack := 14.0
@@ -89,7 +94,9 @@ func _process(delta: float) -> void:
 	var want := clampf(inverse_lerp(-30.0, -6.0, peak), 0.0, 1.0)
 	_duck = lerpf(_duck, want, 1.0 - exp(-(duck_attack if want > _duck else duck_release) * delta))
 	_pinned = maxf(_pinned - delta, 0.0)
-	var target := (paused_db if get_tree().paused else 0.0) + (sting_duck_db if _pinned > 0.0 else 0.0)
+	var target := (paused_db if get_tree().paused else 0.0) + (
+		sting_duck_db if _pinned > 0.0 else 0.0
+	)
 	_bias = lerpf(_bias, target, 1.0 - exp(-4.0 * delta))
 	AudioServer.set_bus_volume_db(_ambience_bus, _ambience_base + _duck * duck_db + _bias)
 
@@ -107,6 +114,10 @@ func victory() -> void:
 	_sting.volume_db = bank.gain_db + sting_db
 	_sting.play()
 	_pinned = stream.get_length()
+
+
+func leave_menu() -> void:
+	_music.stop(menu_leave)
 
 
 func _apply() -> void:
@@ -162,7 +173,13 @@ func _slid(_value: float, slider: Slider) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and (event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"ui_down") or event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"ui_right")):
+	if (
+		event is InputEventKey
+		and (
+			event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"ui_down")
+			or event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"ui_right")
+		)
+	):
 		_last_nav = Time.get_ticks_msec() * 0.001
 
 

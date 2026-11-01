@@ -9,7 +9,11 @@ static var pending := &""
 const LIST := [
 	{ "id": &"yard", "title": "Yard", "scene": "res://scenes/scenarios/yard.tscn" },
 	{ "id": &"stairs", "title": "Stairs", "scene": "res://scenes/scenarios/stairs.tscn" },
-	{ "id": &"checkpoint", "title": "Checkpoint", "scene": "res://scenes/scenarios/checkpoint.tscn" },
+	{
+		"id": &"checkpoint",
+		"title": "Checkpoint",
+		"scene": "res://scenes/scenarios/checkpoint.tscn",
+	},
 ]
 
 
@@ -31,6 +35,7 @@ static func id_of(scene: String) -> StringName:
 
 static func play(tree: SceneTree, id: StringName) -> void:
 	pending = id
+	GameAudio.of(tree).leave_menu()
 	Transition.go(tree, SANDBOX)
 
 
