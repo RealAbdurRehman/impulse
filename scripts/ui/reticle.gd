@@ -207,6 +207,7 @@ func _on_pouch_changed() -> void:
 		return
 
 	if now > _reserve_seen:
+		_gain = (_gain if _gain_time > 0.0 else 0) + now - _reserve_seen
 		_gain_time = gain_show_time
 		_reserve_time = gain_show_time
 
