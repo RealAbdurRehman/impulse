@@ -105,8 +105,6 @@ const CORPSE_LAYER := 32
 @export var corpse_arm_reach := 70.0
 @export var arm_return_rate := 14.0
 
-@export var arms_ignore_body := true
-
 @export_group("Killing blow")
 @export var launch_speed := 2.5
 @export var launch_release := 0.05
@@ -252,14 +250,6 @@ func _ready() -> void:
 		_apply_joint_limits()
 
 	_publish_hinge_axes()
-
-	if arms_ignore_body:
-		for arm in arm_bones:
-			var side := "Left" if "Left" in String(arm.bone_name) else "Right"
-			for other in physical_bones:
-				var same_arm := other in arm_bones and side in String(other.bone_name)
-				if other != arm and not same_arm:
-					arm.add_collision_exception_with(other)
 
 	if legs_ignore_each_other:
 		var lefts: Array[PhysicalBone3D] = []
