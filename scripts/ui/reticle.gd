@@ -51,7 +51,8 @@ class Canvas extends Control:
 @export var ring_show_time := 1.6
 @export_range(0.0, 1.0) var low_ammo := 0.3
 @export var reserve_size := 15.0
-@export var gain_show_time := 1.4
+@export var gain_show_time := 1.6
+@export var reserve_linger := 1.1
 
 @export_group("Barrel")
 @export var min_gap := 5.5
@@ -90,6 +91,8 @@ var _reload_elapsed := 0.0
 var _reserve_seen := 0
 var _gain := 0
 var _gain_time := 0.0
+var _reserve_time := 0.0
+var _shown_reserve := 0.0
 
 var _mark := Mark.NONE
 var _mark_age := 0.0
@@ -150,6 +153,7 @@ func _on_player_died() -> void:
 func _bind(weapon: Weapon) -> void:
 	_weapon = weapon
 	_reserve_seen = _reserve()
+	_shown_reserve = float(_reserve_seen)
 	_ring_time = ring_show_time
 	if weapon.pouch != null and not weapon.pouch.changed.is_connected(_on_pouch_changed):
 		weapon.pouch.changed.connect(_on_pouch_changed)
@@ -158,6 +162,7 @@ func _bind(weapon: Weapon) -> void:
 	weapon.dry_fired.connect(_on_dry_fired)
 	weapon.bullet_traced.connect(_on_traced)
 	weapon.reload_started.connect(_on_reload_started)
+	weapon.reload_finished.connect(_on_reload_finished)
 	weapon.ammo_changed.connect(_on_ammo_changed)
 
 
@@ -174,6 +179,11 @@ func _on_dry_fired() -> void:
 func _on_reload_started() -> void:
 	_reload_elapsed = 0.0
 	_ring_time = ring_show_time
+	_reserve_time = reserve_linger
+
+
+func _on_reload_finished() -> void:
+	_reserve_time = reserve_linger
 
 
 func _on_ammo_changed(_current: int, _capacity: int) -> void:
@@ -197,8 +207,8 @@ func _on_pouch_changed() -> void:
 		return
 
 	if now > _reserve_seen:
-		_gain = (_gain if _gain_time > 0.0 else 0) + now - _reserve_seen
 		_gain_time = gain_show_time
+		_reserve_time = gain_show_time
 
 	_reserve_seen = now
 	_ring_time = ring_show_time
@@ -312,7 +322,17 @@ func _process(delta: float) -> void:
 	_flash = maxf(_flash - 5.0 * real, 0.0)
 	_bandaging = lerpf(_bandaging, 1.0 if _healing.is_applying() else 0.0, 1.0 - exp(-10.0 * real))
 	_ring_time = maxf(_ring_time - real, 0.0)
+
 	_gain_time = maxf(_gain_time - real, 0.0)
+	_reserve_time = maxf(_reserve_time - real, 0.0)
+	if is_instance_valid(_weapon):
+		var gap := float(_reserve()) - _shown_reserve
+		_shown_reserve = move_toward(
+			_shown_reserve,
+			float(_reserve()),
+			real * maxf(24.0, absf(gap) * 5.0),
+		)
+
 	_mark_age += real
 	_was_armed = _armed
 
@@ -442,8 +462,15 @@ func _ring_visibility() -> float:
 	return clampf(_ring_time / 0.4, 0.0, 1.0)
 
 
+func _reserve_visibility() -> float:
+	if _weapon.is_reloading():
+		return 1.0
+
+	return clampf(_reserve_time / 0.4, 0.0, 1.0)
+
+
 func _paint_reserve(c: Control, at: Vector2, k: float) -> void:
-	var visibility := _ring_visibility()
+	var visibility := _reserve_visibility() * _alpha
 	if visibility <= 0.01:
 		return
 
@@ -451,25 +478,49 @@ func _paint_reserve(c: Control, at: Vector2, k: float) -> void:
 	var tone := INK
 	if _limited():
 		var reserve := _reserve()
-		text = str(reserve)
+		text = str(roundi(_shown_reserve))
 		if reserve == 0:
 			tone = HOT
 		elif reserve <= _weapon.stats.magazine_size:
 			tone = AMBER
 
+	var radius := ring_radius * k
+	var dir := DIAGONALS[0]
+	var tail := at + dir * (radius + 9.0 * k)
+	_stroke(c, at + dir * (radius + 3.0 * k), tail, 1.2 * k, Color(INK, 0.4 * visibility), k)
+
 	var font := ThemeDB.fallback_font
 	var size := int(reserve_size * k)
-	var from := at + Vector2(ring_radius + 7.0, ring_radius + 12.0) * k
-	_text(c, from, text, size, Color(tone, 0.9 * visibility * _alpha), k)
+	var from := tail + Vector2(3.5 * k, size * 0.6)
+	_text(c, from, text, size, Color(tone, 0.92 * visibility), k)
 	if _gain_time > 0.0:
 		var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
-		var fade := clampf(_gain_time / 0.5, 0.0, 1.0)
-		_text(c, from + Vector2(width + 6.0 * k, 0.0), "+%d" % _gain, int(reserve_size * 0.8 * k), Color(AMBER, fade * _alpha), k)
+		var age := gain_show_time - _gain_time
+		var slide := 1.0 - clampf(age / 0.18, 0.0, 1.0)
+		var fade := clampf(_gain_time / 0.5, 0.0, 1.0) * clampf(age / 0.08, 0.0, 1.0)
+		var lift := Vector2(width + 7.0 * k, -slide * 5.0 * k)
+
+		_text(
+			c,
+			from + lift,
+			"+%d" % _gain,
+			int(reserve_size * 0.8 * k),
+			Color(AMBER, fade * _alpha),
+			k,
+		)
 
 
 func _text(c: Control, at: Vector2, text: String, size: int, color: Color, k: float) -> void:
 	var font := ThemeDB.fallback_font
-	c.draw_string(font, at + Vector2.ONE * k, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, Color(SHADOW, SHADOW.a * color.a))
+	c.draw_string(
+		font,
+		at + Vector2.ONE * k,
+		text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		size,
+		Color(SHADOW, SHADOW.a * color.a),
+	)
 	c.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, color)
 
 
