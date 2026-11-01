@@ -36,7 +36,7 @@ static func of(folder: String, prefix := "") -> Bank:
 
 
 static func warm() -> void:
-	for folder in ["footsteps/concrete", "footsteps/metal", "footsteps/wood", "impacts/body", "impacts/concrete", "impacts/glass", "impacts/metal", "impacts/plastic", "impacts/wood", "ui"]:
+	for folder in ["footsteps/concrete", "footsteps/metal", "footsteps/wood", "impacts/body", "impacts/flesh", "impacts/concrete", "impacts/glass", "impacts/metal", "impacts/plastic", "impacts/wood", "ui"]:
 		of(folder)
 
 

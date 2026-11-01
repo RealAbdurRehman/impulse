@@ -16,7 +16,7 @@ const PARTS := {
 @export var full_loss := 7.0
 @export var cooldown := 0.12
 @export var probe := 0.45
-@export var surface_share := 0.55
+@export var surface_share := 0.3
 
 var _bones: Array[PhysicalBone3D] = []
 var _weights := PackedFloat32Array()
@@ -55,4 +55,4 @@ func _strike(at: Vector3, dir: Vector3, level: float) -> void:
 	var space := (get_parent() as Node3D).get_world_3d().direct_space_state
 	var found := space.intersect_ray(PhysicsRayQueryParameters3D.create(at - dir * 0.05, at + dir * probe, 1))
 	if not found.is_empty():
-		foley.hit(at, Surfaces.of(found.collider), level * surface_share, -3.0)
+		foley.hit(at, Surfaces.of(found.collider), level * surface_share, -6.0)

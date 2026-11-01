@@ -104,8 +104,8 @@ func step(at: Vector3, surface: StringName, loud: float, extra_db := 0.0, npc :=
 	var span: Vector2i = STEP_SETS[surface]
 	var bank := SoundBank.of(STEPS[surface])
 	var stream := bank.pick(span.x, span.y)
-	var db := lerpf(-17.0, -2.0, pow(loud, 0.8)) + tune.y + bank.gain_db + extra_db - fade
-	var rate := tune.x * lerpf(1.04, 0.96, loud) * randf_range(0.97, 1.03)
+	var db := lerpf(-26.0, -1.0, pow(loud, 1.2)) + tune.y + bank.gain_db + extra_db - fade
+	var rate := tune.x * lerpf(1.08, 0.94, loud) * randf_range(0.97, 1.03)
 	_play(stream, at, db, rate, STEP_PAN)
 
 
@@ -139,7 +139,20 @@ func thud(at: Vector3, intensity: float, extra_db := 0.0) -> void:
 
 	var stream := bank.pick(span.x, span.y)
 	var db := lerpf(-16.0, 4.0, pow(level, 0.6)) + bank.gain_db + extra_db
-	_play(stream, at, db, lerpf(1.1, 0.88, level) * randf_range(0.96, 1.04))
+	_play(stream, at, db, lerpf(1.05, 0.93, level) * randf_range(0.97, 1.03))
+
+
+func flesh(at: Vector3, intensity: float, extra_db := 0.0) -> void:
+	if not _ready_for("flesh", 0.03):
+		return
+
+	var level := clampf(intensity, 0.0, 1.0)
+	var bank := SoundBank.of("impacts/flesh")
+	var stream := bank.pick()
+	var db := lerpf(-14.0, 0.0, pow(level, 0.7)) + bank.gain_db + extra_db
+	_play(stream, at, db, lerpf(1.08, 0.94, level) * randf_range(0.96, 1.04))
+	if level > 0.5:
+		thud(at, level * 0.7, extra_db - 5.0)
 
 
 func bullet(at: Vector3, surface: StringName, size: float, exiting: bool) -> void:
@@ -149,7 +162,7 @@ func bullet(at: Vector3, surface: StringName, size: float, exiting: bool) -> voi
 	var level := clampf(size * 0.45, 0.2, 0.75)
 	var db := -8.0 if exiting else -2.0
 	if surface == &"flesh":
-		thud(at, level + 0.2, db + 3.0)
+		flesh(at, level + 0.2, db + 3.0)
 	else:
 		hit(at, surface, level, db - 2.0, 1.1)
 
