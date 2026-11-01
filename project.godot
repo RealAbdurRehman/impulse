@@ -18,13 +18,16 @@ config/icon="res://assets/icon.svg"
 [audio]
 
 buses/default_bus_layout="uid://ctti0cldq28rl"
+general/default_playback_type.web=0
 
 [display]
 
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/size/mode=3
-window/stretch/mode.web="viewport"
+window/size/viewport_width.web=2560
+window/size/viewport_height.web=1440
+window/stretch/mode.web="canvas_items"
 window/stretch/aspect.web="expand"
 
 [editor_plugins]
@@ -120,8 +123,6 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 anti_aliasing/quality/use_debanding=true
-lights_and_shadows/directional_shadow/size.web=2048
-anti_aliasing/quality/msaa_3d.web=1
 
 [shader_globals]
 
