@@ -35,8 +35,6 @@ const WARY_SIGHT := 1.6
 const BODY_STANDOFF := 1.0
 const LEVEL_GAP := 2.0
 const STAIR_ROAM := 0.25
-const CONCEALED := 0.2
-const CONCEALED_REACH := 2.5
 const FADE_TIME := 1.2
 const SETTLE := 0.25
 const PAINT_TIME := 1.4
@@ -146,7 +144,6 @@ var _search_body := 0
 var _inspected: EnemyInput
 var _inspect_left := 0.0
 var _cleaning := false
-var _concealment := 1.0
 var _wary_left := 0.0
 var _bodies_seen := { }
 
@@ -491,7 +488,6 @@ func _sense(delta: float) -> void:
 		_look_left = _rng.randf_range(0.08, 0.14)
 		_look_screen()
 		_screen_gain = 1.0 if _on_screen or _laser != null else OFFSCREEN_SIGHT
-		_concealment = StealthZone.at(there + Vector3.UP * 0.9)
 		_view_gain = _glimpse(me, there)
 		_visible = _view_gain > 0.0
 		_hear = _loudness(there, _noise.radius) if _noise.radius > 0.0 else 0.0
@@ -568,9 +564,6 @@ func _glimpse(me: Vector3, there: Vector3) -> float:
 	var chest := there + Vector3.UP * (0.6 if crouched else 1.2)
 	var head := there + Vector3.UP * (1.0 if crouched else 1.6)
 	var ahead := reach * float(_body.facing)
-	if _concealment < CONCEALED and absf(reach) > CONCEALED_REACH:
-		return 0.0
-
 	var gain := 0.0
 	if _mode == Mode.COMBAT or (ahead > 0.0 and absf(chest.y - eye.y) <= ahead * _view_slope):
 		gain = 1.0
@@ -602,8 +595,6 @@ func _sight_rate(distance: float) -> float:
 
 	if _wary_left > 0.0:
 		rate *= WARY_SIGHT
-
-	rate *= _concealment
 
 	return rate * traits.alertness
 

@@ -1,8 +1,6 @@
 class_name PlayerLoot
 extends Node
 
-signal collected(type: StringName, amount: int)
-
 @export var reach := 0.9
 
 @onready var _movement := get_parent() as CharacterMovement
@@ -28,6 +26,5 @@ func _physics_process(_delta: float) -> void:
 		var taken := pouch.add(pickup.type, pickup.count)
 		if taken > 0:
 			pickup.count -= taken
-			collected.emit(pickup.type, taken)
 			if pickup.count <= 0:
 				pickup.queue_free()

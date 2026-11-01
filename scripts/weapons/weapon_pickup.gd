@@ -86,10 +86,6 @@ func _ready() -> void:
 			add_child(collider)
 
 
-func local_center() -> Vector3:
-	return _bounds.get_center()
-
-
 func center() -> Vector3:
 	return global_transform * _bounds.get_center()
 

@@ -59,10 +59,6 @@ func bleed_rate() -> float:
 	return total
 
 
-func open_wounds() -> int:
-	return _wounds.size()
-
-
 func _physics_process(delta: float) -> void:
 	_bleed(delta)
 

@@ -49,14 +49,6 @@ static func release(id: int) -> void:
 		_drop(pool, id)
 
 
-static func holds(id: int) -> bool:
-	for pool: Pool in _pools.values():
-		if pool.holders.has(id):
-			return true
-
-	return false
-
-
 static func count(target_id: int) -> int:
 	return _pools[target_id].holders.size() if _pools.has(target_id) else 0
 

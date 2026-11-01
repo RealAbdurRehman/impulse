@@ -492,8 +492,8 @@ func _apply_hit(hit: Dictionary, dir: Vector3, distance: float, power: float) ->
 	var ragdoll := body.get_parent() as ActiveRagdoll
 	if ragdoll != null:
 		ragdoll.kick(body as PhysicalBone3D, impulse, point - body.global_position)
-	elif body.has_method(&"apply_impulse"):
-		body.call(&"apply_impulse", impulse, point - body.global_position)
+	elif body is RigidBody3D:
+		(body as RigidBody3D).apply_impulse(impulse, point - body.global_position)
 
 
 func _damage_at(distance: float) -> float:

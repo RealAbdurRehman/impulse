@@ -328,14 +328,6 @@ func _setup_feet() -> void:
 		)
 
 
-func shift_feet(by: Vector3) -> void:
-	for f in _feet:
-		f.planted += by
-		f.current += by
-		f.start += by
-		f.end += by
-
-
 func _make_foot(target: Node3D, pole: Node3D, side: float) -> Foot:
 	var f := Foot.new()
 	f.target = target

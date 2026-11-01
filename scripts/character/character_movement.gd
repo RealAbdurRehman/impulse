@@ -42,7 +42,6 @@ signal landed(speed: float)
 @export var head_check_height := 1.5
 @export var stand_height := 1.8
 @export var head_clearance := 1.74
-@export var crouch_height := 1.35
 @export var crouch_head_check := 1.3
 
 @export var fall_off_height := 0.9

@@ -19,7 +19,6 @@ var _hold := 0.0
 var _scan_left := 0.0
 var _fade := 0.0
 var _open := 1.0
-var _hidden := 0.0
 var _exposure := 0.0
 var _shown_alert := 0.0
 var _warm := WARM_FRAMES
@@ -51,7 +50,6 @@ func _process(delta: float) -> void:
 		_scan_left = 0.15
 		_scan()
 
-	var concealment := StealthZone.at(_body.global_position + Vector3.UP * 0.9)
 	var speed := absf(_body.velocity.x)
 	var motion := 1.0
 	if speed > NoiseSource.RUN_SPEED:
@@ -60,16 +58,15 @@ func _process(delta: float) -> void:
 		motion = 0.7
 
 	var stance := 0.6 if _body.crouching else 1.0
-	var exposure := concealment * stance * motion / 1.4
+	var exposure := stance * motion / 1.4
 
-	var relevant := _body.health.alive and (_near or concealment < 0.98)
+	var relevant := _body.health.alive and _near
 	_hold = hold_time if relevant else maxf(_hold - delta, 0.0)
 
 	var blend := 1.0 - exp(-8.0 * delta)
 	_fade = move_toward(_fade, 1.0 if _hold > 0.0 else 0.0, delta * 5.0)
 	_open = lerpf(_open, smoothstep(0.05, 0.75, exposure), blend)
 	_exposure = lerpf(_exposure, exposure, blend)
-	_hidden = lerpf(_hidden, 1.0 if concealment < EnemyInput.CONCEALED else 0.0, blend)
 	_shown_alert = lerpf(_shown_alert, _alert, blend)
 
 	if _warm > 0:
@@ -81,7 +78,6 @@ func _process(delta: float) -> void:
 	visible = true
 	_material.set_shader_parameter(&"fade", _fade)
 	_material.set_shader_parameter(&"open", _open)
-	_material.set_shader_parameter(&"hidden", _hidden)
 	_material.set_shader_parameter(&"exposure", _exposure)
 	_material.set_shader_parameter(&"alert", _shown_alert)
 

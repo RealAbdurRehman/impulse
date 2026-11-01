@@ -11,7 +11,6 @@ const EPS := 0.01
 const JUMP_UP := 0.9
 const JUMP_GAP := 1.7
 const MAX_DROP := 4.0
-const WALL_TOP := 1.4
 const WALL_REACH := 4.5
 const WALL_LIMIT := 3.15
 const BIG_DROP := 2.5
