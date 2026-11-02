@@ -13,7 +13,7 @@
 <p align="center">
   <img src="./media/demo.gif" alt="Demo">
   <br>
-  <a href="">Live demo</a>
+  <a href="https://realabdurrehman.itch.io/impulse">Live demo</a>
 </p>
 
 > [!NOTE]
