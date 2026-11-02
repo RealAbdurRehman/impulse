@@ -64,7 +64,7 @@ This project was originally meant to be a simple 2.5D shooter with animations, b
 | `Q`       | Slow motion      |
 | `Esc`     | Pause            |
 
-_Additional controls are listed in the in game controls menu._
+_Additional controls are listed in the in-game controls menu._
 
 ## Technology
 
