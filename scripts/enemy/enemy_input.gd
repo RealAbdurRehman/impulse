@@ -495,7 +495,11 @@ func _sense(delta: float) -> void:
 			_look_for_bodies(me)
 
 		if _mark != null:
-			_mark.show_state(awareness if _mode != Mode.COMBAT else 0.0, _alarm_left > 0.0)
+			var ally := health.team == Targeter.player_team
+			_mark.show_state(
+				0.0 if ally or _mode == Mode.COMBAT else awareness,
+				not ally and _alarm_left > 0.0,
+			)
 
 	if _visible and _unseen_for > 1.5 and _known:
 		_notice()
@@ -706,7 +710,9 @@ func _shout(at: Vector3, body := 0) -> void:
 
 func _look_screen() -> void:
 	var cam := get_viewport().get_camera_3d()
-	_fair_on = fair_play and target.health.team == Targeter.player_team and not (cam is EditorCamera)
+	_fair_on = (
+		fair_play and target.health.team == Targeter.player_team and not (cam is EditorCamera)
+	)
 	if not _fair_on:
 		_on_screen = true
 		_view_reach = INF

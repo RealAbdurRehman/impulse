@@ -28,7 +28,6 @@ db = 1
 resource_name = "Compressor"
 threshold = -6.0
 ratio = 2.0
-gain = 0.0
 
 [sub_resource type="AudioEffectReverb" id="AudioEffectReverb_foley"]
 resource_name = "Reverb"
